@@ -7,9 +7,10 @@ export interface Agent {
   id: string
   cooperative_id: string
   role: string
-  first_name: string
-  last_name: string
-  email?: string
+  name: string
+  email: string
+  phone?: string | null
+  status?: string
 }
 
 export function useAgent() {
@@ -25,7 +26,7 @@ export function useAgent() {
 
       const { data } = await supabase
         .from('agents')
-        .select('id, cooperative_id, role, first_name, last_name')
+        .select('id, cooperative_id, role, name, email, phone, status')
         .eq('id', user.id)
         .single()
 

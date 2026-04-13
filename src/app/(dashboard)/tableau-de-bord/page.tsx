@@ -8,36 +8,75 @@ export const metadata: Metadata = { title: 'Tableau de bord' }
 export default async function TableauDeBordPage() {
   const supabase = await createClient()
 
-  // Fetch cooperative summary via RPC
-  const [summaryResult, recentTxResult, fraudResult] = await Promise.allSettled([
+  const [
+    summaryRes,
+    membersRes,
+    accountsRes,
+    vaultRes,
+    loansRes,
+    ratesRes,
+    recentTxRes,
+    fraudRes,
+  ] = await Promise.allSettled([
     supabase.rpc('get_cooperative_summary'),
+    supabase.from('members').select('id, status').eq('status', 'active'),
+    supabase.from('accounts').select('id, balance, currency, status').eq('status', 'active'),
+    supabase.from('cash_vault').select('current_balance, opening_balance, last_updated').limit(1).single(),
+    supabase.from('loans').select('id, principal_amount, amount_paid, status').in('status', ['active', 'pending']),
+    supabase
+      .from('exchange_rates')
+      .select('from_currency, to_currency, rate, is_active, created_at')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(6),
     supabase
       .from('transactions')
-      .select('id, type, amount, currency, created_at, status')
+      .select('id, transaction_type, amount, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
       .order('created_at', { ascending: false })
       .limit(8),
     supabase
       .from('fraud_flags')
-      .select('id, reason, risk_score, created_at, resolved_at')
-      .is('resolved_at', null)
-      .order('risk_score', { ascending: false })
+      .select('id, rule_triggered, severity, created_at, transaction_id')
+      .order('created_at', { ascending: false })
       .limit(5),
   ])
 
-  const summary =
-    summaryResult.status === 'fulfilled' ? summaryResult.value.data : null
-  const recentTx =
-    recentTxResult.status === 'fulfilled' ? recentTxResult.value.data : []
-  const fraudFlags =
-    fraudResult.status === 'fulfilled' ? fraudResult.value.data : []
+  const summary = summaryRes.status === 'fulfilled' ? (summaryRes.value.data?.[0] ?? null) : null
+  const members = membersRes.status === 'fulfilled' ? (membersRes.value.data ?? []) : []
+  const accounts = accountsRes.status === 'fulfilled' ? (accountsRes.value.data ?? []) : []
+  const vault = vaultRes.status === 'fulfilled' ? (vaultRes.value.data as any) : null
+  const loans = loansRes.status === 'fulfilled' ? (loansRes.value.data ?? []) : []
+  const rates = ratesRes.status === 'fulfilled' ? (ratesRes.value.data ?? []) : []
+  const recentTx = recentTxRes.status === 'fulfilled' ? (recentTxRes.value.data ?? []) : []
+  const fraudFlags = fraudRes.status === 'fulfilled' ? (fraudRes.value.data ?? []) : []
+
+  // Compute totals client-side from fetched data
+  const totalBalanceHTG = accounts
+    .filter((a: any) => a.currency === 'HTG')
+    .reduce((s: number, a: any) => s + Number(a.balance ?? 0), 0)
+
+  const totalBalanceUSD = accounts
+    .filter((a: any) => a.currency === 'USD')
+    .reduce((s: number, a: any) => s + Number(a.balance ?? 0), 0)
+
+  const activeLoansTotal = loans
+    .filter((l: any) => l.status === 'active')
+    .reduce((s: number, l: any) => s + Number(l.principal_amount ?? 0) - Number(l.amount_paid ?? 0), 0)
 
   return (
     <>
       <Header title="Tableau de bord" />
       <DashboardHome
         summary={summary}
-        recentTransactions={recentTx ?? []}
-        fraudFlags={fraudFlags ?? []}
+        activeMembers={members.length}
+        totalBalanceHTG={totalBalanceHTG}
+        totalBalanceUSD={totalBalanceUSD}
+        vaultBalance={vault?.current_balance ?? null}
+        activeLoansTotal={activeLoansTotal}
+        activeLoansCount={loans.filter((l: any) => l.status === 'active').length}
+        exchangeRates={rates as any[]}
+        recentTransactions={recentTx as any[]}
+        fraudFlags={fraudFlags as any[]}
       />
     </>
   )
