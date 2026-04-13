@@ -44,7 +44,7 @@ export default function RootLayout({
       className={`${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} h-full`}
       suppressHydrationWarning
     >
-      <body className="min-h-full antialiased">
+      <body className="min-h-full antialiased" suppressHydrationWarning>
         <TooltipProvider>
           {children}
         </TooltipProvider>
