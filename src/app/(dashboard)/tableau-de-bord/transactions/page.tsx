@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
-import { ArrowLeftRight } from 'lucide-react'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Transactions' }
@@ -48,7 +47,7 @@ export default async function TransactionsPage() {
 
         <DataCard>
           {rows.length === 0 ? (
-            <EmptyState icon={ArrowLeftRight} title="Aucune transaction" />
+            <EmptyState title="Aucune transaction" />
           ) : (
             <Table headers={['Référence', 'Type', 'Membre', 'Compte', 'Montant', 'Motif', 'Statut', 'Date']}>
               {rows.map((t: any) => {

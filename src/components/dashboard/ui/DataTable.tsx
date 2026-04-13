@@ -1,5 +1,6 @@
 'use client'
 import * as React from 'react'
+import { Inbox } from 'lucide-react'
 
 /* ── Status badge ───────────────────────────────────────────────────────── */
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
@@ -35,14 +36,14 @@ export function StatusBadge({ value }: { value: string }) {
 }
 
 /* ── Empty state ────────────────────────────────────────────────────────── */
-export function EmptyState({ icon: Icon, title, description }: {
-  icon: React.ElementType; title: string; description?: string
+export function EmptyState({ title, description }: {
+  title: string; description?: string
 }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
       <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3"
         style={{ background: 'rgba(255,255,255,0.05)' }}>
-        <Icon size={22} style={{ color: 'rgba(255,255,255,0.20)' }} aria-hidden="true" />
+        <Inbox size={22} style={{ color: 'rgba(255,255,255,0.20)' }} aria-hidden="true" />
       </div>
       <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>{title}</p>
       {description && <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>{description}</p>}

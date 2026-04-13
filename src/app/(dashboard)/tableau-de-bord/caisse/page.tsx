@@ -78,7 +78,7 @@ export default async function CaissePage() {
           <h3 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>Clôtures journalières récentes</h3>
           <DataCard>
             {closings.length === 0 ? (
-              <EmptyState icon={Vault} title="Aucune clôture enregistrée" description="Les clôtures journalières apparaîtront ici." />
+              <EmptyState title="Aucune clôture enregistrée" description="Les clôtures journalières apparaîtront ici." />
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>

@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
-import { TrendingUp } from 'lucide-react'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
@@ -69,7 +68,7 @@ export default async function BureauDeChangePage() {
           <h3 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>Taux de change actifs</h3>
           {activeRates.length === 0 ? (
             <DataCard>
-              <EmptyState icon={TrendingUp} title="Aucun taux configuré" description="Définissez des taux de change pour commencer." />
+              <EmptyState title="Aucun taux configuré" description="Définissez des taux de change pour commencer." />
             </DataCard>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
@@ -107,7 +106,7 @@ export default async function BureauDeChangePage() {
           <h3 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>Historique des opérations</h3>
           <DataCard>
             {txs.length === 0 ? (
-              <EmptyState icon={TrendingUp} title="Aucune opération de change" />
+              <EmptyState title="Aucune opération de change" />
             ) : (
               <Table headers={['Ticket', 'Client', 'De', 'Vers', 'Montant donné', 'Taux', 'Montant reçu', 'Agent', 'Date']}>
                 {txs.map((t: any) => (

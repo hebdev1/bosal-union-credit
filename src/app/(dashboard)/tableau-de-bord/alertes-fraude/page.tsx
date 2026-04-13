@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
-import { AlertTriangle } from 'lucide-react'
 import { formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Alertes fraude' }
@@ -57,7 +56,7 @@ export default async function AlertesFraudePage() {
         {/* Table */}
         <DataCard>
           {rows.length === 0 ? (
-            <EmptyState icon={AlertTriangle} title="Aucune alerte fraude" description="Toutes les transactions sont conformes." />
+            <EmptyState title="Aucune alerte fraude" description="Toutes les transactions sont conformes." />
           ) : (
             <Table headers={['Sévérité', 'Règle déclenchée', 'Membre', 'Compte', 'Type transaction', 'Montant', 'Date alerte']}>
               {rows.map((f: any) => {

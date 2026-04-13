@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
-import { Banknote } from 'lucide-react'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Comptes' }
@@ -49,7 +48,7 @@ export default async function ComptesPage() {
 
         <DataCard>
           {rows.length === 0 ? (
-            <EmptyState icon={Banknote} title="Aucun compte" description="Les comptes apparaîtront ici une fois créés." />
+            <EmptyState title="Aucun compte" description="Les comptes apparaîtront ici une fois créés." />
           ) : (
             <Table headers={['N° Compte', 'Membre', 'Type', 'Solde', 'Devise', 'Statut', 'Ouvert le']}>
               {rows.map((a: any) => {

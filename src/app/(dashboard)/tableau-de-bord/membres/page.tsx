@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
-import { Users } from 'lucide-react'
 import { formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Membres' }
@@ -45,7 +44,7 @@ export default async function MembresPage() {
         {/* Table */}
         <DataCard>
           {rows.length === 0 ? (
-            <EmptyState icon={Users} title="Aucun membre" description="Les membres apparaîtront ici une fois créés." />
+            <EmptyState title="Aucun membre" description="Les membres apparaîtront ici une fois créés." />
           ) : (
             <Table headers={['N° Membre', 'Nom complet', 'Téléphone', 'Email', 'Profession', 'Comptes', 'Statut', 'Inscription']}>
               {rows.map((m: any) => (

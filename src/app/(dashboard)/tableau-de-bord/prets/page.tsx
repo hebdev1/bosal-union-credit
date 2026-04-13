@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
-import { Landmark } from 'lucide-react'
 import { formatHTG, formatDate, formatPercent } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Prêts' }
@@ -44,7 +43,7 @@ export default async function PretsPage() {
 
         <DataCard>
           {rows.length === 0 ? (
-            <EmptyState icon={Landmark} title="Aucun prêt" description="Les prêts apparaîtront ici une fois créés." />
+            <EmptyState title="Aucun prêt" description="Les prêts apparaîtront ici une fois créés." />
           ) : (
             <Table headers={['N° Prêt', 'Membre', 'Capital', 'Taux', 'Durée', 'Mensualité', 'Remboursé', 'Objet', 'Statut', 'Date']}>
               {rows.map((l: any) => {

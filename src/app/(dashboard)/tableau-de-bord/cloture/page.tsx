@@ -91,7 +91,7 @@ export default async function CloturePage() {
           <h3 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>Historique</h3>
           <DataCard>
             {rows.length === 0 ? (
-              <EmptyState icon={BookCheck} title="Aucune clôture enregistrée" description="Les clôtures journalières apparaîtront ici." />
+              <EmptyState title="Aucune clôture enregistrée" description="Les clôtures journalières apparaîtront ici." />
             ) : (
               <div className="divide-y" style={{ borderColor: '#1a1f2e' }}>
                 {rows.map((c: any) => {
