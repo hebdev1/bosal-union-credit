@@ -9,8 +9,13 @@ const LABEL = 'block text-xs font-medium mb-1'
 const LABEL_STYLE = { color: 'rgba(255,255,255,0.50)' }
 
 interface Member { id: string; first_name: string; last_name: string; member_number: string }
+interface Plan   { id: string; name: string; interest_rate: number; interest_period: string }
 
-export function CreateAccountModal({ members }: { members: Member[] }) {
+const PERIOD_LABELS: Record<string, string> = {
+  daily: 'quotidien', monthly: 'mensuel', quarterly: 'trimestriel', yearly: 'annuel',
+}
+
+export function CreateAccountModal({ members, plans = [] }: { members: Member[]; plans?: Plan[] }) {
   const [open, setOpen] = React.useState(false)
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
@@ -24,8 +29,8 @@ export function CreateAccountModal({ members }: { members: Member[] }) {
       await createAccount(new FormData(e.currentTarget))
       formRef.current?.reset()
       setOpen(false)
-    } catch (err: any) {
-      setError(err.message ?? 'Erreur inconnue')
+    } catch (err: unknown) {
+      setError((err as Error).message ?? 'Erreur inconnue')
     } finally {
       setPending(false)
     }
@@ -44,23 +49,32 @@ export function CreateAccountModal({ members }: { members: Member[] }) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.70)' }}>
-          <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
-            style={{ background: '#111318', border: '1px solid #252A36' }}>
-            <div className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: '1px solid #1a1f2e' }}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.70)' }}
+          onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
+            style={{ background: '#111318', border: '1px solid #252A36', maxHeight: '90vh', overflowY: 'auto' }}
+          >
+            <div
+              className="flex items-center justify-between px-6 py-4 sticky top-0"
+              style={{ borderBottom: '1px solid #1a1f2e', background: '#111318' }}
+            >
               <h2 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.92)' }}>
                 Nouveau compte
               </h2>
               <button type="button" onClick={() => setOpen(false)}
-                className="rounded-lg p-1.5 transition-colors hover:bg-white/5"
+                className="rounded-lg p-1.5 transition-colors"
                 style={{ color: 'rgba(255,255,255,0.45)' }}>
                 <X size={16} />
               </button>
             </div>
 
             <form ref={formRef} onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
+
+              {/* Membre */}
               <div>
                 <label className={LABEL} style={LABEL_STYLE}>Membre *</label>
                 <select name="member_id" required className={INPUT} style={INPUT_STYLE}>
@@ -73,11 +87,13 @@ export function CreateAccountModal({ members }: { members: Member[] }) {
                 </select>
               </div>
 
+              {/* N° Compte */}
               <div>
                 <label className={LABEL} style={LABEL_STYLE}>N° Compte *</label>
                 <input name="account_number" required className={INPUT} style={INPUT_STYLE} placeholder="CPT-001" />
               </div>
 
+              {/* Type + Devise */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={LABEL} style={LABEL_STYLE}>Type de compte *</label>
@@ -96,6 +112,33 @@ export function CreateAccountModal({ members }: { members: Member[] }) {
                 </div>
               </div>
 
+              {/* Plan d'épargne */}
+              <div>
+                <label className={LABEL} style={LABEL_STYLE}>
+                  Plan d&apos;épargne
+                  <span className="ml-1 text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>(optionnel)</span>
+                </label>
+                <select name="savings_product_id" className={INPUT} style={INPUT_STYLE}>
+                  <option value="">— Aucun plan —</option>
+                  {plans.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} · {p.interest_rate}% {PERIOD_LABELS[p.interest_period] ?? p.interest_period}
+                    </option>
+                  ))}
+                </select>
+                {plans.length === 0 && (
+                  <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                    Aucun plan disponible.
+                  </p>
+                )}
+                {plans.length > 0 && (
+                  <p className="text-[11px] mt-1" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                    Un plan peut être attribué ou modifié ultérieurement.
+                  </p>
+                )}
+              </div>
+
+              {/* Solde initial */}
               <div>
                 <label className={LABEL} style={LABEL_STYLE}>Solde initial</label>
                 <input name="balance" type="number" min="0" step="0.01" defaultValue="0"
