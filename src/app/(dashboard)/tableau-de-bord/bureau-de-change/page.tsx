@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { CreateExchangeModal } from '@/components/dashboard/forms/CreateExchangeModal'
+import { CreateRateModal } from '@/components/dashboard/forms/CreateRateModal'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
@@ -25,6 +26,7 @@ export default async function BureauDeChangePage() {
   const supabase = await createClient()
 
   const [ratesRes, txRes] = await Promise.allSettled([
+    // All rates (active + inactive) for full history
     supabase
       .from('exchange_rates')
       .select('id, from_currency, to_currency, rate, is_active, created_at, agents(name)')
@@ -36,26 +38,38 @@ export default async function BureauDeChangePage() {
       .limit(100),
   ])
 
-  const rates = ratesRes.status === 'fulfilled' ? (ratesRes.value.data ?? []) : []
-  const txs   = txRes.status === 'fulfilled'   ? (txRes.value.data ?? [])   : []
+  const rates = (ratesRes.status === 'fulfilled' ? (ratesRes.value.data ?? []) : []) as any[]
+  const txs   = (txRes.status === 'fulfilled'   ? (txRes.value.data ?? [])   : []) as any[]
 
-  const activeRates = rates.filter((r: any) => r.is_active)
-  const totalVolumeGiven = txs.reduce((s: number, t: any) => s + Number(t.amount_given ?? 0), 0)
+  const activeRates       = rates.filter(r => r.is_active)
+  const inactiveRates     = rates.filter(r => !r.is_active)
+  const totalVolumeGiven  = txs.reduce((s, t) => s + Number(t.amount_given ?? 0), 0)
 
   return (
     <>
       <Header title="Bureau de change" />
       <PageShell
         title="Bureau de change"
-        description={`${activeRates.length} taux actif${activeRates.length !== 1 ? 's' : ''} · ${txs.length} transaction${txs.length !== 1 ? 's' : ''}`}
-        action={<CreateExchangeModal rates={activeRates.map((r: any) => ({ id: r.id, from_currency: r.from_currency, to_currency: r.to_currency, rate: Number(r.rate) }))} />}
+        description={`${activeRates.length} taux actif${activeRates.length !== 1 ? 's' : ''} · ${txs.length} opération${txs.length !== 1 ? 's' : ''}`}
+        action={
+          <div className="flex items-center gap-2">
+            <CreateRateModal />
+            <CreateExchangeModal rates={activeRates.map(r => ({
+              id: r.id,
+              from_currency: r.from_currency,
+              to_currency: r.to_currency,
+              rate: Number(r.rate),
+            }))} />
+          </div>
+        }
       >
         {/* KPIs */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Taux actifs', value: activeRates.length },
-            { label: 'Transactions change', value: txs.length },
-            { label: 'Volume total échangé', value: formatHTG(totalVolumeGiven) },
+            { label: 'Taux actifs',            value: activeRates.length },
+            { label: 'Taux archivés',          value: inactiveRates.length },
+            { label: 'Opérations de change',   value: txs.length },
+            { label: 'Volume total échangé',   value: formatHTG(totalVolumeGiven) },
           ].map(k => (
             <div key={k.label} className="rounded-xl px-5 py-4"
               style={{ background: '#111318', border: '1px solid #252A36' }}>
@@ -65,29 +79,40 @@ export default async function BureauDeChangePage() {
           ))}
         </div>
 
-        {/* Active rates grid */}
+        {/* ── Taux actifs ── */}
         <section aria-label="Taux de change actifs">
-          <h3 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>Taux de change actifs</h3>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>
+            Taux de change actifs
+          </h3>
           {activeRates.length === 0 ? (
             <DataCard>
-              <EmptyState title="Aucun taux configuré" description="Définissez des taux de change pour commencer." />
+              <EmptyState
+                title="Aucun taux configuré"
+                description='Cliquez sur "Nouveau taux" pour définir vos premiers taux de change.'
+              />
             </DataCard>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
-              {activeRates.map((r: any) => (
+              {activeRates.map(r => (
                 <div key={r.id} className="rounded-xl p-4 space-y-3"
-                  style={{ background: '#111318', border: '1px solid #252A36' }}>
-                  <div className="flex items-center gap-1.5">
-                    <CurrencyTag code={r.from_currency} />
-                    <span style={{ color: 'rgba(255,255,255,0.20)', fontSize: 10 }}>→</span>
-                    <CurrencyTag code={r.to_currency} />
+                  style={{ background: '#111318', border: '1px solid rgba(52,211,153,0.18)' }}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <CurrencyTag code={r.from_currency} />
+                      <span style={{ color: 'rgba(255,255,255,0.20)', fontSize: 10 }}>→</span>
+                      <CurrencyTag code={r.to_currency} />
+                    </div>
+                    <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+                      style={{ background: 'rgba(52,211,153,0.12)', color: '#34D399' }}>
+                      actif
+                    </span>
                   </div>
                   <div>
                     <p className="text-lg font-bold kpi-value" style={{ color: 'rgba(255,255,255,0.95)' }}>
                       {Number(r.rate).toLocaleString('fr-HT', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                     </p>
                     <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
-                      Mis à jour {formatDate(r.created_at)}
+                      {formatDate(r.created_at)}
                     </p>
                   </div>
                   {r.agents && (
@@ -101,15 +126,64 @@ export default async function BureauDeChangePage() {
           )}
         </section>
 
-        {/* Transactions history */}
+        {/* ── Historique des taux ── */}
+        <section aria-label="Historique des taux de change">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>
+              Historique des taux
+            </h3>
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              {rates.length} entrée{rates.length !== 1 ? 's' : ''} au total
+            </span>
+          </div>
+          <DataCard>
+            {rates.length === 0 ? (
+              <EmptyState title="Aucun taux enregistré" />
+            ) : (
+              <Table headers={['De', 'Vers', 'Taux', 'Statut', 'Défini par', 'Date']}>
+                {rates.map(r => (
+                  <TR key={r.id}>
+                    <TD><CurrencyTag code={r.from_currency} /></TD>
+                    <TD><CurrencyTag code={r.to_currency} /></TD>
+                    <TD>
+                      <span className="font-semibold font-mono kpi-value" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                        {Number(r.rate).toLocaleString('fr-HT', { minimumFractionDigits: 2, maximumFractionDigits: 6 })}
+                      </span>
+                    </TD>
+                    <TD>
+                      <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
+                        style={{
+                          background: r.is_active ? 'rgba(52,211,153,0.10)' : 'rgba(255,255,255,0.05)',
+                          color:      r.is_active ? '#34D399'                : 'rgba(255,255,255,0.30)',
+                        }}>
+                        {r.is_active ? 'Actif' : 'Archivé'}
+                      </span>
+                    </TD>
+                    <TD>{r.agents?.name ?? '—'}</TD>
+                    <TD>{formatDate(r.created_at)}</TD>
+                  </TR>
+                ))}
+              </Table>
+            )}
+          </DataCard>
+        </section>
+
+        {/* ── Historique des opérations ── */}
         <section aria-label="Historique des opérations de change">
-          <h3 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>Historique des opérations</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>
+              Historique des opérations
+            </h3>
+            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              {txs.length} opération{txs.length !== 1 ? 's' : ''}
+            </span>
+          </div>
           <DataCard>
             {txs.length === 0 ? (
-              <EmptyState title="Aucune opération de change" />
+              <EmptyState title="Aucune opération de change" description='Utilisez "Nouvelle opération" pour enregistrer un échange.' />
             ) : (
               <Table headers={['Ticket', 'Client', 'De', 'Vers', 'Montant donné', 'Taux', 'Montant reçu', 'Agent', 'Date']}>
-                {txs.map((t: any) => (
+                {txs.map(t => (
                   <TR key={t.id}>
                     <TD mono>{t.ticket_number}</TD>
                     <TD>
