@@ -69,10 +69,8 @@ export default async function ParametresPage() {
               {agents.map((a: any) => {
                 const statusCfg = STATUS_CFG[a.status] ?? STATUS_CFG.pending
                 return (
-                  <div key={a.id} className="flex items-center gap-4 px-5 py-3.5 transition-colors"
-                    style={{ borderTop: '1px solid #1a1f2e' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                  <div key={a.id} className="flex items-center gap-4 px-5 py-3.5"
+                    style={{ borderTop: '1px solid #1a1f2e' }}>
                     <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
                       style={{ background: '#C41E3A20', color: '#C41E3A' }} aria-hidden="true">
                       {a.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}

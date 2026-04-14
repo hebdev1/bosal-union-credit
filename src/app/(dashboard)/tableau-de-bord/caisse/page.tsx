@@ -92,9 +92,7 @@ export default async function CaissePage() {
                   </thead>
                   <tbody>
                     {closings.map((c: any) => (
-                      <tr key={c.id} style={{ borderBottom: '1px solid #1a1f2e' }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.025)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                      <tr key={c.id} style={{ borderBottom: '1px solid #1a1f2e' }}>
                         <td className="px-4 py-3 font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
                           {new Date(c.closing_date).toLocaleDateString('fr-HT', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>

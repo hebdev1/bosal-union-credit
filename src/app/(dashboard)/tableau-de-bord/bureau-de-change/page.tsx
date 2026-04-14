@@ -75,10 +75,8 @@ export default async function BureauDeChangePage() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
               {activeRates.map((r: any) => (
-                <div key={r.id} className="rounded-xl p-4 space-y-3 transition-colors"
-                  style={{ background: '#111318', border: '1px solid #252A36' }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#363D52')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#252A36')}>
+                <div key={r.id} className="rounded-xl p-4 space-y-3"
+                  style={{ background: '#111318', border: '1px solid #252A36' }}>
                   <div className="flex items-center gap-1.5">
                     <CurrencyTag code={r.from_currency} />
                     <span style={{ color: 'rgba(255,255,255,0.20)', fontSize: 10 }}>→</span>

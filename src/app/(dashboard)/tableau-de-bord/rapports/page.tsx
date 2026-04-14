@@ -47,10 +47,8 @@ export default async function RapportsPage() {
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {metrics.map(m => (
-            <div key={m.label} className="rounded-xl px-5 py-4 transition-colors"
-              style={{ background: '#111318', border: '1px solid #252A36' }}
-              onMouseEnter={e => (e.currentTarget.style.borderColor = '#363D52')}
-              onMouseLeave={e => (e.currentTarget.style.borderColor = '#252A36')}>
+            <div key={m.label} className="rounded-xl px-5 py-4"
+              style={{ background: '#111318', border: '1px solid #252A36' }}>
               <p className="text-xl font-bold kpi-value" style={{ color: m.color }}>{m.value}</p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>{m.label}</p>
             </div>

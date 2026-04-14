@@ -98,10 +98,8 @@ export default async function CloturePage() {
                   const cfg = STATUS_CFG[c.status] ?? STATUS_CFG.open
                   const net = Number(c.closing_balance ?? 0) - Number(c.opening_balance ?? 0)
                   return (
-                    <div key={c.id} className="flex items-center gap-4 px-5 py-4 transition-colors"
-                      style={{ borderTop: '1px solid #1a1f2e' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    <div key={c.id} className="flex items-center gap-4 px-5 py-4"
+                      style={{ borderTop: '1px solid #1a1f2e' }}>
                       <div className="flex-1">
                         <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
                           {new Date(c.closing_date).toLocaleDateString('fr-HT', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
