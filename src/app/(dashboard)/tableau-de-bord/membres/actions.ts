@@ -8,11 +8,13 @@ export async function createMember(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Non authentifié')
 
-  const { data: agent, error: agentErr } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agent, error: agentErr } = await (supabase as any)
     .from('agents').select('cooperative_id').eq('id', user.id).single()
   if (agentErr || !agent) throw new Error('Agent introuvable')
 
-  const { error } = await supabase.from('members').insert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('members').insert({
     cooperative_id: agent.cooperative_id,
     member_number:  (formData.get('member_number') as string).trim(),
     first_name:     (formData.get('first_name') as string).trim(),

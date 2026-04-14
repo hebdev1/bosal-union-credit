@@ -8,7 +8,8 @@ export async function createExchangeTransaction(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Non authentifié')
 
-  const { data: agent, error: agentErr } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agent, error: agentErr } = await (supabase as any)
     .from('agents').select('cooperative_id, id').eq('id', user.id).single()
   if (agentErr || !agent) throw new Error('Agent introuvable')
 
@@ -16,7 +17,8 @@ export async function createExchangeTransaction(formData: FormData) {
   const rateApplied    = Number(formData.get('rate_applied'))
   const amountReceived = amountGiven * rateApplied
 
-  const { error } = await supabase.from('exchange_transactions').insert({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).from('exchange_transactions').insert({
     cooperative_id:    agent.cooperative_id,
     agent_id:          agent.id,
     client_first_name: (formData.get('client_first_name') as string).trim(),
