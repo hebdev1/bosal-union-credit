@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
+import { CreateExchangeModal } from '@/components/dashboard/forms/CreateExchangeModal'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
@@ -47,6 +48,7 @@ export default async function BureauDeChangePage() {
       <PageShell
         title="Bureau de change"
         description={`${activeRates.length} taux actif${activeRates.length !== 1 ? 's' : ''} · ${txs.length} transaction${txs.length !== 1 ? 's' : ''}`}
+        action={<CreateExchangeModal rates={activeRates.map((r: any) => ({ id: r.id, from_currency: r.from_currency, to_currency: r.to_currency, rate: Number(r.rate) }))} />}
       >
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

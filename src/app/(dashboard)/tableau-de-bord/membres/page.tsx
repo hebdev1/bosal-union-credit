@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
+import { CreateMemberModal } from '@/components/dashboard/forms/CreateMemberModal'
 import { formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Membres' }
@@ -25,6 +26,7 @@ export default async function MembresPage() {
       <PageShell
         title="Membres"
         description={`${total} membre${total !== 1 ? 's' : ''} · ${actifs} actif${actifs !== 1 ? 's' : ''} · ${inactifs} inactif${inactifs !== 1 ? 's' : ''}`}
+        action={<CreateMemberModal />}
       >
         {/* KPI strip */}
         <div className="grid grid-cols-3 gap-4">
