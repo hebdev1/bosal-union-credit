@@ -19,9 +19,16 @@ type Tx = {
 
 interface Props {
   transactions: Tx[]
-  formatHTG: (n: number) => string
-  formatUSD: (n: number) => string
-  formatDate: (d: string) => string
+}
+
+function formatHTG(n: number) {
+  return new Intl.NumberFormat('fr-HT', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
+}
+function formatUSD(n: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(n)
+}
+function formatDate(d: string) {
+  return new Intl.DateTimeFormat('fr-HT', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d))
 }
 
 const TABS = [
@@ -32,7 +39,7 @@ const TABS = [
   { key: 'adjustment', label: 'Ajustements', color: '#FCD34D' },
 ]
 
-export function TransactionsClient({ transactions, formatHTG, formatUSD, formatDate }: Props) {
+export function TransactionsClient({ transactions }: Props) {
   const [activeTab, setActiveTab] = React.useState('all')
   const [search, setSearch] = React.useState('')
 

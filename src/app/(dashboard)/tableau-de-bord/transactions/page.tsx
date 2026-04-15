@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell } from '@/components/dashboard/ui/DataTable'
 import { TransactionsClient } from '@/components/dashboard/ui/TransactionsClient'
-import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
+import { formatHTG } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Transactions' }
 
@@ -45,12 +45,7 @@ export default async function TransactionsPage() {
         </div>
 
         {/* Client-side filtered + searchable history */}
-        <TransactionsClient
-          transactions={rows}
-          formatHTG={formatHTG}
-          formatUSD={formatUSD}
-          formatDate={formatDate}
-        />
+        <TransactionsClient transactions={rows} />
       </PageShell>
     </>
   )

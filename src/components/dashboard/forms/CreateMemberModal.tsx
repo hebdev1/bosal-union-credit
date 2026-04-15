@@ -18,15 +18,14 @@ export function CreateMemberModal() {
     e.preventDefault()
     setPending(true)
     setError(null)
-    try {
-      await createMember(new FormData(e.currentTarget))
-      formRef.current?.reset()
-      setOpen(false)
-    } catch (err: any) {
-      setError(err.message ?? 'Erreur inconnue')
-    } finally {
-      setPending(false)
+    const result = await createMember(new FormData(e.currentTarget))
+    setPending(false)
+    if (result?.error) {
+      setError(result.error)
+      return
     }
+    formRef.current?.reset()
+    setOpen(false)
   }
 
   return (

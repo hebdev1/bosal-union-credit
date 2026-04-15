@@ -4,7 +4,7 @@ import {
   BookCheck, AlertTriangle, Loader2, X, Download,
   ChevronDown, ChevronUp, Lock, Unlock, FileText,
 } from 'lucide-react'
-import { closeDay, openNewDay, type ClosureResult } from '@/app/(dashboard)/tableau-de-bord/cloture/actions'
+import { closeDay, type ClosureResult } from '@/app/(dashboard)/tableau-de-bord/cloture/actions'
 
 /* ─── Types ───────────────────────────────────────────────────────────────── */
 interface TodayStats {
@@ -244,9 +244,6 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
   const [error, setError]             = React.useState<string | null>(null)
   const [success, setSuccess]         = React.useState(false)
   const [expandedId, setExpandedId]   = React.useState<string | null>(null)
-  const [openingDlg, setOpeningDlg]   = React.useState(false)
-  const [newBalance, setNewBalance]   = React.useState('0')
-  const [openPending, setOpenPending] = React.useState(false)
 
   // Estimate live closing balance
   const liveBalance = todayStats
@@ -265,18 +262,6 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
       setError((err as Error).message ?? 'Erreur inconnue')
     } finally {
       setClosing(false)
-    }
-  }
-
-  async function handleOpenDay() {
-    setOpenPending(true)
-    try {
-      await openNewDay(Number(newBalance))
-      setOpeningDlg(false)
-    } catch (err: unknown) {
-      setError((err as Error).message ?? 'Erreur')
-    } finally {
-      setOpenPending(false)
     }
   }
 
@@ -391,18 +376,9 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
           <div className="flex items-center gap-3">
             <BookCheck size={17} style={{ color: '#FCD34D' }} />
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.60)' }}>
-              Aucune journée ouverte. Commencez une nouvelle journée.
+              Aucune journée ouverte. La prochaine journée s&apos;ouvrira automatiquement lors de la prochaine clôture.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpeningDlg(true)}
-            className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium flex-shrink-0"
-            style={{ background: 'rgba(245,158,11,0.12)', color: '#FCD34D', border: '1px solid rgba(245,158,11,0.25)' }}
-          >
-            <Unlock size={13} />
-            Ouvrir journée
-          </button>
         </div>
       )}
 
@@ -608,53 +584,6 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
         </div>
       )}
 
-      {/* ── Open new day dialog ── */}
-      {openingDlg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.75)' }}
-          onClick={e => { if (e.target === e.currentTarget) setOpeningDlg(false) }}>
-          <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
-            style={{ background: '#111318', border: '1px solid #252A36' }}>
-            <div className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: '1px solid #1a1f2e' }}>
-              <h2 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>
-                Ouvrir une nouvelle journée
-              </h2>
-              <button type="button" onClick={() => setOpeningDlg(false)}
-                style={{ color: 'rgba(255,255,255,0.35)' }}><X size={15} /></button>
-            </div>
-            <div className="px-6 py-5 space-y-4">
-              <div>
-                <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                  Solde d'ouverture (HTG)
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={newBalance}
-                  onChange={e => setNewBalance(e.target.value)}
-                  className="w-full rounded-lg px-3 py-2 text-sm outline-none"
-                  style={{ background: '#0F1117', border: '1px solid #252A36', color: 'rgba(255,255,255,0.85)' }}
-                />
-              </div>
-              <div className="flex gap-3">
-                <button type="button" onClick={() => setOpeningDlg(false)}
-                  className="flex-1 h-9 rounded-lg text-sm font-medium"
-                  style={{ background: 'transparent', border: '1px solid #252A36', color: 'rgba(255,255,255,0.55)' }}>
-                  Annuler
-                </button>
-                <button type="button" onClick={handleOpenDay} disabled={openPending}
-                  className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-sm font-medium"
-                  style={{ background: '#C41E3A', color: '#fff', opacity: openPending ? 0.7 : 1 }}>
-                  {openPending && <Loader2 size={13} className="animate-spin" />}
-                  Ouvrir
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

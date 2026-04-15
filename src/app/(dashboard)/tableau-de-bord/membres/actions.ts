@@ -2,16 +2,16 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-export async function createMember(formData: FormData) {
+export async function createMember(formData: FormData): Promise<{ error: string } | null> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
+  if (!user) return { error: 'Non authentifié' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent, error: agentErr } = await (supabase as any)
     .from('agents').select('cooperative_id').eq('id', user.id).single()
-  if (agentErr || !agent) throw new Error('Agent introuvable')
+  if (agentErr || !agent) return { error: 'Agent introuvable' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from('members').insert({
@@ -27,6 +27,10 @@ export async function createMember(formData: FormData) {
     status:         'active',
   })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (error.code === '23505') return { error: 'Ce numéro de membre existe déjà. Veuillez en choisir un autre.' }
+    return { error: error.message }
+  }
   revalidatePath('/tableau-de-bord/membres')
+  return null
 }
