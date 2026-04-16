@@ -3,7 +3,7 @@ import * as React from 'react'
 import { FileDown, Loader2 } from 'lucide-react'
 
 function fHTG(n: number) {
-  return new Intl.NumberFormat('fr-HT', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
 }
 function fDate(d: string) {
   if (!d) return '—'

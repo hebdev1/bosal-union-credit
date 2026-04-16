@@ -3,7 +3,7 @@ import * as React from 'react'
 import { FileDown, Loader2 } from 'lucide-react'
 
 function fHTG(n: number) {
-  return new Intl.NumberFormat('fr-HT', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
 }
 function fUSD(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(n)
@@ -127,7 +127,7 @@ async function generateBureauPDF(txs: ExchangeTx[], rates: ExchangeRate[]) {
       cx = L + 2
       const vals = [
         r.from_currency, r.to_currency,
-        `1 ${r.from_currency} = ${Number(r.rate).toLocaleString('fr-HT', { minimumFractionDigits: 4 })} ${r.to_currency}`,
+        `1 ${r.from_currency} = ${Number(r.rate).toLocaleString('en-US', { minimumFractionDigits: 4 })} ${r.to_currency}`,
         r.agents?.name ?? '—',
         fDateShort(r.created_at),
       ]

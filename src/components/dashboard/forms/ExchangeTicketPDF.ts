@@ -26,8 +26,7 @@ export interface TicketData {
 }
 
 function fmt(n: number, ccy: string) {
-  const locales: Record<string, string> = { USD: 'en-US', HTG: 'fr-HT', CAD: 'fr-CA', DOP: 'es-DO' }
-  return new Intl.NumberFormat(locales[ccy] ?? 'fr-HT', {
+  return new Intl.NumberFormat('en-US', {
     style: 'currency', currency: ccy, minimumFractionDigits: 2,
   }).format(n)
 }
