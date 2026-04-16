@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
@@ -93,7 +94,7 @@ export default async function ComptesPage() {
           {rows.length === 0 ? (
             <EmptyState title="Aucun compte" description="Les comptes apparaîtront ici une fois créés." />
           ) : (
-            <Table headers={['N° Compte', 'Membre', 'Type', 'Plan', 'Solde', 'Devise', 'Statut', 'Ouvert le', 'Action']}>
+            <Table headers={['N° Compte', 'Membre', 'Type', 'Plan', 'Solde', 'Devise', 'Statut', 'Ouvert le', 'Action', '']}>
               {rows.map((a: any) => {
                 const member = a.members
                 const plan   = a.savings_products
@@ -137,6 +138,15 @@ export default async function ComptesPage() {
                       ) : (
                         <span className="text-xs" style={{ color: 'rgba(255,255,255,0.22)' }}>Fermé</span>
                       )}
+                    </TD>
+                    <TD>
+                      <Link
+                        href={`/tableau-de-bord/comptes/${a.id}`}
+                        className="inline-flex items-center gap-1 h-7 px-3 rounded-lg text-xs font-medium transition-opacity hover:opacity-80"
+                        style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid #252A36' }}
+                      >
+                        Voir profil →
+                      </Link>
                     </TD>
                   </TR>
                 )
