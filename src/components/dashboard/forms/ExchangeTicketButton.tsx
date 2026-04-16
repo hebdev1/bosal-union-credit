@@ -1,14 +1,20 @@
 'use client'
 import * as React from 'react'
 import { Printer, Loader2 } from 'lucide-react'
-import { generateExchangeTicketPDF, type TicketData } from './ExchangeTicketPDF'
+import { generateExchangeTicketPDF, type TicketData, type TicketConfig, DEFAULT_CONFIG } from './ExchangeTicketPDF'
 
-export function ExchangeTicketButton({ ticket }: { ticket: TicketData }) {
+export function ExchangeTicketButton({
+  ticket,
+  config = DEFAULT_CONFIG,
+}: {
+  ticket: TicketData
+  config?: TicketConfig
+}) {
   const [loading, setLoading] = React.useState(false)
 
   async function handlePrint() {
     setLoading(true)
-    await generateExchangeTicketPDF(ticket)
+    await generateExchangeTicketPDF(ticket, config)
     setLoading(false)
   }
 

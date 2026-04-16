@@ -2,7 +2,7 @@
 import * as React from 'react'
 import { ArrowLeftRight, X, Loader2, Printer } from 'lucide-react'
 import { createExchangeTransaction } from '@/app/(dashboard)/tableau-de-bord/bureau-de-change/actions'
-import { generateExchangeTicketPDF, type TicketData } from './ExchangeTicketPDF'
+import { generateExchangeTicketPDF, type TicketData, type TicketConfig, DEFAULT_CONFIG } from './ExchangeTicketPDF'
 
 const INPUT = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
 const INPUT_STYLE = { background: '#0F1117', border: '1px solid #252A36', color: 'rgba(255,255,255,0.85)' }
@@ -11,7 +11,17 @@ const LABEL_STYLE = { color: 'rgba(255,255,255,0.50)' }
 
 interface Rate { id: string; from_currency: string; to_currency: string; rate: number }
 
-export function CreateExchangeModal({ rates }: { rates: Rate[] }) {
+export function CreateExchangeModal({
+  rates,
+  ticketConfig = DEFAULT_CONFIG,
+  coopName  = 'Bosal Union Crédit',
+  agentName = '—',
+}: {
+  rates: Rate[]
+  ticketConfig?: TicketConfig
+  coopName?: string
+  agentName?: string
+}) {
   const [open, setOpen]             = React.useState(false)
   const [pending, setPending]       = React.useState(false)
   const [error, setError]           = React.useState<string | null>(null)
@@ -39,7 +49,7 @@ export function CreateExchangeModal({ rates }: { rates: Rate[] }) {
     if ('error' in result) { setError(result.error); return }
 
     // Auto-generate ticket PDF immediately
-    await generateExchangeTicketPDF(result.ticket)
+    await generateExchangeTicketPDF(result.ticket, ticketConfig)
 
     // Show success state with ticket data
     setLastTicket(result.ticket)
@@ -121,7 +131,7 @@ export function CreateExchangeModal({ rates }: { rates: Rate[] }) {
 
                 <div className="flex gap-3">
                   <button type="button"
-                    onClick={() => generateExchangeTicketPDF(lastTicket)}
+                    onClick={() => generateExchangeTicketPDF(lastTicket, ticketConfig)}
                     className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-sm font-medium"
                     style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid #252A36', color: 'rgba(255,255,255,0.75)' }}>
                     <Printer size={14} />

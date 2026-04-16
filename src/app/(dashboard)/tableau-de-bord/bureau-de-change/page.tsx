@@ -6,6 +6,7 @@ import { CreateExchangeModal } from '@/components/dashboard/forms/CreateExchange
 import { CreateRateModal } from '@/components/dashboard/forms/CreateRateModal'
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
 import { ExchangeTicketButton } from '@/components/dashboard/forms/ExchangeTicketButton'
+import { type TicketConfig, DEFAULT_CONFIG } from '@/components/dashboard/forms/ExchangeTicketPDF'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
@@ -38,6 +39,19 @@ export default async function BureauDeChangePage() {
   const coopName  = (coopRow as any)?.name  ?? 'Bosal Union Crédit'
   const agentName = (agentRow as any)?.name ?? '—'
 
+  // Fetch ticket color settings
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: ticketSettings } = await (supabase as any)
+    .from('app_settings')
+    .select('key, value')
+    .in('key', ['ticket_accent_color', 'ticket_received_color'])
+  const settingMap: Record<string, string> = {}
+  for (const s of (ticketSettings ?? [])) settingMap[s.key] = String(s.value).replace(/"/g, '')
+  const ticketConfig: TicketConfig = {
+    accent_color:   settingMap['ticket_accent_color']   || DEFAULT_CONFIG.accent_color,
+    received_color: settingMap['ticket_received_color'] || DEFAULT_CONFIG.received_color,
+  }
+
   const [ratesRes, txRes] = await Promise.allSettled([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
@@ -69,12 +83,17 @@ export default async function BureauDeChangePage() {
           <div className="flex items-center gap-2">
             <BureauDeChangeExportButton txs={txs} rates={rates} />
             <CreateRateModal />
-            <CreateExchangeModal rates={activeRates.map(r => ({
-              id: r.id,
-              from_currency: r.from_currency,
-              to_currency: r.to_currency,
-              rate: Number(r.rate),
-            }))} />
+            <CreateExchangeModal
+              ticketConfig={ticketConfig}
+              coopName={coopName}
+              agentName={agentName}
+              rates={activeRates.map(r => ({
+                id: r.id,
+                from_currency: r.from_currency,
+                to_currency: r.to_currency,
+                rate: Number(r.rate),
+              }))}
+            />
           </div>
         }
       >
@@ -222,20 +241,23 @@ export default async function BureauDeChangePage() {
                     <TD>{t.agents?.name ?? '—'}</TD>
                     <TD>{formatDate(t.created_at)}</TD>
                     <TD>
-                      <ExchangeTicketButton ticket={{
-                        ticket_number:     t.ticket_number ?? '—',
-                        client_first_name: t.client_first_name,
-                        client_last_name:  t.client_last_name,
-                        from_currency:     t.from_currency,
-                        to_currency:       t.to_currency,
-                        amount_given:      Number(t.amount_given),
-                        rate_applied:      Number(t.rate_applied),
-                        amount_received:   Number(t.amount_received),
-                        notes:             t.notes ?? null,
-                        created_at:        t.created_at,
-                        agent_name:        t.agents?.name ?? agentName,
-                        coop_name:         coopName,
-                      }} />
+                      <ExchangeTicketButton
+                        config={ticketConfig}
+                        ticket={{
+                          ticket_number:     t.ticket_number ?? '—',
+                          client_first_name: t.client_first_name,
+                          client_last_name:  t.client_last_name,
+                          from_currency:     t.from_currency,
+                          to_currency:       t.to_currency,
+                          amount_given:      Number(t.amount_given),
+                          rate_applied:      Number(t.rate_applied),
+                          amount_received:   Number(t.amount_received),
+                          notes:             t.notes ?? null,
+                          created_at:        t.created_at,
+                          agent_name:        t.agents?.name ?? agentName,
+                          coop_name:         coopName,
+                        }}
+                      />
                     </TD>
                   </TR>
                 ))}
