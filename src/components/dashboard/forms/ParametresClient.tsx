@@ -1,6 +1,6 @@
 'use client'
 import * as React from 'react'
-import { Check, Pencil, X, Loader2, ChevronDown, Upload, Palette, Mail, Layout, FileText, Settings } from 'lucide-react'
+import { Check, Pencil, X, Loader2, ChevronDown, Upload, Palette, Mail, Layout, FileText, Settings, Save, RotateCcw } from 'lucide-react'
 import { updateSetting, updateCooperative, updateAgentStatus } from '@/app/(dashboard)/tableau-de-bord/parametres/actions'
 import { createClient } from '@/lib/supabase/client'
 
@@ -19,9 +19,11 @@ const PALETTE_COLORS = [
   '#F59E0B','#10B981','#3B82F6','#6366F1',
   '#8B5CF6','#EC4899','#0F172A','#1E293B',
   '#0C0C0E','#111318','#252A36','#FFFFFF',
+  '#34D399','#60A5FA','#A78BFA','#FCD34D',
+  '#F87171','#4ADE80','#2DD4BF','#FB923C',
 ]
 const CATEGORY_META: Record<string, { label: string; icon: React.ElementType; desc: string }> = {
-  theme:   { label: 'Thème & Design',          icon: Layout,   desc: 'Personnalisez l\'apparence du tableau de bord' },
+  theme:   { label: 'Thème & Design',          icon: Layout,   desc: "Personnalisez l'apparence du tableau de bord" },
   pdf:     { label: 'PDF & Tickets',            icon: FileText, desc: 'Configuration des rapports PDF et tickets de caisse' },
   general: { label: 'Général',                  icon: Settings, desc: 'Paramètres généraux de la coopérative' },
   finance: { label: 'Finance',                  icon: Settings, desc: 'Règles financières et limites' },
@@ -34,12 +36,15 @@ interface Agent   { id: string; name: string; email: string; role: string; statu
 interface Coop    { id: string; name: string; address?: string; phone?: string }
 
 /* ── Color palette picker ───────────────────────────────────────────────── */
-function ColorPicker({ settingKey, current }: { settingKey: string; current: string }) {
-  const [val, setVal]       = React.useState(current)
+function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen]     = React.useState(false)
-  const [custom, setCustom] = React.useState(current)
-  const [saving, setSaving] = React.useState(false)
+  const [custom, setCustom] = React.useState(value)
   const ref = React.useRef<HTMLDivElement>(null)
+  const btnRef = React.useRef<HTMLButtonElement>(null)
+  const [openUp, setOpenUp] = React.useState(false)
+
+  // sync custom input when value changes externally
+  React.useEffect(() => { setCustom(value) }, [value])
 
   React.useEffect(() => {
     function outside(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
@@ -47,53 +52,63 @@ function ColorPicker({ settingKey, current }: { settingKey: string; current: str
     return () => document.removeEventListener('mousedown', outside)
   }, [])
 
-  async function pick(color: string) {
-    const prev = val
-    setVal(color)
-    setCustom(color)
-    setSaving(true)
-    try { await updateSetting(settingKey, color) }
-    catch { setVal(prev); setCustom(prev) }
-    finally { setSaving(false); setOpen(false) }
+  function handleOpen() {
+    // Decide if dropdown should open upward
+    if (btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      setOpenUp(rect.bottom + 320 > window.innerHeight)
+    }
+    setOpen(o => !o)
   }
 
-  async function applyCustom() {
+  function pick(color: string) {
+    onChange(color)
+    setCustom(color)
+    setOpen(false)
+  }
+
+  function applyCustom() {
     if (!/^#[0-9A-Fa-f]{6}$/.test(custom)) return
-    await pick(custom)
+    pick(custom)
   }
 
   return (
     <div ref={ref} className="relative">
-      <button type="button" onClick={() => setOpen(o => !o)}
+      <button ref={btnRef} type="button" onClick={handleOpen}
         className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium transition-colors"
         style={{ background: '#0F1117', border: '1px solid #3B4260', color: 'rgba(255,255,255,0.80)' }}>
-        <span className="w-4 h-4 rounded-sm flex-shrink-0 shadow-sm" style={{ background: val }} />
-        <span className="font-mono">{val}</span>
-        {saving ? <Loader2 size={11} className="animate-spin ml-1" /> : <Palette size={11} className="ml-1 opacity-50" />}
+        <span className="w-4 h-4 rounded-sm flex-shrink-0 shadow-sm" style={{ background: value }} />
+        <span className="font-mono">{value}</span>
+        <Palette size={11} className="ml-1 opacity-50" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-10 z-50 rounded-xl p-4 shadow-2xl w-64"
-          style={{ background: '#181D27', border: '1px solid #252A36' }}>
+        <div
+          className="absolute right-0 z-50 rounded-xl p-4 shadow-2xl w-64"
+          style={{
+            background: '#181D27',
+            border: '1px solid #252A36',
+            ...(openUp ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }),
+          }}
+        >
           <p className="text-xs font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.50)' }}>Palette</p>
-          <div className="grid grid-cols-8 gap-1.5 mb-4">
-            {PALETTE_COLORS.map(c => (
-              <button key={c} type="button" onClick={() => pick(c)}
-                className="w-6 h-6 rounded-md transition-transform hover:scale-110 focus:outline-none"
-                style={{ background: c, border: val === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.10)' }}
-                title={c}
-              />
-            ))}
+          {/* Scrollable palette grid */}
+          <div className="overflow-y-auto" style={{ maxHeight: 120 }}>
+            <div className="grid grid-cols-8 gap-1.5 mb-1">
+              {PALETTE_COLORS.map(c => (
+                <button key={c} type="button" onClick={() => pick(c)}
+                  className="w-6 h-6 rounded-md transition-transform hover:scale-110 focus:outline-none"
+                  style={{ background: c, border: value === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.10)' }}
+                  title={c}
+                />
+              ))}
+            </div>
           </div>
-          <p className="text-xs font-semibold mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>Couleur personnalisée</p>
+          <p className="text-xs font-semibold mt-3 mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>Couleur personnalisée</p>
           <div className="flex gap-2">
             <div className="relative flex-1">
-              <input
-                type="color"
-                value={custom}
-                onChange={e => setCustom(e.target.value)}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
+              <input type="color" value={custom} onChange={e => setCustom(e.target.value)}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               <div className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs"
                 style={{ background: '#0F1117', border: '1px solid #3B4260', color: 'rgba(255,255,255,0.70)' }}>
                 <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: custom }} />
@@ -114,9 +129,9 @@ function ColorPicker({ settingKey, current }: { settingKey: string; current: str
 
 /* ── Logo upload ────────────────────────────────────────────────────────── */
 function LogoUpload({ settingKey, current }: { settingKey: string; current: string }) {
-  const [url, setUrl]           = React.useState(current)
+  const [url, setUrl]             = React.useState(current)
   const [uploading, setUploading] = React.useState(false)
-  const [err, setErr]           = React.useState<string | null>(null)
+  const [err, setErr]             = React.useState<string | null>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
 
   async function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -135,9 +150,7 @@ function LogoUpload({ settingKey, current }: { settingKey: string; current: stri
       setUrl(publicUrl)
     } catch (ex: any) {
       setErr(ex.message ?? 'Erreur upload')
-    } finally {
-      setUploading(false)
-    }
+    } finally { setUploading(false) }
   }
 
   return (
@@ -176,105 +189,89 @@ function LogoUpload({ settingKey, current }: { settingKey: string; current: stri
 }
 
 /* ── Toggle ─────────────────────────────────────────────────────────────── */
-function Toggle({ settingKey, checked }: { settingKey: string; checked: boolean }) {
-  const [val, setVal]       = React.useState(checked)
-  const [saving, setSaving] = React.useState(false)
-  async function toggle() {
-    setSaving(true); const next = !val; setVal(next)
-    try { await updateSetting(settingKey, next) }
-    catch { setVal(!next) } finally { setSaving(false) }
-  }
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button type="button" onClick={toggle} disabled={saving} role="switch" aria-checked={val}
+    <button type="button" onClick={() => onChange(!checked)} role="switch" aria-checked={checked}
       className="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors"
-      style={{ background: val ? '#C41E3A' : '#252A36', opacity: saving ? 0.7 : 1 }}>
+      style={{ background: checked ? '#C41E3A' : '#252A36' }}>
       <span className="inline-block h-4 w-4 rounded-full shadow-sm transition-transform"
-        style={{ background: '#fff', transform: val ? 'translateX(24px)' : 'translateX(4px)', marginTop: 4 }} />
+        style={{ background: '#fff', transform: checked ? 'translateX(24px)' : 'translateX(4px)', marginTop: 4 }} />
     </button>
   )
 }
 
 /* ── Select ─────────────────────────────────────────────────────────────── */
-function SelectSetting({ settingKey, current, options }: { settingKey: string; current: string; options: { label: string; value: string }[] }) {
-  const [val, setVal] = React.useState(current)
-  const [saving, setSaving] = React.useState(false)
-  async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const next = e.target.value; const prev = val; setVal(next); setSaving(true)
-    try { await updateSetting(settingKey, next) }
-    catch { setVal(prev) } finally { setSaving(false) }
-  }
+function SelectControl({ value, options, onChange }: { value: string; options: { label: string; value: string }[]; onChange: (v: string) => void }) {
   return (
-    <div className="flex items-center gap-2">
-      <select value={val} onChange={handleChange} disabled={saving}
-        className="rounded-lg px-3 py-1.5 text-sm outline-none"
-        style={{ ...IS, minWidth: 150, opacity: saving ? 0.7 : 1 }}>
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-      </select>
-      {saving && <Loader2 size={12} className="animate-spin" style={{ color: 'rgba(255,255,255,0.35)' }} />}
-    </div>
+    <select value={value} onChange={e => onChange(e.target.value)}
+      className="rounded-lg px-3 py-1.5 text-sm outline-none"
+      style={{ ...IS, minWidth: 150 }}>
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
   )
 }
 
 /* ── Inline text/number ─────────────────────────────────────────────────── */
-function InlineEdit({ settingKey, current, type }: { settingKey: string; current: string | number; type: 'text' | 'number' }) {
+function InlineControl({ value, type, onChange }: { value: string | number; type: 'text' | 'number'; onChange: (v: string | number) => void }) {
   const [editing, setEditing] = React.useState(false)
-  const [val, setVal]         = React.useState(String(current))
-  const [saved, setSaved]     = React.useState(String(current))
-  const [saving, setSaving]   = React.useState(false)
-  const [err, setErr]         = React.useState<string | null>(null)
+  const [local, setLocal]     = React.useState(String(value))
   const inputRef = React.useRef<HTMLInputElement>(null)
+
+  // sync local when value prop changes (e.g. after cancel)
+  React.useEffect(() => { if (!editing) setLocal(String(value)) }, [value, editing])
   React.useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
-  async function save() {
-    if (val === saved) { setEditing(false); return }
-    setSaving(true); setErr(null)
-    try { await updateSetting(settingKey, type === 'number' ? Number(val) : val); setSaved(val); setEditing(false) }
-    catch (e: any) { setErr(e.message) } finally { setSaving(false) }
+
+  function commit() {
+    onChange(type === 'number' ? Number(local) : local)
+    setEditing(false)
   }
+  function cancel() {
+    setLocal(String(value))
+    setEditing(false)
+  }
+
   if (!editing) return (
     <button type="button" onClick={() => setEditing(true)}
       className="flex items-center gap-1.5 group rounded px-2 py-1" style={{ color: 'rgba(255,255,255,0.75)' }}>
-      <span className="font-mono text-sm">{saved}</span>
+      <span className="font-mono text-sm">{value}</span>
       <Pencil size={11} className="opacity-0 group-hover:opacity-60 transition-opacity" />
     </button>
   )
   return (
     <div className="flex items-center gap-2">
-      <input ref={inputRef} type={type} value={val} onChange={e => setVal(e.target.value)}
-        onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setVal(saved); setEditing(false) } }}
+      <input ref={inputRef} type={type} value={local}
+        onChange={e => setLocal(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') cancel() }}
         className="rounded-lg px-3 py-1.5 text-sm outline-none"
         style={{ ...IS, width: type === 'number' ? 100 : 220 }} />
-      <button type="button" onClick={save} disabled={saving} className="rounded p-1 hover:bg-green-500/10" style={{ color: '#4ADE80' }}>
-        {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+      <button type="button" onClick={commit} className="rounded p-1 hover:bg-green-500/10" style={{ color: '#4ADE80' }}>
+        <Check size={13} />
       </button>
-      <button type="button" onClick={() => { setVal(saved); setEditing(false) }} className="rounded p-1 hover:bg-red-500/10" style={{ color: '#F87171' }}>
+      <button type="button" onClick={cancel} className="rounded p-1 hover:bg-red-500/10" style={{ color: '#F87171' }}>
         <X size={13} />
       </button>
-      {err && <span className="text-xs" style={{ color: '#F87171' }}>{err}</span>}
     </div>
   )
 }
 
-/* ── Email input (special styled) ───────────────────────────────────────── */
-function EmailSetting({ settingKey, current, placeholder }: { settingKey: string; current: string; placeholder?: string }) {
+/* ── Email input ────────────────────────────────────────────────────────── */
+function EmailControl({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
   const [editing, setEditing] = React.useState(false)
-  const [val, setVal]         = React.useState(current)
-  const [saved, setSaved]     = React.useState(current)
-  const [saving, setSaving]   = React.useState(false)
-  const [err, setErr]         = React.useState<string | null>(null)
+  const [local, setLocal]     = React.useState(value)
   const inputRef = React.useRef<HTMLInputElement>(null)
+
+  React.useEffect(() => { if (!editing) setLocal(value) }, [value, editing])
   React.useEffect(() => { if (editing) inputRef.current?.focus() }, [editing])
-  async function save() {
-    if (val === saved) { setEditing(false); return }
-    setSaving(true); setErr(null)
-    try { await updateSetting(settingKey, val); setSaved(val); setEditing(false) }
-    catch (e: any) { setErr(e.message) } finally { setSaving(false) }
-  }
+
+  function commit() { onChange(local); setEditing(false) }
+  function cancel() { setLocal(value); setEditing(false) }
+
   if (!editing) return (
     <button type="button" onClick={() => setEditing(true)}
       className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs group transition-colors"
-      style={{ background: '#0F1117', border: '1px solid #252A36', color: saved ? 'rgba(255,255,255,0.80)' : 'rgba(255,255,255,0.30)' }}>
+      style={{ background: '#0F1117', border: '1px solid #252A36', color: value ? 'rgba(255,255,255,0.80)' : 'rgba(255,255,255,0.30)' }}>
       <Mail size={12} style={{ color: '#C41E3A', flexShrink: 0 }} />
-      <span className="font-mono">{saved || placeholder || 'non défini'}</span>
+      <span className="font-mono">{value || placeholder || 'non défini'}</span>
       <Pencil size={10} className="ml-1 opacity-0 group-hover:opacity-60 transition-opacity" />
     </button>
   )
@@ -282,36 +279,40 @@ function EmailSetting({ settingKey, current, placeholder }: { settingKey: string
     <div className="flex items-center gap-2">
       <div className="relative">
         <Mail size={12} className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: '#C41E3A' }} />
-        <input ref={inputRef} type="email" value={val} onChange={e => setVal(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setVal(saved); setEditing(false) } }}
+        <input ref={inputRef} type="email" value={local} onChange={e => setLocal(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') cancel() }}
           placeholder={placeholder}
           className="rounded-lg pl-8 pr-3 py-1.5 text-sm outline-none"
           style={{ ...IS, width: 260 }} />
       </div>
-      <button type="button" onClick={save} disabled={saving} className="rounded p-1 hover:bg-green-500/10" style={{ color: '#4ADE80' }}>
-        {saving ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
+      <button type="button" onClick={commit} className="rounded p-1 hover:bg-green-500/10" style={{ color: '#4ADE80' }}>
+        <Check size={13} />
       </button>
-      <button type="button" onClick={() => { setVal(saved); setEditing(false) }} className="rounded p-1 hover:bg-red-500/10" style={{ color: '#F87171' }}>
+      <button type="button" onClick={cancel} className="rounded p-1 hover:bg-red-500/10" style={{ color: '#F87171' }}>
         <X size={13} />
       </button>
-      {err && <span className="text-xs" style={{ color: '#F87171' }}>{err}</span>}
     </div>
   )
 }
 
-/* ── Setting row ────────────────────────────────────────────────────────── */
-function SettingRow({ s }: { s: Setting }) {
-  const rawVal = s.value
+/* ── Setting row (controlled) ───────────────────────────────────────────── */
+function SettingRow({ s, value, onChange }: { s: Setting; value: unknown; onChange: (key: string, v: unknown) => void }) {
   const isEmail = s.key.includes('email') && s.input_type === 'text'
 
   function renderControl() {
-    if (s.input_type === 'toggle')  return <Toggle settingKey={s.key} checked={Boolean(rawVal)} />
-    if (s.input_type === 'color')   return <ColorPicker settingKey={s.key} current={String(rawVal)} />
-    if (s.input_type === 'image')   return <LogoUpload settingKey={s.key} current={String(rawVal)} />
-    if (s.input_type === 'select' && s.options) return <SelectSetting settingKey={s.key} current={String(rawVal)} options={s.options} />
-    if (s.input_type === 'number')  return <InlineEdit settingKey={s.key} current={Number(rawVal)} type="number" />
-    if (isEmail)                    return <EmailSetting settingKey={s.key} current={String(rawVal)} placeholder="email@exemple.com" />
-    return <InlineEdit settingKey={s.key} current={String(rawVal)} type="text" />
+    if (s.input_type === 'toggle')
+      return <Toggle checked={Boolean(value)} onChange={v => onChange(s.key, v)} />
+    if (s.input_type === 'color')
+      return <ColorPicker value={String(value)} onChange={v => onChange(s.key, v)} />
+    if (s.input_type === 'image')
+      return <LogoUpload settingKey={s.key} current={String(value)} />
+    if (s.input_type === 'select' && s.options)
+      return <SelectControl value={String(value)} options={s.options} onChange={v => onChange(s.key, v)} />
+    if (s.input_type === 'number')
+      return <InlineControl value={Number(value)} type="number" onChange={v => onChange(s.key, v)} />
+    if (isEmail)
+      return <EmailControl value={String(value)} onChange={v => onChange(s.key, v)} placeholder="email@exemple.com" />
+    return <InlineControl value={String(value)} type="text" onChange={v => onChange(s.key, v)} />
   }
 
   return (
@@ -327,8 +328,10 @@ function SettingRow({ s }: { s: Setting }) {
 }
 
 /* ── Theme preview card ─────────────────────────────────────────────────── */
-function ThemePreview({ settings }: { settings: Setting[] }) {
-  const get = (key: string) => String(settings.find(s => s.key === key)?.value ?? '')
+function ThemePreview({ draft, settings }: { draft: Record<string, unknown>; settings: Setting[] }) {
+  function get(key: string) {
+    return String(draft[key] ?? settings.find(s => s.key === key)?.value ?? '')
+  }
   const brand   = get('brand_color')   || '#C41E3A'
   const sidebar = get('sidebar_bg')    || '#0C0C0E'
   const surface = get('surface_color') || '#111318'
@@ -337,7 +340,6 @@ function ThemePreview({ settings }: { settings: Setting[] }) {
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: surface, border: `1px solid ${border}`, maxWidth: 380 }}>
       <div className="flex">
-        {/* Mini sidebar */}
         <div className="w-10 flex flex-col items-center py-3 gap-2" style={{ background: sidebar }}>
           <div className="w-6 h-6 rounded-md flex items-center justify-center" style={{ background: brand }}>
             <div className="w-2 h-2 rounded-sm" style={{ background: '#fff' }} />
@@ -346,7 +348,6 @@ function ThemePreview({ settings }: { settings: Setting[] }) {
             <div key={i} className="w-5 h-1 rounded-full" style={{ background: i === 0 ? brand : 'rgba(255,255,255,0.12)' }} />
           ))}
         </div>
-        {/* Content */}
         <div className="flex-1 p-3 space-y-2">
           <div className="flex gap-2">
             {['#4ADE80','#60A5FA',brand].map((c, i) => (
@@ -377,7 +378,7 @@ function ThemePreview({ settings }: { settings: Setting[] }) {
 }
 
 /* ── Coop editor ────────────────────────────────────────────────────────── */
-function CoopEditor({ coop }: { coop: { id: string; name: string; address?: string; phone?: string } }) {
+function CoopEditor({ coop }: { coop: Coop }) {
   const [editing, setEditing] = React.useState(false)
   const [saving, setSaving]   = React.useState(false)
   const [err, setErr]         = React.useState<string | null>(null)
@@ -409,11 +410,11 @@ function CoopEditor({ coop }: { coop: { id: string; name: string; address?: stri
     <form onSubmit={handleSubmit} className="px-5 py-4 space-y-3">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div><label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Nom *</label>
-          <input name="name" required defaultValue={coop.name} className={`${INPUT}`} style={IS} /></div>
+          <input name="name" required defaultValue={coop.name} className={INPUT} style={IS} /></div>
         <div><label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Adresse</label>
-          <input name="address" defaultValue={coop.address ?? ''} className={`${INPUT}`} style={IS} /></div>
+          <input name="address" defaultValue={coop.address ?? ''} className={INPUT} style={IS} /></div>
         <div><label className="block text-xs font-medium mb-1" style={{ color: 'rgba(255,255,255,0.45)' }}>Téléphone</label>
-          <input name="phone" defaultValue={coop.phone ?? ''} className={`${INPUT}`} style={IS} /></div>
+          <input name="phone" defaultValue={coop.phone ?? ''} className={INPUT} style={IS} /></div>
       </div>
       {err && <p className="text-xs" style={{ color: '#F87171' }}>{err}</p>}
       <div className="flex gap-2 justify-end">
@@ -429,7 +430,7 @@ function CoopEditor({ coop }: { coop: { id: string; name: string; address?: stri
   )
 }
 
-/* ── Agent status ───────────────────────────────────────────────────────── */
+/* ── Agent status select ────────────────────────────────────────────────── */
 function AgentStatusSelect({ agentId, current }: { agentId: string; current: string }) {
   const [val, setVal]       = React.useState(current)
   const [saving, setSaving] = React.useState(false)
@@ -455,9 +456,9 @@ function AgentStatusSelect({ agentId, current }: { agentId: string; current: str
 }
 
 /* ── Section card ───────────────────────────────────────────────────────── */
-function SectionCard({ title, icon: Icon, description, children, accent }: {
+function SectionCard({ title, icon: Icon, description, children, accent, scrollable }: {
   title: string; icon: React.ElementType; description?: string
-  children: React.ReactNode; accent?: string
+  children: React.ReactNode; accent?: string; scrollable?: boolean
 }) {
   return (
     <section>
@@ -472,7 +473,11 @@ function SectionCard({ title, icon: Icon, description, children, accent }: {
         </div>
       </div>
       <div className="rounded-xl overflow-hidden" style={{ background: '#111318', border: '1px solid #252A36' }}>
-        {children}
+        {scrollable ? (
+          <div className="overflow-y-auto" style={{ maxHeight: 340 }}>
+            {children}
+          </div>
+        ) : children}
       </div>
     </section>
   )
@@ -492,10 +497,59 @@ export function ParametresClient({ coop, agents, grouped }: {
   coop: Coop | null; agents: Agent[]; grouped: Record<string, Setting[]>
 }) {
   const [tab, setTab] = React.useState('theme')
+
+  // Build initial values map from all settings
+  const buildInitial = React.useCallback(() => {
+    const map: Record<string, unknown> = {}
+    Object.values(grouped).flat().forEach(s => { map[s.key] = s.value })
+    return map
+  }, [grouped])
+
+  const [original] = React.useState<Record<string, unknown>>(() => buildInitial())
+  const [draft, setDraft]     = React.useState<Record<string, unknown>>(() => buildInitial())
+  const [saving, setSaving]   = React.useState(false)
+  const [saveOk, setSaveOk]   = React.useState(false)
+  const [saveErr, setSaveErr] = React.useState<string | null>(null)
+
+  // Check if there are unsaved changes
+  const changedKeys = Object.keys(draft).filter(k => draft[k] !== original[k])
+  const isDirty = changedKeys.length > 0
+
+  function handleChange(key: string, value: unknown) {
+    setSaveOk(false)
+    setDraft(prev => ({ ...prev, [key]: value }))
+  }
+
+  function handleCancel() {
+    setDraft({ ...original })
+    setSaveOk(false)
+    setSaveErr(null)
+  }
+
+  async function handleSave() {
+    setSaving(true)
+    setSaveErr(null)
+    setSaveOk(false)
+    try {
+      // Save all changed keys in parallel
+      await Promise.all(
+        changedKeys.map(key => updateSetting(key, draft[key]))
+      )
+      // Update original to match current draft
+      Object.assign(original, draft)
+      setSaveOk(true)
+      setTimeout(() => setSaveOk(false), 2500)
+    } catch (e: any) {
+      setSaveErr(e.message ?? 'Erreur lors de la sauvegarde')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const themeSettings = (grouped['theme'] ?? []) as Setting[]
 
   return (
-    <div className="px-6 py-6 space-y-6 max-w-[1200px] mx-auto w-full">
+    <div className="px-6 py-6 space-y-6 max-w-[1200px] mx-auto w-full pb-28">
       <div>
         <h2 className="text-lg font-semibold" style={{ color: 'rgba(255,255,255,0.92)' }}>Paramètres</h2>
         <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Configuration avancée de la coopérative</p>
@@ -523,24 +577,39 @@ export function ParametresClient({ coop, agents, grouped }: {
       {tab === 'theme' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Couleurs */}
-            <SectionCard title="Palette de couleurs" icon={Palette} description="Personnalisez les couleurs du tableau de bord" accent="#8B5CF6">
+            {/* Couleurs — scrollable card */}
+            <SectionCard
+              title="Palette de couleurs"
+              icon={Palette}
+              description="Personnalisez les couleurs du tableau de bord"
+              accent="#8B5CF6"
+              scrollable
+            >
               {themeSettings.filter(s => s.input_type === 'color').map(s => (
-                <SettingRow key={s.key} s={s} />
+                <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
               ))}
             </SectionCard>
 
             {/* Aperçu live */}
             <div className="space-y-3">
               <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>Aperçu en temps réel</p>
-              <ThemePreview settings={themeSettings} />
+              <ThemePreview draft={draft} settings={themeSettings} />
+              {isDirty && (
+                <div className="rounded-xl px-4 py-3 flex items-center gap-2"
+                  style={{ background: 'rgba(252,211,77,0.07)', border: '1px solid rgba(252,211,77,0.22)' }}>
+                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse" style={{ background: '#FCD34D' }} />
+                  <p className="text-xs" style={{ color: '#FCD34D' }}>
+                    {changedKeys.length} modification{changedKeys.length > 1 ? 's' : ''} non sauvegardée{changedKeys.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Interface */}
           <SectionCard title="Interface & Comportement" icon={Layout} description="Espacement, animations et navigation" accent="#60A5FA">
             {themeSettings.filter(s => s.input_type !== 'color').map(s => (
-              <SettingRow key={s.key} s={s} />
+              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
             ))}
           </SectionCard>
         </div>
@@ -549,24 +618,19 @@ export function ParametresClient({ coop, agents, grouped }: {
       {/* ── PDF TAB ── */}
       {tab === 'pdf' && (
         <div className="space-y-6">
-          {/* Logo */}
           <SectionCard title="Logo de la coopérative" icon={Upload} description="Logo affiché sur les PDF et tickets de caisse" accent="#34D399">
             {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type === 'image').map((s: Setting) => (
-              <SettingRow key={s.key} s={s} />
+              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
             ))}
           </SectionCard>
-
-          {/* Couleurs PDF */}
-          <SectionCard title="Couleurs du rapport" icon={Palette} description="Personnalisez les couleurs de vos exports PDF" accent="#8B5CF6">
+          <SectionCard title="Couleurs du rapport" icon={Palette} description="Personnalisez les couleurs de vos exports PDF" accent="#8B5CF6" scrollable>
             {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type === 'color').map((s: Setting) => (
-              <SettingRow key={s.key} s={s} />
+              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
             ))}
           </SectionCard>
-
-          {/* Autres settings PDF */}
           <SectionCard title="Mise en page & Contenu" icon={FileText} description="Format, marges et éléments des PDF" accent="#F59E0B">
             {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type !== 'color' && s.input_type !== 'image').map((s: Setting) => (
-              <SettingRow key={s.key} s={s} />
+              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
             ))}
           </SectionCard>
         </div>
@@ -601,7 +665,9 @@ export function ParametresClient({ coop, agents, grouped }: {
             ))}
           </SectionCard>
           <SectionCard title="Paramètres généraux" icon={Settings} description="Langue, devise et notifications" accent="#34D399">
-            {(grouped['general'] ?? []).map((s: Setting) => <SettingRow key={s.key} s={s} />)}
+            {(grouped['general'] ?? []).map((s: Setting) => (
+              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
+            ))}
           </SectionCard>
         </div>
       )}
@@ -609,7 +675,9 @@ export function ParametresClient({ coop, agents, grouped }: {
       {/* ── FINANCE TAB ── */}
       {tab === 'finance' && (
         <SectionCard title="Règles financières" icon={Settings} description="Limites, taux et conditions de prêt" accent="#F59E0B">
-          {(grouped['finance'] ?? []).map((s: Setting) => <SettingRow key={s.key} s={s} />)}
+          {(grouped['finance'] ?? []).map((s: Setting) => (
+            <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
+          ))}
         </SectionCard>
       )}
 
@@ -618,16 +686,109 @@ export function ParametresClient({ coop, agents, grouped }: {
         <div className="space-y-6">
           <SectionCard title="Rapports de clôture par email" icon={Mail} description="Configurez les destinataires des rapports journaliers" accent="#60A5FA">
             {(grouped['closure'] ?? []).filter((s: Setting) => s.key.includes('email') || s.key.includes('subject')).map((s: Setting) => (
-              <SettingRow key={s.key} s={s} />
+              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
             ))}
           </SectionCard>
           <SectionCard title="Règles de clôture" icon={Settings} description="Automatisation et verrouillage des clôtures" accent="#C41E3A">
             {(grouped['closure'] ?? []).filter((s: Setting) => !s.key.includes('email') && !s.key.includes('subject')).map((s: Setting) => (
-              <SettingRow key={s.key} s={s} />
+              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
             ))}
           </SectionCard>
         </div>
       )}
+
+      {/* ── Sticky Save / Cancel bar ── */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-40 transition-all duration-300"
+        style={{
+          transform: isDirty || saveOk ? 'translateY(0)' : 'translateY(100%)',
+          opacity:   isDirty || saveOk ? 1 : 0,
+        }}
+      >
+        <div className="max-w-[1200px] mx-auto px-6 py-4">
+          <div className="rounded-2xl px-5 py-3 flex items-center justify-between gap-4 shadow-2xl"
+            style={{
+              background: '#181D27',
+              border: '1px solid #252A36',
+              backdropFilter: 'blur(12px)',
+              boxShadow: '0 -4px 32px rgba(0,0,0,0.50)',
+            }}>
+
+            {/* Status info */}
+            <div className="flex items-center gap-3">
+              {saveOk ? (
+                <>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(74,222,128,0.15)' }}>
+                    <Check size={14} style={{ color: '#4ADE80' }} />
+                  </div>
+                  <p className="text-sm font-medium" style={{ color: '#4ADE80' }}>
+                    Paramètres sauvegardés avec succès
+                  </p>
+                </>
+              ) : saveErr ? (
+                <>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(248,113,113,0.15)' }}>
+                    <X size={14} style={{ color: '#F87171' }} />
+                  </div>
+                  <p className="text-sm font-medium" style={{ color: '#F87171' }}>{saveErr}</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(252,211,77,0.12)' }}>
+                    <Pencil size={13} style={{ color: '#FCD34D' }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.88)' }}>
+                      Modifications non sauvegardées
+                    </p>
+                    <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+                      {changedKeys.length} paramètre{changedKeys.length > 1 ? 's' : ''} modifié{changedKeys.length > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            {!saveOk && (
+              <div className="flex items-center gap-3 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={saving}
+                  className="flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-opacity"
+                  style={{
+                    background: 'rgba(255,255,255,0.07)',
+                    border: '1px solid #3B4260',
+                    color: 'rgba(255,255,255,0.70)',
+                    opacity: saving ? 0.5 : 1,
+                  }}
+                >
+                  <RotateCcw size={13} />
+                  Annuler
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={saving || !isDirty}
+                  className="flex items-center gap-2 h-9 px-5 rounded-lg text-sm font-semibold transition-opacity"
+                  style={{
+                    background: '#C41E3A',
+                    color: '#fff',
+                    opacity: (saving || !isDirty) ? 0.7 : 1,
+                  }}
+                >
+                  {saving ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                  {saving ? 'Sauvegarde…' : 'Sauvegarder'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
