@@ -31,17 +31,13 @@ export function CreateExchangeModal({ rates }: { rates: Rate[] }) {
     e.preventDefault()
     setPending(true)
     setError(null)
-    try {
-      await createExchangeTransaction(new FormData(e.currentTarget))
-      formRef.current?.reset()
-      setAmountGiven('')
-      setSelectedRate(rates[0] ?? null)
-      setOpen(false)
-    } catch (err: any) {
-      setError(err.message ?? 'Erreur inconnue')
-    } finally {
-      setPending(false)
-    }
+    const result = await createExchangeTransaction(new FormData(e.currentTarget))
+    setPending(false)
+    if (result?.error) { setError(result.error); return }
+    formRef.current?.reset()
+    setAmountGiven('')
+    setSelectedRate(rates[0] ?? null)
+    setOpen(false)
   }
 
   return (

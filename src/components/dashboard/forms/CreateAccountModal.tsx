@@ -25,15 +25,11 @@ export function CreateAccountModal({ members, plans = [] }: { members: Member[];
     e.preventDefault()
     setPending(true)
     setError(null)
-    try {
-      await createAccount(new FormData(e.currentTarget))
-      formRef.current?.reset()
-      setOpen(false)
-    } catch (err: unknown) {
-      setError((err as Error).message ?? 'Erreur inconnue')
-    } finally {
-      setPending(false)
-    }
+    const result = await createAccount(new FormData(e.currentTarget))
+    setPending(false)
+    if (result?.error) { setError(result.error); return }
+    formRef.current?.reset()
+    setOpen(false)
   }
 
   return (

@@ -33,18 +33,14 @@ export function CreateRateModal() {
     e.preventDefault()
     setPending(true)
     setError(null)
-    try {
-      const fd = new FormData(e.currentTarget)
-      fd.set('replace_previous', replace ? 'true' : 'false')
-      await createExchangeRate(fd)
-      formRef.current?.reset()
-      setRate('')
-      setOpen(false)
-    } catch (err: unknown) {
-      setError((err as Error).message ?? 'Erreur inconnue')
-    } finally {
-      setPending(false)
-    }
+    const fd = new FormData(e.currentTarget)
+    fd.set('replace_previous', replace ? 'true' : 'false')
+    const result = await createExchangeRate(fd)
+    setPending(false)
+    if (result?.error) { setError(result.error); return }
+    formRef.current?.reset()
+    setRate('')
+    setOpen(false)
   }
 
   return (

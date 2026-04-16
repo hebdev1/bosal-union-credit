@@ -2,16 +2,18 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-export async function createAccount(formData: FormData) {
+export async function createAccount(
+  formData: FormData,
+): Promise<{ error: string } | null> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
+  if (!user) return { error: 'Non authentifié' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent, error: agentErr } = await (supabase as any)
     .from('agents').select('cooperative_id').eq('id', user.id).single()
-  if (agentErr || !agent) throw new Error('Agent introuvable')
+  if (agentErr || !agent) return { error: 'Agent introuvable' }
 
   const planId = formData.get('savings_product_id') as string | null
 
@@ -27,14 +29,21 @@ export async function createAccount(formData: FormData) {
     savings_product_id: planId && planId !== '' ? planId : null,
   })
 
-  if (error) throw new Error(error.message)
+  if (error) {
+    if (error.code === '23505') return { error: 'Ce numéro de compte est déjà utilisé.' }
+    return { error: error.message }
+  }
   revalidatePath('/tableau-de-bord/comptes')
+  return null
 }
 
-export async function assignPlanToAccount(accountId: string, planId: string | null) {
+export async function assignPlanToAccount(
+  accountId: string,
+  planId: string | null,
+): Promise<{ error: string } | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
+  if (!user) return { error: 'Non authentifié' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
@@ -42,20 +51,23 @@ export async function assignPlanToAccount(accountId: string, planId: string | nu
     .update({ savings_product_id: planId ?? null })
     .eq('id', accountId)
 
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
   revalidatePath('/tableau-de-bord/comptes')
+  return null
 }
 
-export async function closeAccount(accountId: string) {
+export async function closeAccount(
+  accountId: string,
+): Promise<{ error: string } | null> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
+  if (!user) return { error: 'Non authentifié' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent, error: agentErr } = await (supabase as any)
     .from('agents').select('cooperative_id, id').eq('id', user.id).single()
-  if (agentErr || !agent) throw new Error('Agent introuvable')
+  if (agentErr || !agent) return { error: 'Agent introuvable' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: account, error: accErr } = await (supabase as any)
@@ -63,8 +75,8 @@ export async function closeAccount(accountId: string) {
     .select('balance, currency, status, account_number')
     .eq('id', accountId)
     .single()
-  if (accErr || !account) throw new Error('Compte introuvable')
-  if (account.status === 'closed') throw new Error('Ce compte est déjà fermé')
+  if (accErr || !account) return { error: 'Compte introuvable' }
+  if (account.status === 'closed') return { error: 'Ce compte est déjà fermé' }
 
   const CLOSING_FEE = 200 // HTG — frais fixes de fermeture
   const newBalance = Math.max(0, Number(account.balance) - CLOSING_FEE)
@@ -74,7 +86,7 @@ export async function closeAccount(accountId: string) {
     .from('accounts')
     .update({ balance: newBalance, status: 'closed' })
     .eq('id', accountId)
-  if (updateErr) throw new Error(updateErr.message)
+  if (updateErr) return { error: updateErr.message }
 
   // Enregistrer les frais de fermeture comme transaction d'ajustement
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -91,4 +103,5 @@ export async function closeAccount(accountId: string) {
 
   revalidatePath('/tableau-de-bord/comptes')
   revalidatePath('/tableau-de-bord/transactions')
+  return null
 }

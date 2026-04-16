@@ -384,8 +384,10 @@ function CoopEditor({ coop }: { coop: Coop }) {
   const [err, setErr]         = React.useState<string | null>(null)
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault(); setSaving(true); setErr(null)
-    try { await updateCooperative(new FormData(e.currentTarget)); setEditing(false) }
-    catch (ex: any) { setErr(ex.message) } finally { setSaving(false) }
+    const res = await updateCooperative(new FormData(e.currentTarget))
+    setSaving(false)
+    if (res?.error) { setErr(res.error); return }
+    setEditing(false)
   }
   if (!editing) return (
     <div>
@@ -437,8 +439,9 @@ function AgentStatusSelect({ agentId, current }: { agentId: string; current: str
   const cfg = STATUS_CFG[val] ?? STATUS_CFG.pending
   async function handleChange(e: React.ChangeEvent<HTMLSelectElement>) {
     const next = e.target.value; const prev = val; setVal(next); setSaving(true)
-    try { await updateAgentStatus(agentId, next) }
-    catch { setVal(prev) } finally { setSaving(false) }
+    const res = await updateAgentStatus(agentId, next)
+    setSaving(false)
+    if (res?.error) setVal(prev)
   }
   return (
     <div className="relative flex items-center gap-1">
@@ -530,20 +533,15 @@ export function ParametresClient({ coop, agents, grouped }: {
     setSaving(true)
     setSaveErr(null)
     setSaveOk(false)
-    try {
-      // Save all changed keys in parallel
-      await Promise.all(
-        changedKeys.map(key => updateSetting(key, draft[key]))
-      )
-      // Update original to match current draft
-      Object.assign(original, draft)
-      setSaveOk(true)
-      setTimeout(() => setSaveOk(false), 2500)
-    } catch (e: any) {
-      setSaveErr(e.message ?? 'Erreur lors de la sauvegarde')
-    } finally {
-      setSaving(false)
-    }
+    const results = await Promise.all(
+      changedKeys.map(key => updateSetting(key, draft[key]))
+    )
+    setSaving(false)
+    const firstErr = results.find(r => r?.error)
+    if (firstErr) { setSaveErr(firstErr.error); return }
+    Object.assign(original, draft)
+    setSaveOk(true)
+    setTimeout(() => setSaveOk(false), 2500)
   }
 
   const themeSettings = (grouped['theme'] ?? []) as Setting[]

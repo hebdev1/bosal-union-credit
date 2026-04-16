@@ -91,16 +91,16 @@ export async function getTodayStats() {
   }
 }
 
-export async function closeDay(notes?: string): Promise<ClosureResult> {
+export async function closeDay(notes?: string): Promise<ClosureResult | { error: string }> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
+  if (!user) return { error: 'Non authentifié' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent } = await (supabase as any)
     .from('agents').select('cooperative_id, id, name').eq('id', user.id).single()
-  if (!agent) throw new Error('Agent introuvable')
+  if (!agent) return { error: 'Agent introuvable' }
 
   // Find today's open closing
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -111,7 +111,7 @@ export async function closeDay(notes?: string): Promise<ClosureResult> {
     .eq('status', 'open')
     .single()
 
-  if (!openClosing) throw new Error('Aucune journée ouverte à clôturer')
+  if (!openClosing) return { error: 'Aucune journée ouverte à clôturer' }
 
   const closingDate = openClosing.closing_date
   const startOfDay  = `${closingDate}T00:00:00`
@@ -215,15 +215,17 @@ export async function closeDay(notes?: string): Promise<ClosureResult> {
   }
 }
 
-export async function openNewDay(openingBalance: number) {
+export async function openNewDay(
+  openingBalance: number,
+): Promise<{ error: string } | null> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
+  if (!user) return { error: 'Non authentifié' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent } = await (supabase as any)
     .from('agents').select('cooperative_id').eq('id', user.id).single()
-  if (!agent) throw new Error('Agent introuvable')
+  if (!agent) return { error: 'Agent introuvable' }
 
   const today = new Date().toISOString().split('T')[0]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -234,6 +236,7 @@ export async function openNewDay(openingBalance: number) {
     status:          'open',
   }, { onConflict: 'cooperative_id,closing_date' })
 
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
   revalidatePath('/tableau-de-bord/cloture')
+  return null
 }

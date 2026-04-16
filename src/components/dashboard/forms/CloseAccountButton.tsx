@@ -17,14 +17,10 @@ export function CloseAccountButton({
   async function handleClose() {
     setPending(true)
     setError(null)
-    try {
-      await closeAccount(accountId)
-      setOpen(false)
-    } catch (err: unknown) {
-      setError((err as Error).message ?? 'Erreur inconnue')
-    } finally {
-      setPending(false)
-    }
+    const result = await closeAccount(accountId)
+    setPending(false)
+    if (result?.error) { setError(result.error); return }
+    setOpen(false)
   }
 
   return (

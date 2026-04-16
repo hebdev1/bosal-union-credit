@@ -253,16 +253,12 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
   async function handleClose() {
     setClosing(true)
     setError(null)
-    try {
-      const result = await closeDay(notes || undefined)
-      setConfirmOpen(false)
-      setSuccess(true)
-      await generateClosurePDF(result)
-    } catch (err: unknown) {
-      setError((err as Error).message ?? 'Erreur inconnue')
-    } finally {
-      setClosing(false)
-    }
+    const result = await closeDay(notes || undefined)
+    setClosing(false)
+    if ('error' in result) { setError(result.error); return }
+    setConfirmOpen(false)
+    setSuccess(true)
+    await generateClosurePDF(result)
   }
 
   async function handleHistoryPDF(c: DailyClosing) {

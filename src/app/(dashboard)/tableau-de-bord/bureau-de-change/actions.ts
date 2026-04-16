@@ -2,24 +2,26 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
 
-export async function createExchangeRate(formData: FormData) {
+export async function createExchangeRate(
+  formData: FormData,
+): Promise<{ error: string } | null> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
+  if (!user) return { error: 'Non authentifié' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent, error: agentErr } = await (supabase as any)
     .from('agents').select('cooperative_id, id').eq('id', user.id).single()
-  if (agentErr || !agent) throw new Error('Agent introuvable')
+  if (agentErr || !agent) return { error: 'Agent introuvable' }
 
   const fromCurrency    = formData.get('from_currency') as string
   const toCurrency      = formData.get('to_currency') as string
   const rate            = Number(formData.get('rate'))
   const replacePrevious = formData.get('replace_previous') === 'true'
 
-  if (fromCurrency === toCurrency) throw new Error('Les devises doivent être différentes')
-  if (rate <= 0) throw new Error('Le taux doit être supérieur à 0')
+  if (fromCurrency === toCurrency) return { error: 'Les devises doivent être différentes' }
+  if (rate <= 0) return { error: 'Le taux doit être supérieur à 0' }
 
   // Optionally deactivate existing rates for this pair
   if (replacePrevious) {
@@ -43,20 +45,23 @@ export async function createExchangeRate(formData: FormData) {
     is_active:       true,
   })
 
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
   revalidatePath('/tableau-de-bord/bureau-de-change')
+  return null
 }
 
-export async function createExchangeTransaction(formData: FormData) {
+export async function createExchangeTransaction(
+  formData: FormData,
+): Promise<{ error: string } | null> {
   const supabase = await createClient()
 
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Non authentifié')
+  if (!user) return { error: 'Non authentifié' }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent, error: agentErr } = await (supabase as any)
     .from('agents').select('cooperative_id, id').eq('id', user.id).single()
-  if (agentErr || !agent) throw new Error('Agent introuvable')
+  if (agentErr || !agent) return { error: 'Agent introuvable' }
 
   const amountGiven    = Number(formData.get('amount_given'))
   const rateApplied    = Number(formData.get('rate_applied'))
@@ -77,6 +82,7 @@ export async function createExchangeTransaction(formData: FormData) {
     notes:             (formData.get('notes') as string) || null,
   })
 
-  if (error) throw new Error(error.message)
+  if (error) return { error: error.message }
   revalidatePath('/tableau-de-bord/bureau-de-change')
+  return null
 }
