@@ -4,6 +4,7 @@ import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { CreateLoanModal } from '@/components/dashboard/forms/CreateLoanModal'
 import { LoanStatusSelect } from '@/components/dashboard/forms/LoanStatusSelect'
+import { PretsExportButton } from '@/components/dashboard/forms/PretsExportButton'
 import { formatHTG, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Prêts' }
@@ -45,7 +46,12 @@ export default async function PretsPage() {
       <PageShell
         title="Prêts"
         description={`${rows.length} prêt${rows.length !== 1 ? 's' : ''} · ${actifs.length} actif${actifs.length !== 1 ? 's' : ''} · ${pendingRows.length} en attente`}
-        action={<CreateLoanModal members={members} />}
+        action={
+          <div className="flex items-center gap-2">
+            <PretsExportButton loans={rows} repayments={repayments} />
+            <CreateLoanModal members={members} />
+          </div>
+        }
       >
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

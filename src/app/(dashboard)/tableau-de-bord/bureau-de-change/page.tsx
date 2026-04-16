@@ -4,6 +4,7 @@ import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { CreateExchangeModal } from '@/components/dashboard/forms/CreateExchangeModal'
 import { CreateRateModal } from '@/components/dashboard/forms/CreateRateModal'
+import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
@@ -53,6 +54,7 @@ export default async function BureauDeChangePage() {
         description={`${activeRates.length} taux actif${activeRates.length !== 1 ? 's' : ''} · ${txs.length} opération${txs.length !== 1 ? 's' : ''}`}
         action={
           <div className="flex items-center gap-2">
+            <BureauDeChangeExportButton txs={txs} rates={rates} />
             <CreateRateModal />
             <CreateExchangeModal rates={activeRates.map(r => ({
               id: r.id,

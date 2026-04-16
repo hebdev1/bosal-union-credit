@@ -321,17 +321,6 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
                 </p>
               </div>
             </div>
-            {!success && (
-              <button
-                type="button"
-                onClick={() => { setConfirmOpen(true); setError(null) }}
-                className="flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-colors"
-                style={{ background: '#C41E3A', color: '#fff' }}
-              >
-                <Lock size={14} />
-                Clôturer la journée
-              </button>
-            )}
           </div>
 
           {/* Live stats */}
@@ -356,6 +345,21 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
             <div className="px-6 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #1a1f2e' }}>
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>Solde estimé à la clôture</p>
               <p className="text-sm font-bold kpi-value" style={{ color: '#4ADE80' }}>{fHTG(liveBalance)}</p>
+            </div>
+          )}
+
+          {/* Clôturer button — bottom / last */}
+          {!success && (
+            <div className="px-6 py-4" style={{ borderTop: '1px solid #1a1f2e' }}>
+              <button
+                type="button"
+                onClick={() => { setConfirmOpen(true); setError(null) }}
+                className="w-full flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-semibold transition-opacity"
+                style={{ background: '#C41E3A', color: '#fff' }}
+              >
+                <Lock size={15} />
+                Clôturer la journée
+              </button>
             </div>
           )}
         </div>

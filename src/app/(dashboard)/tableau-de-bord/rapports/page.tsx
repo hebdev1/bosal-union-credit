@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
+import { RapportsExportButton } from '@/components/dashboard/forms/RapportsExportButton'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Rapports' }
@@ -78,7 +79,36 @@ export default async function RapportsPage() {
   return (
     <>
       <Header title="Rapports" />
-      <PageShell title="Rapports" description="Synthèse complète des activités de la coopérative">
+      <PageShell
+        title="Rapports"
+        description="Synthèse complète des activités de la coopérative"
+        action={
+          <RapportsExportButton data={{
+            totalDeposits,
+            totalWithdrawals,
+            totalLoans,
+            totalRepaid,
+            defaulted,
+            membersActive: (members as any[]).filter((m: any) => m.status === 'active').length,
+            exchangeCount,
+            exchangeVol,
+            txBreakdown: ['deposit', 'withdrawal', 'transfer', 'adjustment'].map(type => ({
+              type,
+              label: { deposit: 'Dépôts', withdrawal: 'Retraits', transfer: 'Virements', adjustment: 'Ajustements' }[type]!,
+              count: (txs as any[]).filter((t: any) => t.transaction_type === type).length,
+              total: (txs as any[]).filter((t: any) => t.transaction_type === type).reduce((s: number, t: any) => s + Number(t.amount), 0),
+            })),
+            loansByStatus: ['pending', 'active', 'completed', 'defaulted', 'rejected'].map(s => ({
+              status: s,
+              label: { pending: 'En attente', active: 'Actifs', completed: 'Complétés', defaulted: 'En défaut', rejected: 'Rejetés' }[s]!,
+              count: (loans as any[]).filter((l: any) => l.status === s).length,
+              amount: (loans as any[]).filter((l: any) => l.status === s).reduce((a: number, l: any) => a + Number(l.principal_amount), 0),
+            })),
+            pairs: pairs.map(([key, d]) => ({ key, fromCcy: d.fromCcy, toCcy: d.toCcy, count: d.count, given: d.given, received: d.received })),
+            exchDetail: exchDetail as any[],
+          }} />
+        }
+      >
 
         {/* Global KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
