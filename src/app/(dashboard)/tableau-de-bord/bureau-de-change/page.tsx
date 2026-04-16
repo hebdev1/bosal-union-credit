@@ -5,6 +5,7 @@ import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/das
 import { CreateExchangeModal } from '@/components/dashboard/forms/CreateExchangeModal'
 import { CreateRateModal } from '@/components/dashboard/forms/CreateRateModal'
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
+import { ExchangeTicketButton } from '@/components/dashboard/forms/ExchangeTicketButton'
 import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
@@ -26,13 +27,25 @@ function CurrencyTag({ code }: { code: string }) {
 export default async function BureauDeChangePage() {
   const supabase = await createClient()
 
+  // Get cooperative name for ticket reprints
+  const { data: { user } } = await supabase.auth.getUser()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agentRow } = user ? await (supabase as any)
+    .from('agents').select('cooperative_id, name').eq('id', user.id).single() : { data: null }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: coopRow } = agentRow ? await (supabase as any)
+    .from('cooperatives').select('name').eq('id', agentRow.cooperative_id).single() : { data: null }
+  const coopName  = (coopRow as any)?.name  ?? 'Bosal Union Crédit'
+  const agentName = (agentRow as any)?.name ?? '—'
+
   const [ratesRes, txRes] = await Promise.allSettled([
-    // All rates (active + inactive) for full history
-    supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
       .from('exchange_rates')
       .select('id, from_currency, to_currency, rate, is_active, created_at, agents(name)')
       .order('created_at', { ascending: false }),
-    supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
       .from('exchange_transactions')
       .select('id, client_first_name, client_last_name, from_currency, to_currency, amount_given, rate_applied, amount_received, ticket_number, notes, created_at, agents(name)')
       .order('created_at', { ascending: false })
@@ -184,7 +197,7 @@ export default async function BureauDeChangePage() {
             {txs.length === 0 ? (
               <EmptyState title="Aucune opération de change" description='Utilisez "Nouvelle opération" pour enregistrer un échange.' />
             ) : (
-              <Table headers={['Ticket', 'Client', 'De', 'Vers', 'Montant donné', 'Taux', 'Montant reçu', 'Agent', 'Date']}>
+              <Table headers={['Ticket', 'Client', 'De', 'Vers', 'Montant donné', 'Taux', 'Montant reçu', 'Agent', 'Date', '']}>
                 {txs.map(t => (
                   <TR key={t.id}>
                     <TD mono>{t.ticket_number}</TD>
@@ -208,6 +221,22 @@ export default async function BureauDeChangePage() {
                     </TD>
                     <TD>{t.agents?.name ?? '—'}</TD>
                     <TD>{formatDate(t.created_at)}</TD>
+                    <TD>
+                      <ExchangeTicketButton ticket={{
+                        ticket_number:     t.ticket_number ?? '—',
+                        client_first_name: t.client_first_name,
+                        client_last_name:  t.client_last_name,
+                        from_currency:     t.from_currency,
+                        to_currency:       t.to_currency,
+                        amount_given:      Number(t.amount_given),
+                        rate_applied:      Number(t.rate_applied),
+                        amount_received:   Number(t.amount_received),
+                        notes:             t.notes ?? null,
+                        created_at:        t.created_at,
+                        agent_name:        t.agents?.name ?? agentName,
+                        coop_name:         coopName,
+                      }} />
+                    </TD>
                   </TR>
                 ))}
               </Table>
