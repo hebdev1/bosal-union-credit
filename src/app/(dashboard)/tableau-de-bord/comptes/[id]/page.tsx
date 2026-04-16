@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { AccountProfileClient } from '@/components/dashboard/account/AccountProfileClient'
+import { EditMemberModal } from '@/components/dashboard/account/EditMemberModal'
 import { formatHTG, formatUSD, formatDate, formatCurrency } from '@/lib/formatters'
 import { ArrowLeft } from 'lucide-react'
 
@@ -134,12 +135,27 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* Balance */}
-            <div className="text-right">
-              <p className="text-2xl font-bold kpi-value" style={{ color: account.status === 'active' ? '#4ADE80' : 'rgba(255,255,255,0.50)' }}>
-                {formatCurrency(Number(account.balance), account.currency)}
-              </p>
-              <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>Solde actuel · {account.currency}</p>
+            {/* Right side: balance + edit button */}
+            <div className="flex flex-col items-end gap-3">
+              <div className="text-right">
+                <p className="text-2xl font-bold kpi-value" style={{ color: account.status === 'active' ? '#4ADE80' : 'rgba(255,255,255,0.50)' }}>
+                  {formatCurrency(Number(account.balance), account.currency)}
+                </p>
+                <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>Solde actuel · {account.currency}</p>
+              </div>
+              {member && (
+                <EditMemberModal member={{
+                  id:            member.id,
+                  first_name:    member.first_name,
+                  last_name:     member.last_name,
+                  member_number: member.member_number,
+                  birth_date:    member.birth_date    ?? null,
+                  phone:         member.phone         ?? null,
+                  email:         member.email         ?? null,
+                  address:       member.address       ?? null,
+                  profession:    member.profession    ?? null,
+                }} />
+              )}
             </div>
           </div>
 
