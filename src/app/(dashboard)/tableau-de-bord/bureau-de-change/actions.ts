@@ -67,10 +67,13 @@ export async function createExchangeTransaction(
   const rateApplied    = Number(formData.get('rate_applied'))
   const amountReceived = amountGiven * rateApplied
 
+  const exchangeRateId = formData.get('exchange_rate_id') as string | null
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any).from('exchange_transactions').insert({
     cooperative_id:    agent.cooperative_id,
     agent_id:          agent.id,
+    exchange_rate_id:  exchangeRateId || undefined,
     client_first_name: (formData.get('client_first_name') as string).trim(),
     client_last_name:  (formData.get('client_last_name') as string).trim(),
     from_currency:     formData.get('from_currency') as string,
