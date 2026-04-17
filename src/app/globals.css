@@ -152,6 +152,7 @@
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
     letter-spacing: -0.02em;
+    color: var(--color-kpi, inherit);
   }
   .font-display {
     font-family: "Instrument Serif", Georgia, serif;

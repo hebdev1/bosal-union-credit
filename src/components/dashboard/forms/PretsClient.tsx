@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react'
 import { DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { LoanStatusSelect } from '@/components/dashboard/forms/LoanStatusSelect'
 import { PretsExportButton } from '@/components/dashboard/forms/PretsExportButton'
+import { type PdfReportConfig } from '@/lib/pdfConfig'
 
 function formatHTG(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
@@ -58,9 +59,10 @@ interface Props {
   loans: any[]
   repayments: any[]
   lateCount: number
+  reportConfig?: PdfReportConfig
 }
 
-export function PretsClient({ loans, repayments, lateCount }: Props) {
+export function PretsClient({ loans, repayments, lateCount, reportConfig }: Props) {
   const [datePreset, setDatePreset] = React.useState<DatePreset>('all')
   const [dateFrom,   setDateFrom]   = React.useState('')
   const [dateTo,     setDateTo]     = React.useState('')
@@ -116,7 +118,7 @@ export function PretsClient({ loans, repayments, lateCount }: Props) {
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDatePreset('all') }}
               className="h-7 rounded-lg px-2 text-xs outline-none"
               style={{ background: '#111318', border: '1px solid #252A36', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
-            <PretsExportButton loans={filteredLoans} repayments={filteredRepayments} />
+            <PretsExportButton loans={filteredLoans} repayments={filteredRepayments} config={reportConfig} />
           </div>
         </div>
         <DataCard>

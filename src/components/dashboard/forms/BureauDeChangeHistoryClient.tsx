@@ -5,6 +5,7 @@ import { DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/D
 import { ExchangeTicketButton } from '@/components/dashboard/forms/ExchangeTicketButton'
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
 import { type TicketConfig } from '@/components/dashboard/forms/ExchangeTicketPDF'
+import { type PdfReportConfig } from '@/lib/pdfConfig'
 
 function formatHTG(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
@@ -61,11 +62,12 @@ interface Props {
   txs: any[]
   rates: any[]
   ticketConfig: TicketConfig
+  reportConfig?: PdfReportConfig
   agentName: string
   coopName: string
 }
 
-export function BureauDeChangeHistoryClient({ txs, rates, ticketConfig, agentName, coopName }: Props) {
+export function BureauDeChangeHistoryClient({ txs, rates, ticketConfig, reportConfig, agentName, coopName }: Props) {
   const [datePreset, setDatePreset] = React.useState<DatePreset>('today')
   const [dateFrom,   setDateFrom]   = React.useState('')
   const [dateTo,     setDateTo]     = React.useState('')
@@ -113,7 +115,7 @@ export function BureauDeChangeHistoryClient({ txs, rates, ticketConfig, agentNam
           <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDatePreset('all') }}
             className="h-7 rounded-lg px-2 text-xs outline-none"
             style={{ background: '#111318', border: '1px solid #252A36', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
-          <BureauDeChangeExportButton txs={filtered} rates={rates} />
+          <BureauDeChangeExportButton txs={filtered} rates={rates} config={reportConfig} />
           <span className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
             {filtered.length} opération{filtered.length !== 1 ? 's' : ''}
           </span>

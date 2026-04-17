@@ -1,6 +1,7 @@
 'use client'
 import * as React from 'react'
 import { FileDown, Loader2 } from 'lucide-react'
+import { type PdfReportConfig, DEFAULT_PDF_CONFIG, hexToRgb, urlToBase64 } from '@/lib/pdfConfig'
 
 function fHTG(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
@@ -44,19 +45,29 @@ export interface RepaymentRow {
 interface Props {
   loans: LoanRow[]
   repayments: RepaymentRow[]
+  config?: PdfReportConfig
 }
 
-async function generatePretsPDF(loans: LoanRow[], repayments: RepaymentRow[]) {
+async function generatePretsPDF(loans: LoanRow[], repayments: RepaymentRow[], cfg: PdfReportConfig = DEFAULT_PDF_CONFIG) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const W = 297; const L = 12; const R = W - 12
 
+  const [hr, hg, hb] = hexToRgb(cfg.headerColor)
+  const [ar, ag, ab] = hexToRgb(cfg.accentColor)
+
   // Header
-  doc.setFillColor(12, 12, 14)
+  doc.setFillColor(hr, hg, hb)
   doc.rect(0, 0, W, 28, 'F')
+
+  if (cfg.logoEnabled && cfg.logoUrl) {
+    const logoData = await urlToBase64(cfg.logoUrl)
+    if (logoData) { try { doc.addImage(logoData, L, 5, 20, 16) } catch { /* ignore */ } }
+  }
+
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
-  doc.setTextColor(196, 30, 58)
+  doc.setTextColor(ar, ag, ab)
   doc.text('PORTEFEUILLE DES PRÊTS', W / 2, 13, { align: 'center' })
   doc.setFontSize(8)
   doc.setTextColor(140, 140, 140)
@@ -208,16 +219,16 @@ async function generatePretsPDF(loans: LoanRow[], repayments: RepaymentRow[]) {
 
   doc.setFontSize(7)
   doc.setTextColor(60, 60, 60)
-  doc.text(`Document généré le ${new Date().toLocaleDateString('fr-HT')} — Bosal Union Crédit`, W / 2, 205, { align: 'center' })
+  doc.text(cfg.footerText, W / 2, 205, { align: 'center' })
   doc.save(`prets-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
-export function PretsExportButton({ loans, repayments }: Props) {
+export function PretsExportButton({ loans, repayments, config }: Props) {
   const [exporting, setExporting] = React.useState(false)
 
   async function handleExport() {
     setExporting(true)
-    await generatePretsPDF(loans, repayments)
+    await generatePretsPDF(loans, repayments, config)
     setExporting(false)
   }
 

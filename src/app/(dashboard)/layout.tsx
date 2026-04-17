@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { BottomNav } from '@/components/dashboard/BottomNav'
+import { ThemeInjector } from '@/components/dashboard/ThemeInjector'
 
 export default async function DashboardLayout({
   children,
@@ -13,8 +14,30 @@ export default async function DashboardLayout({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  // Fetch theme settings
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: themeRows } = await (supabase as any)
+    .from('app_settings')
+    .select('key, value')
+    .eq('category', 'theme')
+
+  const tm: Record<string, string> = {}
+  for (const r of (themeRows ?? [])) tm[r.key] = String(r.value ?? '').replace(/^"|"$/g, '')
+
+  const themeVars = {
+    brandColor:     tm['brand_color']           || '#C41E3A',
+    sidebarBg:      tm['sidebar_bg_color']       || '#0C0C0E',
+    surfaceColor:   tm['surface_color']          || '#111318',
+    borderColor:    tm['border_color']           || '#252A36',
+    textPrimary:    tm['text_primary_color']     || 'rgba(255,255,255,0.95)',
+    textSecondary:  tm['text_secondary_color']   || 'rgba(255,255,255,0.50)',
+    kpiValueColor:  tm['kpi_value_color']        || 'inherit',
+  }
+
   return (
     <div className="flex h-dvh overflow-hidden" style={{ background: '#0C0C0E' }}>
+      <ThemeInjector vars={themeVars} />
+
       {/* Sidebar — desktop only */}
       <div className="hidden lg:flex lg:flex-shrink-0" style={{ height: '100dvh' }}>
         <Sidebar />

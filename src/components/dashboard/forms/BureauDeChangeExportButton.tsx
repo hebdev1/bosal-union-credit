@@ -1,6 +1,7 @@
 'use client'
 import * as React from 'react'
 import { FileDown, Loader2 } from 'lucide-react'
+import { type PdfReportConfig, DEFAULT_PDF_CONFIG, hexToRgb, urlToBase64 } from '@/lib/pdfConfig'
 
 function fHTG(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
@@ -43,20 +44,33 @@ export interface ExchangeRate {
 interface Props {
   txs: ExchangeTx[]
   rates: ExchangeRate[]
+  config?: PdfReportConfig
 }
 
-async function generateBureauPDF(txs: ExchangeTx[], rates: ExchangeRate[]) {
+async function generateBureauPDF(txs: ExchangeTx[], rates: ExchangeRate[], cfg: PdfReportConfig = DEFAULT_PDF_CONFIG) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const W = 297; const L = 12; const R = W - 12
   let y = 18
 
+  const [hr, hg, hb] = hexToRgb(cfg.headerColor)
+  const [ar, ag, ab] = hexToRgb(cfg.accentColor)
+
   // Header
-  doc.setFillColor(12, 12, 14)
+  doc.setFillColor(hr, hg, hb)
   doc.rect(0, 0, W, 30, 'F')
+
+  // Logo
+  if (cfg.logoEnabled && cfg.logoUrl) {
+    const logoData = await urlToBase64(cfg.logoUrl)
+    if (logoData) {
+      try { doc.addImage(logoData, L, 5, 20, 18) } catch { /* ignore */ }
+    }
+  }
+
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
-  doc.setTextColor(196, 30, 58)
+  doc.setTextColor(ar, ag, ab)
   doc.text('RAPPORT BUREAU DE CHANGE', W / 2, y, { align: 'center' })
   y += 7
   doc.setFontSize(8)
@@ -238,17 +252,17 @@ async function generateBureauPDF(txs: ExchangeTx[], rates: ExchangeRate[]) {
     doc.setPage(p)
     doc.setFontSize(7)
     doc.setTextColor(60, 60, 60)
-    doc.text(`Document généré le ${new Date().toLocaleDateString('fr-HT')} — Bosal Union Crédit · Page ${p}/${pages}`, W / 2, 205, { align: 'center' })
+    doc.text(`${cfg.footerText} · Page ${p}/${pages}`, W / 2, 205, { align: 'center' })
   }
   doc.save(`bureau-de-change-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
-export function BureauDeChangeExportButton({ txs, rates }: Props) {
+export function BureauDeChangeExportButton({ txs, rates, config }: Props) {
   const [exporting, setExporting] = React.useState(false)
 
   async function handleExport() {
     setExporting(true)
-    await generateBureauPDF(txs, rates)
+    await generateBureauPDF(txs, rates, config)
     setExporting(false)
   }
 

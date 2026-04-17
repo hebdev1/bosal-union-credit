@@ -2,6 +2,7 @@
 import * as React from 'react'
 import { FileDown, Loader2, Calendar } from 'lucide-react'
 import { DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
+import { type PdfReportConfig, DEFAULT_PDF_CONFIG, hexToRgb, urlToBase64 } from '@/lib/pdfConfig'
 
 const TYPE_LABELS: Record<string, string> = {
   deposit: 'Dépôt', withdrawal: 'Retrait', transfer: 'Virement', adjustment: 'Ajustement',
@@ -20,6 +21,7 @@ type Tx = {
 
 interface Props {
   transactions: Tx[]
+  reportConfig?: PdfReportConfig
 }
 
 function formatHTG(n: number) {
@@ -58,16 +60,25 @@ function getDateBounds(preset: DatePreset, from: string, to: string): { start: D
   return { start: null, end: null }
 }
 
-async function exportTransactionsPDF(rows: Tx[]) {
+async function exportTransactionsPDF(rows: Tx[], cfg: PdfReportConfig = DEFAULT_PDF_CONFIG) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
   const W = 297; const L = 12; const R = W - 12
 
-  doc.setFillColor(12, 12, 14)
+  const [hr, hg, hb] = hexToRgb(cfg.headerColor)
+  const [ar, ag, ab] = hexToRgb(cfg.accentColor)
+
+  doc.setFillColor(hr, hg, hb)
   doc.rect(0, 0, W, 28, 'F')
+
+  if (cfg.logoEnabled && cfg.logoUrl) {
+    const logoData = await urlToBase64(cfg.logoUrl)
+    if (logoData) { try { doc.addImage(logoData, L, 5, 20, 16) } catch { /* ignore */ } }
+  }
+
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(13)
-  doc.setTextColor(196, 30, 58)
+  doc.setTextColor(ar, ag, ab)
   doc.text('HISTORIQUE DES TRANSACTIONS', W / 2, 13, { align: 'center' })
   doc.setFontSize(8)
   doc.setTextColor(140, 140, 140)
@@ -130,7 +141,7 @@ async function exportTransactionsPDF(rows: Tx[]) {
   })
 
   doc.setFontSize(7); doc.setTextColor(60, 60, 60)
-  doc.text(`Document généré le ${new Date().toLocaleDateString('fr-HT')} — Bosal Union Crédit`, W / 2, 205, { align: 'center' })
+  doc.text(cfg.footerText, W / 2, 205, { align: 'center' })
   doc.save(`transactions-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
@@ -142,7 +153,7 @@ const TYPE_TABS = [
   { key: 'adjustment', label: 'Ajustements', color: '#FCD34D' },
 ]
 
-export function TransactionsClient({ transactions }: Props) {
+export function TransactionsClient({ transactions, reportConfig }: Props) {
   const [activeTab,   setActiveTab]   = React.useState('all')
   const [search,      setSearch]      = React.useState('')
   const [datePreset,  setDatePreset]  = React.useState<DatePreset>('today')
@@ -152,7 +163,7 @@ export function TransactionsClient({ transactions }: Props) {
 
   async function handleExport() {
     setExporting(true)
-    await exportTransactionsPDF(filtered)
+    await exportTransactionsPDF(filtered, reportConfig)
     setExporting(false)
   }
 

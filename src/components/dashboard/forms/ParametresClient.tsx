@@ -325,12 +325,15 @@ function SettingRow({ s, value, onChange }: { s: Setting; value: unknown; onChan
 /* ── Theme preview card ─────────────────────────────────────────────────── */
 function ThemePreview({ draft, settings }: { draft: Record<string, unknown>; settings: Setting[] }) {
   function get(key: string) {
-    return String(draft[key] ?? settings.find(s => s.key === key)?.value ?? '')
+    return String(draft[key] ?? settings.find(s => s.key === key)?.value ?? '').replace(/"/g, '')
   }
-  const brand   = get('brand_color')   || '#C41E3A'
-  const sidebar = get('sidebar_bg')    || '#0C0C0E'
-  const surface = get('surface_color') || '#111318'
-  const border  = get('border_color')  || '#252A36'
+  const brand     = get('brand_color')         || '#C41E3A'
+  const sidebar   = get('sidebar_bg')          || '#0C0C0E'
+  const surface   = get('surface_color')       || '#111318'
+  const border    = get('border_color')        || '#252A36'
+  const textPri   = get('text_primary_color')  || 'rgba(255,255,255,0.90)'
+  const textSec   = get('text_secondary_color')|| 'rgba(255,255,255,0.45)'
+  const kpiColor  = get('kpi_value_color')     || '#FFFFFF'
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: surface, border: `1px solid ${border}`, maxWidth: 380 }}>
@@ -344,19 +347,22 @@ function ThemePreview({ draft, settings }: { draft: Record<string, unknown>; set
           ))}
         </div>
         <div className="flex-1 p-3 space-y-2">
+          {/* KPI cards */}
           <div className="flex gap-2">
             {['#4ADE80','#60A5FA',brand].map((c, i) => (
               <div key={i} className="flex-1 rounded-lg px-2 py-1.5" style={{ background: sidebar, border: `1px solid ${border}` }}>
-                <div className="h-1.5 rounded-full w-8 mb-1" style={{ background: c }} />
-                <div className="h-1 rounded-full w-5" style={{ background: 'rgba(255,255,255,0.12)' }} />
+                <div className="h-2 rounded-full w-8 mb-0.5" style={{ background: c }} />
+                <div className="h-1 rounded-full w-5" style={{ background: i === 0 ? kpiColor + '55' : 'rgba(255,255,255,0.12)' }} />
               </div>
             ))}
           </div>
+          {/* Table rows */}
           <div className="rounded-lg p-2" style={{ background: sidebar, border: `1px solid ${border}` }}>
             {[...Array(3)].map((_, i) => (
               <div key={i} className="flex items-center gap-2 py-1">
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: i === 0 ? brand : 'rgba(255,255,255,0.15)' }} />
-                <div className="h-1 rounded-full flex-1" style={{ background: 'rgba(255,255,255,0.10)' }} />
+                <div className="h-1 rounded-full w-16" style={{ background: textPri + '60' }} />
+                <div className="h-1 rounded-full flex-1" style={{ background: textSec + '40' }} />
               </div>
             ))}
           </div>
@@ -365,15 +371,18 @@ function ThemePreview({ draft, settings }: { draft: Record<string, unknown>; set
           </div>
         </div>
       </div>
-      <div className="px-3 py-1.5 text-[9px] font-medium" style={{ borderTop: `1px solid ${border}`, color: 'rgba(255,255,255,0.30)' }}>
-        Aperçu en temps réel
+      <div className="px-3 py-2 flex justify-between items-center" style={{ borderTop: `1px solid ${border}` }}>
+        <span className="text-[9px]" style={{ color: textSec }}>Texte secondaire</span>
+        <span className="text-[9px] font-semibold" style={{ color: textPri }}>Texte principal</span>
       </div>
     </div>
   )
 }
 
 /* ── Ticket preview (PDF tab) ───────────────────────────────────────────── */
-function TicketPreview({ accentColor, receivedColor }: { accentColor: string; receivedColor: string }) {
+function TicketPreview({ accentColor, receivedColor, logoUrl }: {
+  accentColor: string; receivedColor: string; logoUrl?: string
+}) {
   const rows: [string, string][] = [
     ['Client',         'Jean Dupont'],
     ['De',             'HTG'],
@@ -384,25 +393,24 @@ function TicketPreview({ accentColor, receivedColor }: { accentColor: string; re
   return (
     <div style={{ maxWidth: 280, margin: '0 auto' }}>
       <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.45)', fontFamily: 'monospace' }}>
-        {/* Top accent bar */}
         <div style={{ background: accentColor, height: 7 }} />
         <div style={{ padding: '16px 20px 12px' }}>
-          {/* Header */}
           <div style={{ textAlign: 'center', marginBottom: 12 }}>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" style={{ height: 28, maxWidth: 100, objectFit: 'contain', margin: '0 auto 4px', display: 'block' }} />
+            ) : null}
             <p style={{ color: accentColor, fontWeight: 700, fontSize: 11, letterSpacing: 2 }}>BOSAL UNION CRÉDIT</p>
             <p style={{ color: '#aaa', fontSize: 9, marginTop: 2 }}>TICKET DE CHANGE</p>
             <p style={{ color: accentColor, fontWeight: 700, fontSize: 13, marginTop: 6, paddingBottom: 8, borderBottom: `2px solid ${accentColor}` }}>
               #TK-000001
             </p>
           </div>
-          {/* Rows */}
           {rows.map(([l, v]) => (
             <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed #eee', fontSize: 10 }}>
               <span style={{ color: '#888' }}>{l}</span>
               <span style={{ color: '#222', fontWeight: 600 }}>{v}</span>
             </div>
           ))}
-          {/* Received amount highlight */}
           <div style={{ background: receivedColor + '22', border: `1px solid ${receivedColor}55`, borderRadius: 6, padding: '8px 12px', marginTop: 10, textAlign: 'center' }}>
             <p style={{ color: '#888', fontSize: 8, marginBottom: 2 }}>MONTANT REÇU</p>
             <p style={{ color: receivedColor, fontWeight: 700, fontSize: 15 }}>USD 38.50</p>
@@ -411,10 +419,89 @@ function TicketPreview({ accentColor, receivedColor }: { accentColor: string; re
             {new Date().toLocaleDateString('fr-FR')} · Merci de votre visite
           </p>
         </div>
-        {/* Bottom accent bar */}
         <div style={{ background: accentColor, height: 7 }} />
       </div>
-      <p className="text-center text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>Aperçu en temps réel</p>
+      <p className="text-center text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>Aperçu ticket de caisse</p>
+    </div>
+  )
+}
+
+/* ── Report preview (PDF tab) ───────────────────────────────────────────── */
+function ReportPreview({ headerColor, accentColor, textColor, footerText, logoUrl }: {
+  headerColor: string; accentColor: string; textColor: string; footerText?: string; logoUrl?: string
+}) {
+  const tableRows = [
+    ['REF-001', 'Dépôt',   'Jean Dupont',  'HTG 25,000.00', '17/04/2026'],
+    ['REF-002', 'Retrait', 'Marie Pierre', 'HTG 8,500.00',  '17/04/2026'],
+    ['REF-003', 'Dépôt',   'Paul Michel',  'HTG 12,000.00', '17/04/2026'],
+  ]
+  return (
+    <div style={{ margin: '0 auto' }}>
+      {/* A4 landscape aspect ratio container */}
+      <div style={{
+        background: '#fff',
+        borderRadius: 8,
+        overflow: 'hidden',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+        fontFamily: 'sans-serif',
+        aspectRatio: '297 / 210',
+        display: 'flex',
+        flexDirection: 'column',
+      }}>
+        {/* Header */}
+        <div style={{ background: headerColor, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {logoUrl
+              ? <img src={logoUrl} alt="Logo" style={{ height: 18, maxWidth: 50, objectFit: 'contain' }} />
+              : <div style={{ width: 18, height: 18, borderRadius: 3, background: accentColor, opacity: 0.8 }} />
+            }
+            <span style={{ color: accentColor, fontWeight: 700, fontSize: 9, letterSpacing: 1 }}>RAPPORT TRANSACTIONS</span>
+          </div>
+          <span style={{ color: 'rgba(255,255,255,0.40)', fontSize: 7 }}>Généré le {new Date().toLocaleDateString('fr-FR')}</span>
+        </div>
+
+        {/* KPI cards */}
+        <div style={{ display: 'flex', gap: 6, padding: '8px 14px', background: '#f9f9f9', flexShrink: 0 }}>
+          {[
+            { label: 'Opérations', val: '24',           color: accentColor   },
+            { label: 'Dépôts',     val: 'HTG 89,500',   color: '#22C55E'     },
+            { label: 'Retraits',   val: 'HTG 32,000',   color: '#EF4444'     },
+            { label: 'Flux net',   val: 'HTG 57,500',   color: '#3B82F6'     },
+          ].map(k => (
+            <div key={k.label} style={{ flex: 1, background: '#fff', border: '1px solid #e5e7eb', borderRadius: 4, padding: '5px 7px' }}>
+              <div style={{ color: k.color, fontWeight: 700, fontSize: 8 }}>{k.val}</div>
+              <div style={{ color: '#aaa', fontSize: 6.5, marginTop: 1 }}>{k.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Table */}
+        <div style={{ flex: 1, padding: '0 14px', overflow: 'hidden' }}>
+          {/* Table header */}
+          <div style={{ display: 'flex', background: '#f3f4f6', padding: '4px 0', borderBottom: '1px solid #e5e7eb' }}>
+            {['Référence','Type','Membre','Montant','Date'].map(h => (
+              <div key={h} style={{ flex: 1, color: '#888', fontSize: 6.5, fontWeight: 600, padding: '0 4px' }}>{h}</div>
+            ))}
+          </div>
+          {tableRows.map(([ref, type, member, amount, date], i) => (
+            <div key={ref} style={{ display: 'flex', padding: '4px 0', borderBottom: '1px solid #f3f4f6', background: i % 2 === 0 ? '#fff' : '#fafafa' }}>
+              <div style={{ flex: 1, color: accentColor, fontSize: 6.5, padding: '0 4px', fontWeight: 600 }}>{ref}</div>
+              <div style={{ flex: 1, color: type === 'Dépôt' ? '#22C55E' : '#EF4444', fontSize: 6.5, padding: '0 4px' }}>{type}</div>
+              <div style={{ flex: 1, color: textColor === '#111318' ? '#333' : textColor, fontSize: 6.5, padding: '0 4px' }}>{member}</div>
+              <div style={{ flex: 1, color: type === 'Dépôt' ? '#22C55E' : '#EF4444', fontSize: 6.5, padding: '0 4px', fontWeight: 600 }}>{amount}</div>
+              <div style={{ flex: 1, color: '#aaa', fontSize: 6.5, padding: '0 4px' }}>{date}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer */}
+        <div style={{ padding: '5px 14px', borderTop: '1px solid #e5e7eb', background: '#f9f9f9', flexShrink: 0 }}>
+          <p style={{ color: '#bbb', fontSize: 6, textAlign: 'center' }}>
+            {footerText || 'Bosal Union Crédit · Document confidentiel'}
+          </p>
+        </div>
+      </div>
+      <p className="text-center text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>Aperçu rapport PDF</p>
     </div>
   )
 }
@@ -656,47 +743,75 @@ export function ParametresClient({ coop, agents, grouped }: {
       )}
 
       {/* ── PDF TAB ── */}
-      {tab === 'pdf' && (
-        <div className="space-y-6">
-          <SectionCard title="Logo de la coopérative" icon={Upload} description="Logo affiché sur les PDF et tickets de caisse" accent="#34D399">
-            {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type === 'image').map((s: Setting) => (
-              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
-            ))}
-          </SectionCard>
+      {tab === 'pdf' && (() => {
+        const clean = (v: unknown, fallback: string) => String(v ?? fallback).replace(/"/g, '')
+        const logoUrl       = clean(draft['pdf_logo_url'],        '')
+        const ticketAccent  = clean(draft['ticket_accent_color'], '#C41E3A')
+        const ticketRcv     = clean(draft['ticket_received_color'],'#22C55E')
+        const rptHeader     = clean(draft['pdf_header_color'],    '#0C0C0E')
+        const rptAccent     = clean(draft['pdf_accent_color'],    '#C41E3A')
+        const rptText       = clean(draft['pdf_text_color'],      '#111318')
+        const footerTxt     = clean(draft['pdf_footer_text'],     '')
+        const ticketColors  = (grouped['pdf'] ?? []).filter((s: Setting) => s.key.startsWith('ticket_') && s.input_type === 'color')
+        const reportColors  = (grouped['pdf'] ?? []).filter((s: Setting) => !s.key.startsWith('ticket_') && s.input_type === 'color')
 
-          {/* Colors + live preview side by side */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SectionCard title="Couleurs du ticket & PDF" icon={Palette} description="Personnalisez les couleurs de vos exports et tickets" accent="#8B5CF6">
-              {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type === 'color').map((s: Setting) => (
+        return (
+          <div className="space-y-6">
+            {/* Logo */}
+            <SectionCard title="Logo de la coopérative" icon={Upload} description="Logo affiché dans l'en-tête des PDF et tickets" accent="#34D399">
+              {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type === 'image').map((s: Setting) => (
                 <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
               ))}
             </SectionCard>
 
-            <div className="space-y-3">
-              <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>Aperçu ticket de caisse</p>
-              <TicketPreview
-                accentColor={String(draft['ticket_accent_color'] ?? '#C41E3A').replace(/"/g, '')}
-                receivedColor={String(draft['ticket_received_color'] ?? '#22C55E').replace(/"/g, '')}
-              />
-              {isDirty && (
-                <div className="rounded-xl px-4 py-3 flex items-center gap-2"
-                  style={{ background: 'rgba(252,211,77,0.07)', border: '1px solid rgba(252,211,77,0.22)' }}>
-                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse" style={{ background: '#FCD34D' }} />
-                  <p className="text-xs" style={{ color: '#FCD34D' }}>
-                    {changedKeys.length} modification{changedKeys.length > 1 ? 's' : ''} non sauvegardée{changedKeys.length > 1 ? 's' : ''}
-                  </p>
-                </div>
-              )}
+            {/* ── Ticket colors + Ticket preview ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SectionCard title="Couleurs du ticket de caisse" icon={Palette} description="Couleurs de la bande d'accent et du montant reçu" accent="#8B5CF6">
+                {ticketColors.map((s: Setting) => (
+                  <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
+                ))}
+              </SectionCard>
+              <div className="space-y-3 flex flex-col">
+                <TicketPreview accentColor={ticketAccent} receivedColor={ticketRcv} logoUrl={logoUrl || undefined} />
+              </div>
             </div>
-          </div>
 
-          <SectionCard title="Mise en page & Contenu" icon={FileText} description="Format, marges et éléments des PDF" accent="#F59E0B">
-            {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type !== 'color' && s.input_type !== 'image').map((s: Setting) => (
-              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
-            ))}
-          </SectionCard>
-        </div>
-      )}
+            {/* ── Report colors + Report preview ── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <SectionCard title="Couleurs des rapports PDF" icon={Palette} description="En-tête, accent et texte pour tous les exports A4" accent="#F59E0B">
+                {reportColors.map((s: Setting) => (
+                  <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
+                ))}
+              </SectionCard>
+              <div className="space-y-3 flex flex-col">
+                <ReportPreview
+                  headerColor={rptHeader}
+                  accentColor={rptAccent}
+                  textColor={rptText}
+                  footerText={footerTxt}
+                  logoUrl={logoUrl || undefined}
+                />
+              </div>
+            </div>
+
+            {isDirty && (
+              <div className="rounded-xl px-4 py-3 flex items-center gap-2"
+                style={{ background: 'rgba(252,211,77,0.07)', border: '1px solid rgba(252,211,77,0.22)' }}>
+                <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse" style={{ background: '#FCD34D' }} />
+                <p className="text-xs" style={{ color: '#FCD34D' }}>
+                  {changedKeys.length} modification{changedKeys.length > 1 ? 's' : ''} non sauvegardée{changedKeys.length > 1 ? 's' : ''} — cliquez sur Sauvegarder
+                </p>
+              </div>
+            )}
+
+            <SectionCard title="Mise en page & Contenu" icon={FileText} description="Format, marges, pied de page et éléments des PDF" accent="#60A5FA">
+              {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type !== 'color' && s.input_type !== 'image').map((s: Setting) => (
+                <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
+              ))}
+            </SectionCard>
+          </div>
+        )
+      })()}
 
       {/* ── GENERAL TAB ── */}
       {tab === 'general' && (

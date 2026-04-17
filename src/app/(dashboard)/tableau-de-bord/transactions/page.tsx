@@ -4,6 +4,7 @@ import { Header } from '@/components/dashboard/Header'
 import { PageShell } from '@/components/dashboard/ui/DataTable'
 import { TransactionsClient } from '@/components/dashboard/ui/TransactionsClient'
 import { CloseDayButton } from '@/components/dashboard/forms/CloseDayButton'
+import { buildPdfConfig } from '@/lib/pdfConfig'
 import { formatHTG } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Transactions' }
@@ -11,11 +12,17 @@ export const metadata: Metadata = { title: 'Transactions' }
 export default async function TransactionsPage() {
   const supabase = await createClient()
 
-  const { data: transactions } = await supabase
-    .from('transactions')
-    .select('id, transaction_type, amount, motif, reference, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
-    .order('created_at', { ascending: false })
-    .limit(500)
+  const [{ data: transactions }, { data: pdfSettings }] = await Promise.all([
+    supabase
+      .from('transactions')
+      .select('id, transaction_type, amount, motif, reference, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
+      .order('created_at', { ascending: false })
+      .limit(500),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('app_settings').select('key, value').eq('category', 'pdf'),
+  ])
+
+  const reportConfig = buildPdfConfig((pdfSettings ?? []) as { key: string; value: unknown }[])
 
   const rows        = (transactions ?? []) as any[]
   const deposits    = rows.filter(t => t.transaction_type === 'deposit').reduce((s, t) => s + Number(t.amount), 0)
@@ -47,7 +54,7 @@ export default async function TransactionsPage() {
         </div>
 
         {/* Client-side filtered + searchable history */}
-        <TransactionsClient transactions={rows} />
+        <TransactionsClient transactions={rows} reportConfig={reportConfig} />
       </PageShell>
     </>
   )

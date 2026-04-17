@@ -8,6 +8,7 @@ import { BureauDeChangeHistoryClient } from '@/components/dashboard/forms/Bureau
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
 import { CloseDayButton } from '@/components/dashboard/forms/CloseDayButton'
 import { type TicketConfig, DEFAULT_CONFIG } from '@/components/dashboard/forms/ExchangeTicketPDF'
+import { buildPdfConfig } from '@/lib/pdfConfig'
 import { formatHTG, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
@@ -53,7 +54,7 @@ export default async function BureauDeChangePage() {
     received_color: settingMap['ticket_received_color'] || DEFAULT_CONFIG.received_color,
   }
 
-  const [ratesRes, txRes] = await Promise.allSettled([
+  const [ratesRes, txRes, pdfRes] = await Promise.allSettled([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
       .from('exchange_rates')
@@ -65,10 +66,13 @@ export default async function BureauDeChangePage() {
       .select('id, client_first_name, client_last_name, from_currency, to_currency, amount_given, rate_applied, amount_received, ticket_number, notes, created_at, agents(name)')
       .order('created_at', { ascending: false })
       .limit(100),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('app_settings').select('key, value').eq('category', 'pdf'),
   ])
 
-  const rates = (ratesRes.status === 'fulfilled' ? (ratesRes.value.data ?? []) : []) as any[]
-  const txs   = (txRes.status === 'fulfilled'   ? (txRes.value.data ?? [])   : []) as any[]
+  const rates        = (ratesRes.status === 'fulfilled' ? (ratesRes.value.data ?? []) : []) as any[]
+  const txs          = (txRes.status === 'fulfilled'   ? (txRes.value.data ?? [])   : []) as any[]
+  const reportConfig = buildPdfConfig(((pdfRes as any).status === 'fulfilled' ? ((pdfRes as any).value.data ?? []) : []) as { key: string; value: unknown }[])
 
   const activeRates       = rates.filter(r => r.is_active)
   const inactiveRates     = rates.filter(r => !r.is_active)
@@ -208,6 +212,7 @@ export default async function BureauDeChangePage() {
           txs={txs}
           rates={rates}
           ticketConfig={ticketConfig}
+          reportConfig={reportConfig}
           agentName={agentName}
           coopName={coopName}
         />

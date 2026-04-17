@@ -55,13 +55,13 @@ function NavLink({ item, collapsed, active }: { item: NavItem; collapsed: boolea
       style={{
         color: active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)',
         background: active ? '#181D27' : 'transparent',
-        borderLeft: active ? '2px solid #C41E3A' : '2px solid transparent',
+        borderLeft: active ? '2px solid var(--color-brand, #C41E3A)' : '2px solid transparent',
         paddingLeft: active && !collapsed ? 10 : undefined,
       }}
       onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.80)' } }}
       onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.45)' } }}
     >
-      <Icon size={17} aria-hidden="true" style={{ color: active ? '#C41E3A' : 'inherit', flexShrink: 0 }} />
+      <Icon size={17} aria-hidden="true" style={{ color: active ? 'var(--color-brand, #C41E3A)' : 'inherit', flexShrink: 0 }} />
       {!collapsed && <span className="truncate">{item.label}</span>}
     </Link>
   )
@@ -78,7 +78,7 @@ export function Sidebar() {
       style={{
         width: collapsed ? 60 : 260,
         transition: 'width 220ms cubic-bezier(0.4,0,0.2,1)',
-        background: '#0C0C0E',
+        background: 'var(--color-sidebar, #0C0C0E)',
         borderRight: '1px solid #252A36',
         display: 'flex',
         flexDirection: 'column',
@@ -92,7 +92,7 @@ export function Sidebar() {
       <div className="flex items-center gap-3 px-4 flex-shrink-0"
         style={{ height: 56, borderBottom: '1px solid #252A36', justifyContent: collapsed ? 'center' : undefined }}>
         <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: '#C41E3A', boxShadow: '0 0 16px rgba(196,30,58,0.25)' }} aria-hidden="true">
+          style={{ background: 'var(--color-brand, #C41E3A)', boxShadow: '0 0 16px rgba(196,30,58,0.25)' }} aria-hidden="true">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" opacity="0.9" />
             <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />

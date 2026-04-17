@@ -5,6 +5,7 @@ import { PageShell } from '@/components/dashboard/ui/DataTable'
 import { CreateLoanModal } from '@/components/dashboard/forms/CreateLoanModal'
 import { PretsClient } from '@/components/dashboard/forms/PretsClient'
 import { CloseDayButton } from '@/components/dashboard/forms/CloseDayButton'
+import { buildPdfConfig } from '@/lib/pdfConfig'
 import { formatHTG } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Prêts' }
@@ -12,7 +13,7 @@ export const metadata: Metadata = { title: 'Prêts' }
 export default async function PretsPage() {
   const supabase = await createClient()
 
-  const [loansRes, repaymentsRes, membersRes] = await Promise.all([
+  const [loansRes, repaymentsRes, membersRes, pdfRes] = await Promise.all([
     supabase
       .from('loans')
       .select('id, loan_number, principal_amount, interest_rate, duration_months, monthly_payment, total_amount_due, amount_paid, status, purpose, created_at, disbursed_at, due_date, members(first_name, last_name, member_number)')
@@ -28,11 +29,14 @@ export default async function PretsPage() {
       .select('id, first_name, last_name, member_number')
       .eq('status', 'active')
       .order('last_name', { ascending: true }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('app_settings').select('key, value').eq('category', 'pdf'),
   ])
 
-  const rows       = (loansRes.data ?? []) as any[]
-  const repayments = (repaymentsRes.data ?? []) as any[]
-  const members    = (membersRes.data ?? []) as any[]
+  const rows         = (loansRes.data ?? []) as any[]
+  const repayments   = (repaymentsRes.data ?? []) as any[]
+  const members      = (membersRes.data ?? []) as any[]
+  const reportConfig = buildPdfConfig(((pdfRes as any)?.data ?? []) as { key: string; value: unknown }[])
 
   const actifs      = rows.filter((l: any) => l.status === 'active')
   const pendingRows = rows.filter((l: any) => l.status === 'pending')
@@ -69,7 +73,7 @@ export default async function PretsPage() {
           ))}
         </div>
 
-        <PretsClient loans={rows} repayments={repayments} lateCount={lateCount} />
+        <PretsClient loans={rows} repayments={repayments} lateCount={lateCount} reportConfig={reportConfig} />
       </PageShell>
     </>
   )
