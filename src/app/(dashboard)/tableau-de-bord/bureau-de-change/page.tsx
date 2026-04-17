@@ -4,10 +4,11 @@ import { Header } from '@/components/dashboard/Header'
 import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { CreateExchangeModal } from '@/components/dashboard/forms/CreateExchangeModal'
 import { CreateRateModal } from '@/components/dashboard/forms/CreateRateModal'
+import { BureauDeChangeHistoryClient } from '@/components/dashboard/forms/BureauDeChangeHistoryClient'
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
-import { ExchangeTicketButton } from '@/components/dashboard/forms/ExchangeTicketButton'
+import { CloseDayButton } from '@/components/dashboard/forms/CloseDayButton'
 import { type TicketConfig, DEFAULT_CONFIG } from '@/components/dashboard/forms/ExchangeTicketPDF'
-import { formatHTG, formatUSD, formatDate } from '@/lib/formatters'
+import { formatHTG, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
 
@@ -81,6 +82,7 @@ export default async function BureauDeChangePage() {
         description={`${activeRates.length} taux actif${activeRates.length !== 1 ? 's' : ''} · ${txs.length} opération${txs.length !== 1 ? 's' : ''}`}
         action={
           <div className="flex items-center gap-2">
+            <CloseDayButton />
             <BureauDeChangeExportButton txs={txs} rates={rates} />
             <CreateRateModal />
             <CreateExchangeModal
@@ -202,69 +204,13 @@ export default async function BureauDeChangePage() {
           </DataCard>
         </section>
 
-        {/* ── Historique des opérations ── */}
-        <section aria-label="Historique des opérations de change">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>
-              Historique des opérations
-            </h3>
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
-              {txs.length} opération{txs.length !== 1 ? 's' : ''}
-            </span>
-          </div>
-          <DataCard>
-            {txs.length === 0 ? (
-              <EmptyState title="Aucune opération de change" description='Utilisez "Nouvelle opération" pour enregistrer un échange.' />
-            ) : (
-              <Table headers={['Ticket', 'Client', 'De', 'Vers', 'Montant donné', 'Taux', 'Montant reçu', 'Agent', 'Date', '']}>
-                {txs.map(t => (
-                  <TR key={t.id}>
-                    <TD mono>{t.ticket_number}</TD>
-                    <TD>
-                      <span className="font-medium" style={{ color: 'rgba(255,255,255,0.90)' }}>
-                        {t.client_first_name} {t.client_last_name}
-                      </span>
-                    </TD>
-                    <TD><CurrencyTag code={t.from_currency} /></TD>
-                    <TD><CurrencyTag code={t.to_currency} /></TD>
-                    <TD>
-                      <span className="font-semibold kpi-value" style={{ color: '#F87171' }}>
-                        {t.from_currency === 'USD' ? formatUSD(Number(t.amount_given)) : formatHTG(Number(t.amount_given))}
-                      </span>
-                    </TD>
-                    <TD mono>{Number(t.rate_applied).toFixed(4)}</TD>
-                    <TD>
-                      <span className="font-semibold kpi-value" style={{ color: '#4ADE80' }}>
-                        {t.to_currency === 'USD' ? formatUSD(Number(t.amount_received)) : formatHTG(Number(t.amount_received))}
-                      </span>
-                    </TD>
-                    <TD>{t.agents?.name ?? '—'}</TD>
-                    <TD>{formatDate(t.created_at)}</TD>
-                    <TD>
-                      <ExchangeTicketButton
-                        config={ticketConfig}
-                        ticket={{
-                          ticket_number:     t.ticket_number ?? '—',
-                          client_first_name: t.client_first_name,
-                          client_last_name:  t.client_last_name,
-                          from_currency:     t.from_currency,
-                          to_currency:       t.to_currency,
-                          amount_given:      Number(t.amount_given),
-                          rate_applied:      Number(t.rate_applied),
-                          amount_received:   Number(t.amount_received),
-                          notes:             t.notes ?? null,
-                          created_at:        t.created_at,
-                          agent_name:        t.agents?.name ?? agentName,
-                          coop_name:         coopName,
-                        }}
-                      />
-                    </TD>
-                  </TR>
-                ))}
-              </Table>
-            )}
-          </DataCard>
-        </section>
+        <BureauDeChangeHistoryClient
+          txs={txs}
+          rates={rates}
+          ticketConfig={ticketConfig}
+          agentName={agentName}
+          coopName={coopName}
+        />
       </PageShell>
     </>
   )

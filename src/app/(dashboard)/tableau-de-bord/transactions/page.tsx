@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell } from '@/components/dashboard/ui/DataTable'
 import { TransactionsClient } from '@/components/dashboard/ui/TransactionsClient'
+import { CloseDayButton } from '@/components/dashboard/forms/CloseDayButton'
 import { formatHTG } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Transactions' }
@@ -27,6 +28,7 @@ export default async function TransactionsPage() {
       <PageShell
         title="Historique des transactions"
         description={`${rows.length} transaction${rows.length !== 1 ? 's' : ''} · filtrables par type`}
+        action={<CloseDayButton />}
       >
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

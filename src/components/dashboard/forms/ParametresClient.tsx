@@ -39,41 +39,37 @@ interface Coop    { id: string; name: string; address?: string; phone?: string }
 function ColorPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [open, setOpen]     = React.useState(false)
   const [custom, setCustom] = React.useState(value)
-  const ref = React.useRef<HTMLDivElement>(null)
+  const ref    = React.useRef<HTMLDivElement>(null)
   const btnRef = React.useRef<HTMLButtonElement>(null)
-  const [openUp, setOpenUp] = React.useState(false)
+  const [dropPos, setDropPos] = React.useState<React.CSSProperties>({})
 
-  // sync custom input when value changes externally
   React.useEffect(() => { setCustom(value) }, [value])
 
   React.useEffect(() => {
-    function outside(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false) }
+    function outside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
     document.addEventListener('mousedown', outside)
     return () => document.removeEventListener('mousedown', outside)
   }, [])
 
   function handleOpen() {
-    // Decide if dropdown should open upward
     if (btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      setOpenUp(rect.bottom + 320 > window.innerHeight)
+      const fitsBelow = rect.bottom + 340 < window.innerHeight
+      setDropPos(fitsBelow
+        ? { top: rect.bottom + 8, right: window.innerWidth - rect.right }
+        : { bottom: window.innerHeight - rect.top + 8, right: window.innerWidth - rect.right }
+      )
     }
     setOpen(o => !o)
   }
 
-  function pick(color: string) {
-    onChange(color)
-    setCustom(color)
-    setOpen(false)
-  }
-
-  function applyCustom() {
-    if (!/^#[0-9A-Fa-f]{6}$/.test(custom)) return
-    pick(custom)
-  }
+  function pick(color: string) { onChange(color); setCustom(color); setOpen(false) }
+  function applyCustom() { if (!/^#[0-9A-Fa-f]{6}$/.test(custom)) return; pick(custom) }
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref}>
       <button ref={btnRef} type="button" onClick={handleOpen}
         className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium transition-colors"
         style={{ background: '#0F1117', border: '1px solid #3B4260', color: 'rgba(255,255,255,0.80)' }}>
@@ -84,25 +80,24 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (v: string)
 
       {open && (
         <div
-          className="absolute right-0 z-50 rounded-xl p-4 shadow-2xl w-64"
+          className="rounded-xl p-4 shadow-2xl w-64"
           style={{
+            position: 'fixed',
+            zIndex: 9999,
             background: '#181D27',
             border: '1px solid #252A36',
-            ...(openUp ? { bottom: 'calc(100% + 8px)' } : { top: 'calc(100% + 8px)' }),
+            ...dropPos,
           }}
         >
           <p className="text-xs font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.50)' }}>Palette</p>
-          {/* Scrollable palette grid */}
-          <div className="overflow-y-auto" style={{ maxHeight: 120 }}>
-            <div className="grid grid-cols-8 gap-1.5 mb-1">
-              {PALETTE_COLORS.map(c => (
-                <button key={c} type="button" onClick={() => pick(c)}
-                  className="w-6 h-6 rounded-md transition-transform hover:scale-110 focus:outline-none"
-                  style={{ background: c, border: value === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.10)' }}
-                  title={c}
-                />
-              ))}
-            </div>
+          <div className="grid grid-cols-8 gap-1.5 mb-1">
+            {PALETTE_COLORS.map(c => (
+              <button key={c} type="button" onClick={() => pick(c)}
+                className="w-6 h-6 rounded-md transition-transform hover:scale-110 focus:outline-none"
+                style={{ background: c, border: value === c ? '2px solid #fff' : '1px solid rgba(255,255,255,0.10)' }}
+                title={c}
+              />
+            ))}
           </div>
           <p className="text-xs font-semibold mt-3 mb-2" style={{ color: 'rgba(255,255,255,0.50)' }}>Couleur personnalisée</p>
           <div className="flex gap-2">
@@ -377,6 +372,53 @@ function ThemePreview({ draft, settings }: { draft: Record<string, unknown>; set
   )
 }
 
+/* ── Ticket preview (PDF tab) ───────────────────────────────────────────── */
+function TicketPreview({ accentColor, receivedColor }: { accentColor: string; receivedColor: string }) {
+  const rows: [string, string][] = [
+    ['Client',         'Jean Dupont'],
+    ['De',             'HTG'],
+    ['Vers',           'USD'],
+    ['Montant donné',  'HTG 5,000.00'],
+    ['Taux appliqué',  '1 HTG = 0.0077 USD'],
+  ]
+  return (
+    <div style={{ maxWidth: 280, margin: '0 auto' }}>
+      <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.45)', fontFamily: 'monospace' }}>
+        {/* Top accent bar */}
+        <div style={{ background: accentColor, height: 7 }} />
+        <div style={{ padding: '16px 20px 12px' }}>
+          {/* Header */}
+          <div style={{ textAlign: 'center', marginBottom: 12 }}>
+            <p style={{ color: accentColor, fontWeight: 700, fontSize: 11, letterSpacing: 2 }}>BOSAL UNION CRÉDIT</p>
+            <p style={{ color: '#aaa', fontSize: 9, marginTop: 2 }}>TICKET DE CHANGE</p>
+            <p style={{ color: accentColor, fontWeight: 700, fontSize: 13, marginTop: 6, paddingBottom: 8, borderBottom: `2px solid ${accentColor}` }}>
+              #TK-000001
+            </p>
+          </div>
+          {/* Rows */}
+          {rows.map(([l, v]) => (
+            <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed #eee', fontSize: 10 }}>
+              <span style={{ color: '#888' }}>{l}</span>
+              <span style={{ color: '#222', fontWeight: 600 }}>{v}</span>
+            </div>
+          ))}
+          {/* Received amount highlight */}
+          <div style={{ background: receivedColor + '22', border: `1px solid ${receivedColor}55`, borderRadius: 6, padding: '8px 12px', marginTop: 10, textAlign: 'center' }}>
+            <p style={{ color: '#888', fontSize: 8, marginBottom: 2 }}>MONTANT REÇU</p>
+            <p style={{ color: receivedColor, fontWeight: 700, fontSize: 15 }}>USD 38.50</p>
+          </div>
+          <p style={{ textAlign: 'center', color: '#ccc', fontSize: 8, marginTop: 10 }}>
+            {new Date().toLocaleDateString('fr-FR')} · Merci de votre visite
+          </p>
+        </div>
+        {/* Bottom accent bar */}
+        <div style={{ background: accentColor, height: 7 }} />
+      </div>
+      <p className="text-center text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>Aperçu en temps réel</p>
+    </div>
+  )
+}
+
 /* ── Coop editor ────────────────────────────────────────────────────────── */
 function CoopEditor({ coop }: { coop: Coop }) {
   const [editing, setEditing] = React.useState(false)
@@ -621,11 +663,33 @@ export function ParametresClient({ coop, agents, grouped }: {
               <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
             ))}
           </SectionCard>
-          <SectionCard title="Couleurs du rapport" icon={Palette} description="Personnalisez les couleurs de vos exports PDF" accent="#8B5CF6" scrollable>
-            {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type === 'color').map((s: Setting) => (
-              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
-            ))}
-          </SectionCard>
+
+          {/* Colors + live preview side by side */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <SectionCard title="Couleurs du ticket & PDF" icon={Palette} description="Personnalisez les couleurs de vos exports et tickets" accent="#8B5CF6">
+              {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type === 'color').map((s: Setting) => (
+                <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
+              ))}
+            </SectionCard>
+
+            <div className="space-y-3">
+              <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>Aperçu ticket de caisse</p>
+              <TicketPreview
+                accentColor={String(draft['ticket_accent_color'] ?? '#C41E3A').replace(/"/g, '')}
+                receivedColor={String(draft['ticket_received_color'] ?? '#22C55E').replace(/"/g, '')}
+              />
+              {isDirty && (
+                <div className="rounded-xl px-4 py-3 flex items-center gap-2"
+                  style={{ background: 'rgba(252,211,77,0.07)', border: '1px solid rgba(252,211,77,0.22)' }}>
+                  <div className="w-1.5 h-1.5 rounded-full flex-shrink-0 animate-pulse" style={{ background: '#FCD34D' }} />
+                  <p className="text-xs" style={{ color: '#FCD34D' }}>
+                    {changedKeys.length} modification{changedKeys.length > 1 ? 's' : ''} non sauvegardée{changedKeys.length > 1 ? 's' : ''}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <SectionCard title="Mise en page & Contenu" icon={FileText} description="Format, marges et éléments des PDF" accent="#F59E0B">
             {(grouped['pdf'] ?? []).filter((s: Setting) => s.input_type !== 'color' && s.input_type !== 'image').map((s: Setting) => (
               <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
