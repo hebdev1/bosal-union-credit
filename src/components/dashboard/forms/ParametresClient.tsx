@@ -380,9 +380,16 @@ function ThemePreview({ draft, settings }: { draft: Record<string, unknown>; set
 }
 
 /* ── Ticket preview (PDF tab) ───────────────────────────────────────────── */
-function TicketPreview({ accentColor, receivedColor, logoUrl }: {
-  accentColor: string; receivedColor: string; logoUrl?: string
+function TicketPreview({ accentColor, receivedColor, headerColor, headerTextColor, footerText, logoUrl }: {
+  accentColor: string
+  receivedColor: string
+  headerColor?: string
+  headerTextColor?: string
+  footerText?: string
+  logoUrl?: string
 }) {
+  const hBg   = headerColor    || '#0E0E12'
+  const hText = headerTextColor || accentColor
   const rows: [string, string][] = [
     ['Client',         'Jean Dupont'],
     ['De',             'HTG'],
@@ -393,33 +400,43 @@ function TicketPreview({ accentColor, receivedColor, logoUrl }: {
   return (
     <div style={{ maxWidth: 280, margin: '0 auto' }}>
       <div style={{ background: '#fff', borderRadius: 10, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.45)', fontFamily: 'monospace' }}>
-        <div style={{ background: accentColor, height: 7 }} />
-        <div style={{ padding: '16px 20px 12px' }}>
-          <div style={{ textAlign: 'center', marginBottom: 12 }}>
-            {logoUrl ? (
-              <img src={logoUrl} alt="Logo" style={{ height: 28, maxWidth: 100, objectFit: 'contain', margin: '0 auto 4px', display: 'block' }} />
-            ) : null}
-            <p style={{ color: accentColor, fontWeight: 700, fontSize: 11, letterSpacing: 2 }}>BOSAL UNION CRÉDIT</p>
-            <p style={{ color: '#aaa', fontSize: 9, marginTop: 2 }}>TICKET DE CHANGE</p>
-            <p style={{ color: accentColor, fontWeight: 700, fontSize: 13, marginTop: 6, paddingBottom: 8, borderBottom: `2px solid ${accentColor}` }}>
+        {/* Accent top bar */}
+        <div style={{ background: accentColor, height: 5 }} />
+        {/* Header band */}
+        <div style={{ background: hBg, padding: '10px 16px 10px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          {logoUrl && (
+            <img src={logoUrl} alt="Logo" style={{ height: 22, maxWidth: 60, objectFit: 'contain', flexShrink: 0 }} />
+          )}
+          <div style={{ flex: 1, textAlign: logoUrl ? 'left' : 'center' }}>
+            <p style={{ color: hText, fontWeight: 700, fontSize: 10, letterSpacing: 1.5, margin: 0 }}>BOSAL UNION CRÉDIT</p>
+            <p style={{ color: 'rgba(180,180,190,0.7)', fontSize: 8, marginTop: 2, margin: 0 }}>BUREAU DE CHANGE · REÇU</p>
+          </div>
+        </div>
+        <div style={{ padding: '12px 16px 10px' }}>
+          {/* Ticket number */}
+          <div style={{ textAlign: 'center', marginBottom: 10 }}>
+            <p style={{ color: '#bbb', fontSize: 8, margin: 0 }}>N° TICKET</p>
+            <p style={{ color: accentColor, fontWeight: 700, fontSize: 14, margin: '3px 0 0', borderBottom: `2px solid ${accentColor}`, paddingBottom: 4, display: 'inline-block' }}>
               #TK-000001
             </p>
           </div>
           {rows.map(([l, v]) => (
-            <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px dashed #eee', fontSize: 10 }}>
-              <span style={{ color: '#888' }}>{l}</span>
+            <div key={l} style={{ display: 'flex', justifyContent: 'space-between', padding: '3px 0', borderBottom: '1px dashed #eee', fontSize: 9 }}>
+              <span style={{ color: '#999' }}>{l}</span>
               <span style={{ color: '#222', fontWeight: 600 }}>{v}</span>
             </div>
           ))}
-          <div style={{ background: receivedColor + '22', border: `1px solid ${receivedColor}55`, borderRadius: 6, padding: '8px 12px', marginTop: 10, textAlign: 'center' }}>
-            <p style={{ color: '#888', fontSize: 8, marginBottom: 2 }}>MONTANT REÇU</p>
-            <p style={{ color: receivedColor, fontWeight: 700, fontSize: 15 }}>USD 38.50</p>
+          <div style={{ background: receivedColor + '18', border: `1px solid ${receivedColor}50`, borderRadius: 6, padding: '7px 10px', marginTop: 10, textAlign: 'center' }}>
+            <p style={{ color: '#999', fontSize: 7, marginBottom: 2, margin: 0 }}>MONTANT REÇU</p>
+            <p style={{ color: receivedColor, fontWeight: 700, fontSize: 14, margin: '3px 0 0' }}>USD 38.50</p>
           </div>
-          <p style={{ textAlign: 'center', color: '#ccc', fontSize: 8, marginTop: 10 }}>
-            {new Date().toLocaleDateString('fr-FR')} · Merci de votre visite
+        </div>
+        {/* Bottom accent bar + footer text */}
+        <div style={{ background: accentColor, padding: '4px 8px', textAlign: 'center' }}>
+          <p style={{ color: '#fff', fontSize: 7, margin: 0, opacity: 0.9 }}>
+            {footerText || 'Merci de votre confiance · Conservez ce reçu'}
           </p>
         </div>
-        <div style={{ background: accentColor, height: 7 }} />
       </div>
       <p className="text-center text-[10px] mt-2" style={{ color: 'rgba(255,255,255,0.25)' }}>Aperçu ticket de caisse</p>
     </div>
@@ -745,15 +762,19 @@ export function ParametresClient({ coop, agents, grouped }: {
       {/* ── PDF TAB ── */}
       {tab === 'pdf' && (() => {
         const clean = (v: unknown, fallback: string) => String(v ?? fallback).replace(/"/g, '')
-        const logoUrl       = clean(draft['pdf_logo_url'],        '')
-        const ticketAccent  = clean(draft['ticket_accent_color'], '#C41E3A')
-        const ticketRcv     = clean(draft['ticket_received_color'],'#22C55E')
-        const rptHeader     = clean(draft['pdf_header_color'],    '#0C0C0E')
-        const rptAccent     = clean(draft['pdf_accent_color'],    '#C41E3A')
-        const rptText       = clean(draft['pdf_text_color'],      '#111318')
-        const footerTxt     = clean(draft['pdf_footer_text'],     '')
-        const ticketColors  = (grouped['pdf'] ?? []).filter((s: Setting) => s.key.startsWith('ticket_') && s.input_type === 'color')
-        const reportColors  = (grouped['pdf'] ?? []).filter((s: Setting) => !s.key.startsWith('ticket_') && s.input_type === 'color')
+        const logoUrl           = clean(draft['pdf_logo_url'],             '')
+        const ticketAccent      = clean(draft['ticket_accent_color'],      '#C41E3A')
+        const ticketRcv         = clean(draft['ticket_received_color'],    '#22C55E')
+        const ticketHeader      = clean(draft['ticket_header_color'],      '#0E0E12')
+        const ticketHeaderText  = clean(draft['ticket_header_text_color'], ticketAccent)
+        const ticketFooter      = clean(draft['ticket_footer_text'],       'Merci de votre confiance · Conservez ce reçu')
+        const rptHeader         = clean(draft['pdf_header_color'],         '#0C0C0E')
+        const rptAccent         = clean(draft['pdf_accent_color'],         '#C41E3A')
+        const rptText           = clean(draft['pdf_text_color'],           '#111318')
+        const footerTxt         = clean(draft['pdf_footer_text'],          '')
+        const ticketColors      = (grouped['pdf'] ?? []).filter((s: Setting) => s.key.startsWith('ticket_') && s.input_type === 'color')
+        const ticketTexts       = (grouped['pdf'] ?? []).filter((s: Setting) => s.key.startsWith('ticket_') && s.input_type === 'text')
+        const reportColors      = (grouped['pdf'] ?? []).filter((s: Setting) => !s.key.startsWith('ticket_') && s.input_type === 'color')
 
         return (
           <div className="space-y-6">
@@ -766,13 +787,23 @@ export function ParametresClient({ coop, agents, grouped }: {
 
             {/* ── Ticket colors + Ticket preview ── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <SectionCard title="Couleurs du ticket de caisse" icon={Palette} description="Couleurs de la bande d'accent et du montant reçu" accent="#8B5CF6">
+              <SectionCard title="Personnalisation du ticket" icon={Palette} description="Couleurs, en-tête, pied de page et logo du ticket de caisse" accent="#8B5CF6">
                 {ticketColors.map((s: Setting) => (
+                  <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
+                ))}
+                {ticketTexts.map((s: Setting) => (
                   <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
                 ))}
               </SectionCard>
               <div className="space-y-3 flex flex-col">
-                <TicketPreview accentColor={ticketAccent} receivedColor={ticketRcv} logoUrl={logoUrl || undefined} />
+                <TicketPreview
+                  accentColor={ticketAccent}
+                  receivedColor={ticketRcv}
+                  headerColor={ticketHeader}
+                  headerTextColor={ticketHeaderText}
+                  footerText={ticketFooter}
+                  logoUrl={logoUrl || undefined}
+                />
               </div>
             </div>
 

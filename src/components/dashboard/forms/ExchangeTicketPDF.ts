@@ -1,8 +1,14 @@
 // Client-side PDF ticket generator for bureau de change receipts
+import { urlToBase64 } from '@/lib/pdfConfig'
 
 export interface TicketConfig {
-  accent_color:   string   // heading / ticket-number color
-  received_color: string   // "montant reçu" highlight color
+  accent_color:        string   // ticket-number / underline color
+  received_color:      string   // "montant reçu" highlight color
+  header_color?:       string   // header band background (default: '#0E0E12')
+  header_text_color?:  string   // coop name text color (default: accent_color)
+  footer_text?:        string   // bottom bar text
+  logo_url?:           string   // public URL of logo image
+  logo_enabled?:       boolean  // whether to show logo
 }
 
 export const DEFAULT_CONFIG: TicketConfig = {
@@ -38,7 +44,6 @@ function fDateTime(iso: string) {
   }).format(new Date(iso))
 }
 
-// Parse a hex color to [r,g,b]
 function hex(h: string): [number, number, number] {
   const c = h.replace('#', '')
   return [
@@ -63,19 +68,29 @@ export async function generateExchangeTicketPDF(
 
   const AC = hex(config.accent_color)
   const RC = hex(config.received_color)
+  const HC = hex(config.header_color ?? '#0E0E12')
+  const HTC = config.header_text_color ? hex(config.header_text_color) : AC
 
-  // ── Header block ─────────────────────────────────────────────────────────
-  doc.setFillColor(14, 14, 18)
+  // Header block
+  doc.setFillColor(...HC)
   doc.rect(0, 0, W, 28, 'F')
 
   // Accent bar at very top
   doc.setFillColor(...AC)
   doc.rect(0, 0, W, 2.5, 'F')
 
+  // Logo (top-left of header)
+  if (config.logo_enabled !== false && config.logo_url) {
+    const logoData = await urlToBase64(config.logo_url)
+    if (logoData) {
+      try { doc.addImage(logoData, L, 4, 12, 10) } catch { /* ignore */ }
+    }
+  }
+
   y = 10
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(9.5)
-  doc.setTextColor(...AC)
+  doc.setTextColor(...HTC)
   doc.text(ticket.coop_name.toUpperCase(), cx, y, { align: 'center' })
 
   y += 5
@@ -90,7 +105,7 @@ export async function generateExchangeTicketPDF(
   doc.setTextColor(100, 100, 110)
   doc.text(fDateTime(ticket.created_at), cx, y, { align: 'center' })
 
-  // ── Ticket number ─────────────────────────────────────────────────────────
+  // Ticket number
   y = 36
   doc.setFont('helvetica', 'bold')
   doc.setFontSize(7)
@@ -109,14 +124,14 @@ export async function generateExchangeTicketPDF(
   const tw = doc.getTextWidth(ticket.ticket_number) + 4
   doc.line(cx - tw / 2, y, cx + tw / 2, y)
 
-  // ── Divider ───────────────────────────────────────────────────────────────
+  // Divider
   y += 6
   doc.setDrawColor(35, 35, 45)
   doc.setLineWidth(0.3)
   doc.line(L, y, R, y)
   y += 5
 
-  // ── Client row ────────────────────────────────────────────────────────────
+  // Client row
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(6.5)
   doc.setTextColor(110, 110, 120)
@@ -127,13 +142,13 @@ export async function generateExchangeTicketPDF(
   doc.text(`${ticket.client_first_name} ${ticket.client_last_name}`, R, y, { align: 'right' })
   y += 7
 
-  // ── Divider ───────────────────────────────────────────────────────────────
+  // Divider
   doc.setDrawColor(35, 35, 45)
   doc.setLineWidth(0.3)
   doc.line(L, y, R, y)
   y += 6
 
-  // ── Info rows helper ──────────────────────────────────────────────────────
+  // Info rows helper
   function row(label: string, value: string, valueColor?: [number,number,number]) {
     doc.setFont('helvetica', 'normal')
     doc.setFontSize(6.5)
@@ -153,9 +168,8 @@ export async function generateExchangeTicketPDF(
     `1 ${ticket.from_currency} = ${Number(ticket.rate_applied).toFixed(4)} ${ticket.to_currency}`)
   row('DEVISE REÇUE',   ticket.to_currency)
 
-  // ── Montant reçu — highlighted ────────────────────────────────────────────
+  // Montant reçu — highlighted
   y += 1
-  doc.setFillColor(RC[0], RC[1], RC[2], 0.08)
   doc.setFillColor(Math.round(RC[0] * 0.12), Math.round(RC[1] * 0.12), Math.round(RC[2] * 0.12))
   doc.roundedRect(L - 1, y - 5, R - L + 2, 14, 1.5, 1.5, 'F')
   doc.setDrawColor(...RC)
@@ -172,7 +186,7 @@ export async function generateExchangeTicketPDF(
   doc.text(fmt(ticket.amount_received, ticket.to_currency), R - 1, y + 7, { align: 'right' })
   y += 17
 
-  // ── Notes ─────────────────────────────────────────────────────────────────
+  // Notes
   if (ticket.notes) {
     doc.setDrawColor(35, 35, 45)
     doc.setLineWidth(0.3)
@@ -189,7 +203,7 @@ export async function generateExchangeTicketPDF(
     y += lines.length * 3.5 + 3
   }
 
-  // ── Footer ────────────────────────────────────────────────────────────────
+  // Footer
   doc.setDrawColor(35, 35, 45)
   doc.setLineWidth(0.3)
   doc.line(L, y, R, y)
@@ -203,13 +217,14 @@ export async function generateExchangeTicketPDF(
   doc.text(ticket.agent_name, R, y, { align: 'right' })
   y += 8
 
-  // Bottom accent bar
+  // Bottom accent bar with footer text
   doc.setFillColor(...AC)
   doc.rect(0, 160, W, 5, 'F')
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(5.5)
   doc.setTextColor(255, 255, 255)
-  doc.text('Merci de votre confiance  ·  Conservez ce reçu', cx, 163.5, { align: 'center' })
+  const footerText = config.footer_text ?? 'Merci de votre confiance  ·  Conservez ce reçu'
+  doc.text(footerText, cx, 163.5, { align: 'center' })
 
   doc.save(`ticket-${ticket.ticket_number}.pdf`)
 }

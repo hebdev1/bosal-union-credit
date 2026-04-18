@@ -4,7 +4,6 @@ import { Header } from '@/components/dashboard/Header'
 import { PageShell } from '@/components/dashboard/ui/DataTable'
 import { CreateLoanModal } from '@/components/dashboard/forms/CreateLoanModal'
 import { PretsClient } from '@/components/dashboard/forms/PretsClient'
-import { CloseDayButton } from '@/components/dashboard/forms/CloseDayButton'
 import { buildPdfConfig } from '@/lib/pdfConfig'
 import { formatHTG } from '@/lib/formatters'
 
@@ -50,12 +49,7 @@ export default async function PretsPage() {
       <PageShell
         title="Prêts"
         description={`${rows.length} prêt${rows.length !== 1 ? 's' : ''} · ${actifs.length} actif${actifs.length !== 1 ? 's' : ''} · ${pendingRows.length} en attente`}
-        action={
-          <div className="flex items-center gap-2">
-            <CloseDayButton />
-            <CreateLoanModal members={members} />
-          </div>
-        }
+        action={<CreateLoanModal members={members} />}
       >
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

@@ -6,9 +6,7 @@ import { CreateExchangeModal } from '@/components/dashboard/forms/CreateExchange
 import { CreateRateModal } from '@/components/dashboard/forms/CreateRateModal'
 import { BureauDeChangeHistoryClient } from '@/components/dashboard/forms/BureauDeChangeHistoryClient'
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
-import { CloseDayButton } from '@/components/dashboard/forms/CloseDayButton'
-import { type TicketConfig, DEFAULT_CONFIG } from '@/components/dashboard/forms/ExchangeTicketPDF'
-import { buildPdfConfig } from '@/lib/pdfConfig'
+import { buildPdfConfig, buildTicketConfig } from '@/lib/pdfConfig'
 import { formatHTG, formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Bureau de change' }
@@ -41,19 +39,6 @@ export default async function BureauDeChangePage() {
   const coopName  = (coopRow as any)?.name  ?? 'Bosal Union Crédit'
   const agentName = (agentRow as any)?.name ?? '—'
 
-  // Fetch ticket color settings
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: ticketSettings } = await (supabase as any)
-    .from('app_settings')
-    .select('key, value')
-    .in('key', ['ticket_accent_color', 'ticket_received_color'])
-  const settingMap: Record<string, string> = {}
-  for (const s of (ticketSettings ?? [])) settingMap[s.key] = String(s.value).replace(/"/g, '')
-  const ticketConfig: TicketConfig = {
-    accent_color:   settingMap['ticket_accent_color']   || DEFAULT_CONFIG.accent_color,
-    received_color: settingMap['ticket_received_color'] || DEFAULT_CONFIG.received_color,
-  }
-
   const [ratesRes, txRes, pdfRes] = await Promise.allSettled([
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)
@@ -73,6 +58,7 @@ export default async function BureauDeChangePage() {
   const rates        = (ratesRes.status === 'fulfilled' ? (ratesRes.value.data ?? []) : []) as any[]
   const txs          = (txRes.status === 'fulfilled'   ? (txRes.value.data ?? [])   : []) as any[]
   const reportConfig = buildPdfConfig(((pdfRes as any).status === 'fulfilled' ? ((pdfRes as any).value.data ?? []) : []) as { key: string; value: unknown }[])
+  const ticketConfig = buildTicketConfig(((pdfRes as any).status === 'fulfilled' ? ((pdfRes as any).value.data ?? []) : []) as { key: string; value: unknown }[])
 
   const activeRates       = rates.filter(r => r.is_active)
   const inactiveRates     = rates.filter(r => !r.is_active)
@@ -86,7 +72,6 @@ export default async function BureauDeChangePage() {
         description={`${activeRates.length} taux actif${activeRates.length !== 1 ? 's' : ''} · ${txs.length} opération${txs.length !== 1 ? 's' : ''}`}
         action={
           <div className="flex items-center gap-2">
-            <CloseDayButton />
             <BureauDeChangeExportButton txs={txs} rates={rates} />
             <CreateRateModal />
             <CreateExchangeModal
