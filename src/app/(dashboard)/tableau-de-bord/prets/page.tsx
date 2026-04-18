@@ -12,7 +12,7 @@ export const metadata: Metadata = { title: 'Prêts' }
 export default async function PretsPage() {
   const supabase = await createClient()
 
-  const [loansRes, repaymentsRes, membersRes, pdfRes] = await Promise.all([
+  const [loansRes, repaymentsRes, membersRes, accountsRes, pdfRes] = await Promise.all([
     supabase
       .from('loans')
       .select('id, loan_number, principal_amount, interest_rate, duration_months, monthly_payment, total_amount_due, amount_paid, status, purpose, created_at, disbursed_at, due_date, members(first_name, last_name, member_number)')
@@ -28,6 +28,11 @@ export default async function PretsPage() {
       .select('id, first_name, last_name, member_number')
       .eq('status', 'active')
       .order('last_name', { ascending: true }),
+    supabase
+      .from('accounts')
+      .select('id, account_number, currency, account_type, member_id')
+      .eq('status', 'active')
+      .order('account_number', { ascending: true }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any).from('app_settings').select('key, value').eq('category', 'pdf'),
   ])
@@ -35,6 +40,7 @@ export default async function PretsPage() {
   const rows         = (loansRes.data ?? []) as any[]
   const repayments   = (repaymentsRes.data ?? []) as any[]
   const members      = (membersRes.data ?? []) as any[]
+  const accounts     = (accountsRes.data ?? []) as any[]
   const reportConfig = buildPdfConfig(((pdfRes as any)?.data ?? []) as { key: string; value: unknown }[])
 
   const actifs      = rows.filter((l: any) => l.status === 'active')
@@ -49,7 +55,7 @@ export default async function PretsPage() {
       <PageShell
         title="Prêts"
         description={`${rows.length} prêt${rows.length !== 1 ? 's' : ''} · ${actifs.length} actif${actifs.length !== 1 ? 's' : ''} · ${pendingRows.length} en attente`}
-        action={<CreateLoanModal members={members} />}
+        action={<CreateLoanModal members={members} accounts={accounts} />}
       >
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

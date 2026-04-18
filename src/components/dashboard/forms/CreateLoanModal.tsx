@@ -19,20 +19,38 @@ export interface LoanMember {
   member_number: string
 }
 
-interface Props {
-  members: LoanMember[]
+export interface LoanAccount {
+  id: string
+  account_number: string
+  currency: string
+  account_type: string
+  member_id: string
 }
 
-export function CreateLoanModal({ members }: Props) {
+interface Props {
+  members: LoanMember[]
+  accounts: LoanAccount[]
+}
+
+export function CreateLoanModal({ members, accounts }: Props) {
   const [open, setOpen]         = React.useState(false)
   const [pending, setPending]   = React.useState(false)
   const [error, setError]       = React.useState<string | null>(null)
   const formRef                 = React.useRef<HTMLFormElement>(null)
 
+  // Selected member to filter accounts
+  const [selectedMemberId, setSelectedMemberId] = React.useState('')
+
   // Live preview state
   const [principal, setPrincipal]       = React.useState('')
   const [interestRate, setInterestRate] = React.useState('12')
   const [duration, setDuration]         = React.useState('12')
+
+  // Accounts for selected member
+  const memberAccounts = React.useMemo(
+    () => accounts.filter(a => a.member_id === selectedMemberId),
+    [accounts, selectedMemberId]
+  )
 
   // Flat-rate calculations
   const principalNum = parseFloat(principal)
@@ -53,6 +71,7 @@ export function CreateLoanModal({ members }: Props) {
     setPrincipal('')
     setInterestRate('12')
     setDuration('12')
+    setSelectedMemberId('')
     formRef.current?.reset()
   }
 
@@ -117,7 +136,8 @@ export function CreateLoanModal({ members }: Props) {
                   required
                   className={INPUT}
                   style={INPUT_STYLE}
-                  defaultValue=""
+                  value={selectedMemberId}
+                  onChange={e => setSelectedMemberId(e.target.value)}
                 >
                   <option value="" disabled>Sélectionner un membre…</option>
                   {members.map(m => (
@@ -126,6 +146,41 @@ export function CreateLoanModal({ members }: Props) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Compte associé */}
+              <div>
+                <label className={LABEL} style={LABEL_STYLE}>Compte associé *</label>
+                <select
+                  name="account_id"
+                  required
+                  className={INPUT}
+                  style={{
+                    ...INPUT_STYLE,
+                    opacity: selectedMemberId ? 1 : 0.5,
+                  }}
+                  defaultValue=""
+                  disabled={!selectedMemberId}
+                >
+                  <option value="" disabled>
+                    {selectedMemberId
+                      ? memberAccounts.length === 0
+                        ? 'Aucun compte actif pour ce membre'
+                        : 'Sélectionner un compte…'
+                      : 'Sélectionnez d\'abord un membre'
+                    }
+                  </option>
+                  {memberAccounts.map(a => (
+                    <option key={a.id} value={a.id}>
+                      {a.account_number} — {a.currency} ({a.account_type})
+                    </option>
+                  ))}
+                </select>
+                {selectedMemberId && memberAccounts.length === 0 && (
+                  <p className="text-[11px] mt-1" style={{ color: '#F87171' }}>
+                    Ce membre n&apos;a aucun compte actif. Créez-en un d&apos;abord.
+                  </p>
+                )}
               </div>
 
               {/* Capital */}

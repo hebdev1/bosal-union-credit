@@ -40,12 +40,14 @@ export async function createLoan(formData: FormData): Promise<{ error: string } 
   if (!agent) return { error: 'Agent introuvable' }
 
   const memberId       = formData.get('member_id') as string
+  const accountId      = formData.get('account_id') as string
   const principal      = parseFloat(formData.get('principal_amount') as string)
   const interestRate   = parseFloat(formData.get('interest_rate') as string)
   const durationMonths = parseInt(formData.get('duration_months') as string, 10)
   const purpose        = (formData.get('purpose') as string).trim() || null
 
   if (!memberId)          return { error: 'Veuillez sélectionner un membre.' }
+  if (!accountId)         return { error: 'Veuillez sélectionner un compte.' }
   if (isNaN(principal) || principal <= 0) return { error: 'Montant du capital invalide.' }
   if (isNaN(interestRate) || interestRate < 0) return { error: 'Taux d\'intérêt invalide.' }
   if (isNaN(durationMonths) || durationMonths <= 0) return { error: 'Durée invalide.' }
@@ -70,6 +72,7 @@ export async function createLoan(formData: FormData): Promise<{ error: string } 
     cooperative_id:    agent.cooperative_id,
     agent_id:          agent.id,
     member_id:         memberId,
+    account_id:        accountId,
     loan_number:       loanNumber,
     principal_amount:  principal,
     interest_rate:     interestRate,
