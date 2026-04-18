@@ -4,7 +4,7 @@ import { TrendingUp, X, Loader2, ArrowRight } from 'lucide-react'
 import { createExchangeRate } from '@/app/(dashboard)/tableau-de-bord/bureau-de-change/actions'
 
 const INPUT = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
-const INPUT_STYLE = { background: '#0F1117', border: '1px solid #252A36', color: 'rgba(255,255,255,0.85)' }
+const INPUT_STYLE = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.85)' }
 const LABEL = 'block text-xs font-medium mb-1'
 const LABEL_STYLE = { color: 'rgba(255,255,255,0.50)' }
 
@@ -49,7 +49,7 @@ export function CreateRateModal() {
         type="button"
         onClick={() => setOpen(true)}
         className="flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-colors"
-        style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.80)', border: '1px solid #252A36' }}
+        style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.80)', border: '1px solid rgba(255,255,255,0.09)' }}
       >
         <TrendingUp size={14} aria-hidden="true" />
         Nouveau taux
@@ -63,11 +63,11 @@ export function CreateRateModal() {
         >
           <div
             className="w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
-            style={{ background: '#111318', border: '1px solid #252A36' }}
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: '1px solid #1a1f2e' }}>
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                   style={{ background: 'rgba(52,211,153,0.12)' }}>
@@ -167,7 +167,7 @@ export function CreateRateModal() {
                   />
                   <div
                     className="w-9 h-5 rounded-full transition-colors"
-                    style={{ background: replace ? '#C41E3A' : '#252A36' }}
+                    style={{ background: replace ? '#C41E3A' : 'rgba(255,255,255,0.07)' }}
                   >
                     <div
                       className="absolute top-0.5 w-4 h-4 rounded-full transition-transform"
@@ -199,7 +199,7 @@ export function CreateRateModal() {
               <div className="flex justify-end gap-3 pt-1">
                 <button type="button" onClick={() => setOpen(false)}
                   className="h-9 px-4 rounded-lg text-sm font-medium"
-                  style={{ background: 'transparent', border: '1px solid #252A36', color: 'rgba(255,255,255,0.55)' }}>
+                  style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.55)' }}>
                   Annuler
                 </button>
                 <button

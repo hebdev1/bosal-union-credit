@@ -108,11 +108,11 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
         </Link>
 
         {/* ── Account hero card ── */}
-        <div className="rounded-2xl overflow-hidden" style={{ background: '#111318', border: `1px solid ${account.status === 'active' ? 'rgba(74,222,128,0.28)' : '#252A36'}` }}>
+        <div className="rounded-2xl overflow-hidden" style={{ background: '#0D1018', border: `1px solid ${account.status === 'active' ? 'rgba(74,222,128,0.28)' : 'rgba(255,255,255,0.09)'}` }}>
 
           {/* Top bar */}
           <div className="px-6 py-5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
-            style={{ borderBottom: '1px solid #1a1f2e' }}>
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <div className="flex items-center gap-4">
               {/* Avatar */}
               <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 text-base font-bold"
@@ -160,14 +160,14 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
           </div>
 
           {/* Stats row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px" style={{ background: '#1a1f2e' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-px" style={{ background: 'rgba(255,255,255,0.05)' }}>
             {[
               { label: `Dépôts (${txs.filter(t => t.transaction_type === 'deposit').length})`,     value: formatCurrency(totalDeposits, account.currency),    color: '#4ADE80' },
               { label: `Retraits (${txs.filter(t => t.transaction_type === 'withdrawal').length})`, value: formatCurrency(totalWithdrawals, account.currency), color: '#F87171' },
               { label: 'Flux net',                                                                   value: formatCurrency(netFlow, account.currency),          color: netFlow >= 0 ? '#4ADE80' : '#F87171' },
               { label: `Total transactions`,                                                          value: String(txs.length),                                 color: 'rgba(255,255,255,0.80)' },
             ].map(s => (
-              <div key={s.label} className="px-5 py-4" style={{ background: '#111318' }}>
+              <div key={s.label} className="px-5 py-4" style={{ background: '#0D1018' }}>
                 <p className="text-base font-bold kpi-value" style={{ color: s.color }}>{s.value}</p>
                 <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
               </div>
@@ -181,7 +181,7 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
           {/* Member info */}
           {member && (
             <div className="lg:col-span-2 rounded-xl p-5 space-y-4"
-              style={{ background: '#111318', border: '1px solid #252A36' }}>
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               <h2 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>
                 Informations du membre
               </h2>
@@ -214,7 +214,7 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
             {/* Plan card */}
             {plan ? (
               <div className="rounded-xl p-5 space-y-3"
-                style={{ background: '#111318', border: '1px solid rgba(52,211,153,0.22)' }}>
+                style={{ background: '#0D1018', border: '1px solid rgba(52,211,153,0.22)' }}>
                 <h2 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>
                   Plan d&apos;épargne
                 </h2>
@@ -244,7 +244,7 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
               </div>
             ) : (
               <div className="rounded-xl p-5"
-                style={{ background: '#111318', border: '1px solid #252A36' }}>
+                style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
                 <h2 className="text-sm font-semibold mb-2" style={{ color: 'rgba(255,255,255,0.75)' }}>Plan d&apos;épargne</h2>
                 <p className="text-xs" style={{ color: 'rgba(255,255,255,0.30)' }}>Aucun plan assigné</p>
               </div>
@@ -252,7 +252,7 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
 
             {/* Account meta */}
             <div className="rounded-xl p-5 space-y-3"
-              style={{ background: '#111318', border: '1px solid #252A36' }}>
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               <h2 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.75)' }}>
                 Détails du compte
               </h2>
@@ -278,10 +278,10 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
             <h2 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>
               Prêts du membre ({loans.length})
             </h2>
-            <div className="rounded-xl overflow-hidden" style={{ background: '#111318', border: '1px solid #252A36' }}>
+            <div className="rounded-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               {/* Header */}
               <div className="grid grid-cols-6 gap-4 px-5 py-3"
-                style={{ borderBottom: '1px solid #1a1f2e', background: '#0F1117' }}>
+                style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.04)' }}>
                 {['N° Prêt', 'Capital', 'Remboursé', 'Mensualité', 'Statut', 'Date'].map(h => (
                   <p key={h} className="text-[11px] font-semibold uppercase tracking-wide"
                     style={{ color: 'rgba(255,255,255,0.35)' }}>{h}</p>
@@ -293,13 +293,13 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
                 return (
                   <div key={l.id}
                     className="grid grid-cols-6 gap-4 px-5 py-3.5 items-center"
-                    style={{ borderTop: idx === 0 ? 'none' : '1px solid #1a1f2e' }}>
+                    style={{ borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
                     <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.70)' }}>{l.loan_number}</p>
                     <p className="text-sm font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.88)' }}>
                       {formatHTG(Number(l.principal_amount))}
                     </p>
                     <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: '#252A36' }}>
+                      <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
                         <div className="h-full rounded-full"
                           style={{ width: `${pct}%`, background: pct >= 80 ? '#4ADE80' : pct >= 40 ? '#FCD34D' : '#C41E3A' }} />
                       </div>
@@ -326,7 +326,7 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
             Historique des transactions ({txs.length})
           </h2>
           {txs.length === 0 ? (
-            <div className="rounded-xl" style={{ background: '#111318', border: '1px solid #252A36' }}>
+            <div className="rounded-xl" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               <EmptyState title="Aucune transaction" description="Les transactions de ce compte apparaîtront ici." />
             </div>
           ) : (

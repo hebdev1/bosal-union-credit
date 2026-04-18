@@ -45,7 +45,7 @@ export default async function TransactionsPage() {
             { label: 'Flux net',          value: formatHTG(flux),        color: flux >= 0 ? '#4ADE80' : '#F87171' },
           ].map(k => (
             <div key={k.label} className="rounded-xl px-5 py-4"
-              style={{ background: '#111318', border: '1px solid #252A36' }}>
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               <p className="text-xl font-semibold kpi-value" style={{ color: k.color }}>{k.value}</p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>{k.label}</p>
             </div>

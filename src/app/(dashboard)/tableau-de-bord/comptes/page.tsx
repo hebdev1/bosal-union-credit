@@ -55,7 +55,7 @@ export default async function ComptesPage() {
             { label: 'Solde USD total', value: formatUSD(totalUSD) },
           ].map(k => (
             <div key={k.label} className="rounded-xl px-5 py-4"
-              style={{ background: '#111318', border: '1px solid #252A36' }}>
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               <p className="text-xl font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.95)' }}>{k.value}</p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>{k.label}</p>
             </div>
@@ -74,7 +74,7 @@ export default async function ComptesPage() {
                 const linked = rows.filter((a: any) => a.savings_product_id === p.id).length
                 return (
                   <div key={p.id} className="rounded-xl px-4 py-3.5 space-y-1.5"
-                    style={{ background: '#111318', border: '1px solid #252A36' }}>
+                    style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
                     <p className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.88)' }}>{p.name}</p>
                     <p className="text-xs" style={{ color: '#34D399' }}>
                       {Number(p.interest_rate).toFixed(2)}% {PERIOD[p.interest_period] ?? p.interest_period}
@@ -143,7 +143,7 @@ export default async function ComptesPage() {
                       <Link
                         href={`/tableau-de-bord/comptes/${a.id}`}
                         className="inline-flex items-center gap-1 h-7 px-3 rounded-lg text-xs font-medium transition-opacity hover:opacity-80"
-                        style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid #252A36' }}
+                        style={{ background: 'rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.09)' }}
                       >
                         Voir profil →
                       </Link>

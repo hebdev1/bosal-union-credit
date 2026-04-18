@@ -212,7 +212,7 @@ export function TransactionsClient({ transactions, reportConfig }: Props) {
       <div className="flex items-center gap-2 flex-wrap">
         <Calendar size={13} style={{ color: 'rgba(255,255,255,0.30)' }} className="flex-shrink-0" />
         <div className="flex items-center gap-1 rounded-xl p-1 flex-shrink-0"
-          style={{ background: '#111318', border: '1px solid #252A36' }}>
+          style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
           {DATE_PRESETS.map(p => (
             <button key={p.key} type="button" onClick={() => handlePreset(p.key)}
               className="px-3 h-7 rounded-lg text-xs font-medium transition-colors"
@@ -226,17 +226,17 @@ export function TransactionsClient({ transactions, reportConfig }: Props) {
         </div>
         <input type="date" value={dateFrom} onChange={e => handleFrom(e.target.value)}
           className="h-9 rounded-xl px-3 text-xs outline-none flex-shrink-0"
-          style={{ background: '#111318', border: '1px solid #252A36', color: dateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark', minWidth: 130 }} />
+          style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark', minWidth: 130 }} />
         <span className="text-xs flex-shrink-0" style={{ color: 'rgba(255,255,255,0.20)' }}>→</span>
         <input type="date" value={dateTo} onChange={e => handleTo(e.target.value)}
           className="h-9 rounded-xl px-3 text-xs outline-none flex-shrink-0"
-          style={{ background: '#111318', border: '1px solid #252A36', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark', minWidth: 130 }} />
+          style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark', minWidth: 130 }} />
       </div>
 
       {/* Type tabs + search + export */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex items-center gap-1 rounded-xl p-1 flex-wrap"
-          style={{ background: '#111318', border: '1px solid #252A36' }}>
+          style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
           {TYPE_TABS.map(tab => {
             const active = activeTab === tab.key
             return (
@@ -262,7 +262,7 @@ export function TransactionsClient({ transactions, reportConfig }: Props) {
         <input type="text" placeholder="Chercher référence, membre, compte…" value={search}
           onChange={e => setSearch(e.target.value)}
           className="flex-1 rounded-xl px-4 h-9 text-sm outline-none"
-          style={{ background: '#111318', border: '1px solid #252A36', color: 'rgba(255,255,255,0.75)', minWidth: 0 }}
+          style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.75)', minWidth: 0 }}
         />
 
         <button type="button" onClick={handleExport}
@@ -270,7 +270,7 @@ export function TransactionsClient({ transactions, reportConfig }: Props) {
           className="flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium flex-shrink-0 transition-opacity"
           style={{
             background: 'rgba(255,255,255,0.07)',
-            border:     '1px solid #252A36',
+            border:     '1px solid rgba(255,255,255,0.09)',
             color:      'rgba(255,255,255,0.75)',
             opacity:    (exporting || filtered.length === 0) ? 0.5 : 1,
           }}>

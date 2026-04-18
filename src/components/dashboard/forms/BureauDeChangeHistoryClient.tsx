@@ -96,7 +96,7 @@ export function BureauDeChangeHistoryClient({ txs, rates, ticketConfig, reportCo
         <div className="flex items-center gap-2 flex-wrap">
           <Calendar size={13} style={{ color: 'rgba(255,255,255,0.30)' }} />
           <div className="flex items-center gap-1 rounded-xl p-1"
-            style={{ background: '#111318', border: '1px solid #252A36' }}>
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
             {DATE_PRESETS.map(p => (
               <button key={p.key} type="button" onClick={() => handlePreset(p.key)}
                 className="px-3 h-7 rounded-lg text-xs font-medium transition-colors"
@@ -110,11 +110,11 @@ export function BureauDeChangeHistoryClient({ txs, rates, ticketConfig, reportCo
           </div>
           <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setDatePreset('all') }}
             className="h-7 rounded-lg px-2 text-xs outline-none"
-            style={{ background: '#111318', border: '1px solid #252A36', color: dateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
           <span className="text-xs" style={{ color: 'rgba(255,255,255,0.20)' }}>→</span>
           <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDatePreset('all') }}
             className="h-7 rounded-lg px-2 text-xs outline-none"
-            style={{ background: '#111318', border: '1px solid #252A36', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
           <BureauDeChangeExportButton txs={filtered} rates={rates} config={reportConfig} />
           <span className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
             {filtered.length} opération{filtered.length !== 1 ? 's' : ''}

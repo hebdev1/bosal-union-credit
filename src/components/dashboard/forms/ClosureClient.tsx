@@ -300,9 +300,9 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
 
       {/* ── Today's status card ── */}
       {todayOpen ? (
-        <div className="rounded-xl overflow-hidden" style={{ background: '#111318', border: '1px solid rgba(74,222,128,0.28)' }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(74,222,128,0.28)' }}>
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid #1a1f2e' }}>
+          <div className="flex items-center justify-between px-6 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(74,222,128,0.12)' }}>
                 <Unlock size={17} style={{ color: '#4ADE80' }} />
@@ -321,14 +321,14 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
 
           {/* Live stats */}
           {todayStats && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px" style={{ background: '#1a1f2e' }}>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-px" style={{ background: 'rgba(255,255,255,0.05)' }}>
               {[
                 { label: `Dépôts  (${todayStats.depositCount})`,       value: fHTG(todayStats.deposits),     color: '#4ADE80' },
                 { label: `Retraits  (${todayStats.withdrawalCount})`,   value: fHTG(todayStats.withdrawals),  color: '#F87171' },
                 { label: `Remboursements  (${todayStats.repaymentCount})`, value: fHTG(todayStats.repayments), color: '#60A5FA' },
                 { label: `Change  (${todayStats.exchangeCount} op.)`,   value: fHTG(todayStats.exchangeIn - todayStats.exchangeOut), color: '#34D399' },
               ].map(s => (
-                <div key={s.label} className="px-5 py-4" style={{ background: '#111318' }}>
+                <div key={s.label} className="px-5 py-4" style={{ background: '#0D1018' }}>
                   <p className="text-base font-bold kpi-value" style={{ color: s.color }}>{s.value}</p>
                   <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{s.label}</p>
                 </div>
@@ -338,7 +338,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
 
           {/* Estimated closing balance */}
           {liveBalance !== null && (
-            <div className="px-6 py-3 flex items-center justify-between" style={{ borderTop: '1px solid #1a1f2e' }}>
+            <div className="px-6 py-3 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>Solde estimé à la clôture</p>
               <p className="text-sm font-bold kpi-value" style={{ color: '#4ADE80' }}>{fHTG(liveBalance)}</p>
             </div>
@@ -346,7 +346,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
 
           {/* Clôturer button — bottom / last */}
           {!success && (
-            <div className="px-6 py-4" style={{ borderTop: '1px solid #1a1f2e' }}>
+            <div className="px-6 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
               <button
                 type="button"
                 onClick={() => { setConfirmOpen(true); setError(null) }}
@@ -392,7 +392,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
             {closings.filter(c => c.status === 'closed' || c.status === 'validated').length} journée{closings.filter(c => c.status !== 'open').length !== 1 ? 's' : ''} clôturée{closings.filter(c => c.status !== 'open').length !== 1 ? 's' : ''}
           </span>
         </div>
-        <div className="rounded-xl overflow-hidden" style={{ background: '#111318', border: '1px solid #252A36' }}>
+        <div className="rounded-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
           {closings.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 text-center">
               <FileText size={22} style={{ color: 'rgba(255,255,255,0.15)', marginBottom: 10 }} />
@@ -405,7 +405,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
             const isExpanded = expandedId === c.id
             const isClosed = c.status === 'closed' || c.status === 'validated'
             return (
-              <div key={c.id} style={{ borderTop: idx === 0 ? 'none' : '1px solid #1a1f2e' }}>
+              <div key={c.id} style={{ borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
                 {/* Row header */}
                 <div
                   className="flex items-center gap-4 px-5 py-4 cursor-pointer transition-colors"
@@ -437,7 +437,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
 
                 {/* Expanded detail */}
                 {isExpanded && (
-                  <div className="px-5 pb-5 space-y-4" style={{ borderTop: '1px solid #1a1f2e' }}>
+                  <div className="px-5 pb-5 space-y-4" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
                       {[
                         { label: 'Dépôts',         value: fHTG(Number(c.total_deposits ?? 0)),             color: '#4ADE80' },
@@ -450,7 +450,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
                         { label: 'Solde clôture',   value: fHTG(Number(c.closing_balance ?? 0)),            color: 'rgba(255,255,255,0.95)' },
                       ].map(k => (
                         <div key={k.label} className="rounded-xl px-4 py-3"
-                          style={{ background: '#0F1117', border: '1px solid #1a1f2e' }}>
+                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)' }}>
                           <p className="text-sm font-bold kpi-value" style={{ color: k.color }}>{k.value}</p>
                           <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>{k.label}</p>
                         </div>
@@ -459,7 +459,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
 
                     {c.notes && (
                       <p className="text-xs px-4 py-3 rounded-xl"
-                        style={{ background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.55)', border: '1px solid #1a1f2e' }}>
+                        style={{ background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.55)', border: '1px solid rgba(255,255,255,0.05)' }}>
                         <span style={{ color: 'rgba(255,255,255,0.30)' }}>Notes : </span>{c.notes}
                       </p>
                     )}
@@ -470,7 +470,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
                           type="button"
                           onClick={() => handleHistoryPDF(c)}
                           className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium transition-colors"
-                          style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', border: '1px solid #252A36' }}
+                          style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', border: '1px solid rgba(255,255,255,0.09)' }}
                         >
                           <Download size={12} />
                           Télécharger PDF
@@ -493,10 +493,10 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
           onClick={e => { if (e.target === e.currentTarget && !closing) setConfirmOpen(false) }}
         >
           <div className="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
-            style={{ background: '#111318', border: '1px solid #252A36' }}>
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: '1px solid #1a1f2e' }}>
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center"
                   style={{ background: 'rgba(239,68,68,0.12)' }}>
@@ -535,7 +535,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
               {/* Estimated closing balance */}
               {liveBalance !== null && (
                 <div className="rounded-xl px-4 py-3 flex items-center justify-between"
-                  style={{ background: '#0F1117', border: '1px solid #252A36' }}>
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}>
                   <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>Solde de clôture estimé</p>
                   <p className="text-base font-bold kpi-value" style={{ color: '#4ADE80' }}>{fHTG(liveBalance)}</p>
                 </div>
@@ -552,7 +552,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
                   rows={2}
                   placeholder="Observations, incidents du jour…"
                   className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none"
-                  style={{ background: '#0F1117', border: '1px solid #252A36', color: 'rgba(255,255,255,0.75)' }}
+                  style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.75)' }}
                 />
               </div>
 
@@ -566,7 +566,7 @@ export function ClosureClient({ todayOpen, todayStats, closings, coopName, agent
               <div className="flex gap-3 pt-1">
                 <button type="button" onClick={() => setConfirmOpen(false)} disabled={closing}
                   className="flex-1 h-10 rounded-lg text-sm font-medium"
-                  style={{ background: 'transparent', border: '1px solid #252A36', color: 'rgba(255,255,255,0.55)', opacity: closing ? 0.5 : 1 }}>
+                  style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.55)', opacity: closing ? 0.5 : 1 }}>
                   Annuler
                 </button>
                 <button type="button" onClick={handleClose} disabled={closing}

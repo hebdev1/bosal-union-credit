@@ -99,7 +99,7 @@ export function PretsClient({ loans, repayments, lateCount, reportConfig }: Prop
           <div className="flex items-center gap-2 flex-wrap">
             <Calendar size={13} style={{ color: 'rgba(255,255,255,0.30)' }} />
             <div className="flex items-center gap-1 rounded-xl p-1"
-              style={{ background: '#111318', border: '1px solid #252A36' }}>
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               {DATE_PRESETS.map(p => (
                 <button key={p.key} type="button" onClick={() => handlePreset(p.key)}
                   className="px-3 h-7 rounded-lg text-xs font-medium transition-colors"
@@ -113,11 +113,11 @@ export function PretsClient({ loans, repayments, lateCount, reportConfig }: Prop
             </div>
             <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setDatePreset('all') }}
               className="h-7 rounded-lg px-2 text-xs outline-none"
-              style={{ background: '#111318', border: '1px solid #252A36', color: dateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.20)' }}>→</span>
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDatePreset('all') }}
               className="h-7 rounded-lg px-2 text-xs outline-none"
-              style={{ background: '#111318', border: '1px solid #252A36', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
             <PretsExportButton loans={filteredLoans} repayments={filteredRepayments} config={reportConfig} />
           </div>
         </div>
@@ -157,7 +157,7 @@ export function PretsClient({ loans, repayments, lateCount, reportConfig }: Prop
                     <TD>{formatHTG(Number(l.monthly_payment))}</TD>
                     <TD>
                       <div className="flex items-center gap-2">
-                        <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: '#252A36' }}>
+                        <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.07)' }}>
                           <div className="h-full rounded-full"
                             style={{
                               width: `${rembPercent}%`,
@@ -195,7 +195,7 @@ export function PretsClient({ loans, repayments, lateCount, reportConfig }: Prop
           <div className="flex items-center gap-2 flex-wrap">
             <Calendar size={13} style={{ color: 'rgba(255,255,255,0.30)' }} />
             <div className="flex items-center gap-1 rounded-xl p-1"
-              style={{ background: '#111318', border: '1px solid #252A36' }}>
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               {DATE_PRESETS.map(p => (
                 <button key={p.key} type="button" onClick={() => handleRepPreset(p.key)}
                   className="px-3 h-7 rounded-lg text-xs font-medium transition-colors"
@@ -209,11 +209,11 @@ export function PretsClient({ loans, repayments, lateCount, reportConfig }: Prop
             </div>
             <input type="date" value={repDateFrom} onChange={e => { setRepDateFrom(e.target.value); setRepDatePreset('all') }}
               className="h-7 rounded-lg px-2 text-xs outline-none"
-              style={{ background: '#111318', border: '1px solid #252A36', color: repDateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: repDateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.20)' }}>→</span>
             <input type="date" value={repDateTo} onChange={e => { setRepDateTo(e.target.value); setRepDatePreset('all') }}
               className="h-7 rounded-lg px-2 text-xs outline-none"
-              style={{ background: '#111318', border: '1px solid #252A36', color: repDateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: repDateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
           </div>
         </div>
         <DataCard>

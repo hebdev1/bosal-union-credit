@@ -143,7 +143,7 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
               { label: `Change (${todayStats.exchangeCount})`,     value: fHTG(todayStats.exchangeIn - todayStats.exchangeOut), color: '#FCD34D' },
               { label: 'Solde estimé',      value: fHTG(estimatedClosing),           color: estimatedClosing >= todayStats.openingBalance ? '#4ADE80' : '#F87171' },
             ].map(k => (
-              <div key={k.label} className="rounded-xl px-4 py-3" style={{ background: '#111318', border: '1px solid #252A36' }}>
+              <div key={k.label} className="rounded-xl px-4 py-3" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
                 <p className="text-base font-bold kpi-value" style={{ color: k.color }}>{k.value}</p>
                 <p className="text-[10px] mt-0.5 leading-tight" style={{ color: 'rgba(255,255,255,0.35)' }}>{k.label}</p>
               </div>
@@ -151,7 +151,7 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
           </div>
         </section>
       ) : (
-        <div className="rounded-xl px-5 py-8 text-center" style={{ background: '#111318', border: '1px solid #252A36' }}>
+        <div className="rounded-xl px-5 py-8 text-center" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
           <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.55)' }}>
             Aucune journée ouverte
           </p>
@@ -176,7 +176,7 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
               value={dateFrom}
               onChange={e => setDateFrom(e.target.value)}
               className="h-7 rounded-lg px-2 text-xs outline-none"
-              style={{ background: '#111318', border: '1px solid #252A36', color: dateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }}
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateFrom ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }}
             />
             <span className="text-xs" style={{ color: 'rgba(255,255,255,0.20)' }}>→</span>
             <input
@@ -184,7 +184,7 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
               value={dateTo}
               onChange={e => setDateTo(e.target.value)}
               className="h-7 rounded-lg px-2 text-xs outline-none"
-              style={{ background: '#111318', border: '1px solid #252A36', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }}
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }}
             />
             {(dateFrom || dateTo) && (
               <button
@@ -276,10 +276,10 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
           {/* Modal */}
           <div
             className="relative w-full max-w-md rounded-2xl"
-            style={{ background: '#181D27', border: '1px solid #252A36', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}
+            style={{ background: '#111520', border: '1px solid rgba(255,255,255,0.09)', boxShadow: '0 24px 64px rgba(0,0,0,0.7)' }}
           >
             {/* Modal header */}
-            <div className="flex items-center gap-3 px-6 py-5" style={{ borderBottom: '1px solid #252A36' }}>
+            <div className="flex items-center gap-3 px-6 py-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
               <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{ background: 'rgba(196,30,58,0.14)', border: '1px solid rgba(196,30,58,0.25)' }}>
                 <MoonStar size={17} style={{ color: '#E8314F' }} />
@@ -317,7 +317,7 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
 
               {/* Stats summary */}
               {todayStats && (
-                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid #252A36' }}>
+                <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.09)' }}>
                   {[
                     { label: 'Solde d\'ouverture',  value: fHTG(todayStats.openingBalance),  color: 'rgba(255,255,255,0.70)' },
                     { label: `Dépôts (${todayStats.depositCount})`,      value: '+' + fHTG(todayStats.deposits),      color: '#4ADE80' },
@@ -327,13 +327,13 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
                     { label: `Change sorties`,       value: '-' + fHTG(todayStats.exchangeOut),  color: '#FCD34D' },
                   ].map((row, i) => (
                     <div key={row.label} className="flex items-center justify-between px-4 py-2.5"
-                      style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderTop: i > 0 ? '1px solid #1a1f2e' : undefined }}>
+                      style={{ background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : undefined }}>
                       <span className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>{row.label}</span>
                       <span className="text-xs font-semibold kpi-value" style={{ color: row.color }}>{row.value}</span>
                     </div>
                   ))}
                   <div className="flex items-center justify-between px-4 py-3"
-                    style={{ background: 'rgba(255,255,255,0.04)', borderTop: '1px solid #252A36' }}>
+                    style={{ background: 'rgba(255,255,255,0.04)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
                     <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>Solde de clôture estimé</span>
                     <span className="text-base font-bold kpi-value" style={{ color: estimatedClosing >= todayStats.openingBalance ? '#4ADE80' : '#F87171' }}>
                       {fHTG(estimatedClosing)}
@@ -355,7 +355,7 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
                   disabled={closingState !== 'idle'}
                   className="w-full rounded-xl px-3 py-2.5 text-sm outline-none resize-none"
                   style={{
-                    background: '#0F1117',
+                    background: 'rgba(255,255,255,0.04)',
                     border: '1px solid #3B4260',
                     color: 'rgba(255,255,255,0.85)',
                     opacity: closingState !== 'idle' ? 0.5 : 1,
@@ -383,13 +383,13 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
             </div>
 
             {/* Modal footer */}
-            <div className="flex items-center gap-3 px-6 py-4" style={{ borderTop: '1px solid #252A36' }}>
+            <div className="flex items-center gap-3 px-6 py-4" style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
                 disabled={closingState === 'loading' || closingState === 'success'}
                 className="flex-1 h-10 rounded-xl text-sm font-medium transition-colors"
-                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.60)', border: '1px solid #252A36' }}
+                style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.60)', border: '1px solid rgba(255,255,255,0.09)' }}
               >
                 Annuler
               </button>

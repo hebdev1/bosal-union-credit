@@ -97,7 +97,7 @@ export default async function BureauDeChangePage() {
             { label: 'Volume total échangé',   value: formatHTG(totalVolumeGiven) },
           ].map(k => (
             <div key={k.label} className="rounded-xl px-5 py-4"
-              style={{ background: '#111318', border: '1px solid #252A36' }}>
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               <p className="text-xl font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.95)' }}>{k.value}</p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>{k.label}</p>
             </div>
@@ -120,7 +120,7 @@ export default async function BureauDeChangePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3">
               {activeRates.map(r => (
                 <div key={r.id} className="rounded-xl p-4 space-y-3"
-                  style={{ background: '#111318', border: '1px solid rgba(52,211,153,0.18)' }}>
+                  style={{ background: '#0D1018', border: '1px solid rgba(52,211,153,0.18)' }}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <CurrencyTag code={r.from_currency} />

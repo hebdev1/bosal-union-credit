@@ -68,7 +68,7 @@ export default async function RapportsPage() {
             { label: 'Membres actifs', value: String(activeMembers),        color: '#60A5FA' },
           ].map(k => (
             <div key={k.label} className="rounded-xl px-5 py-4"
-              style={{ background: '#111318', border: '1px solid #252A36' }}>
+              style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
               <p className="text-xl font-bold kpi-value" style={{ color: k.color }}>{k.value}</p>
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>{k.label}</p>
             </div>

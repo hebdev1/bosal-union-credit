@@ -78,29 +78,30 @@
 }
 
 :root {
-  --sidebar-width: 260px;
-  --sidebar-collapsed: 68px;
-  --header-height: 60px;
+  --sidebar-width: 256px;
+  --sidebar-collapsed: 64px;
+  --header-height: 56px;
   --page-gutter: 24px;
   --content-max: 1280px;
 
-  --background:            #0C0C0E;
-  --foreground:            rgba(255,255,255,0.95);
-  --card:                  #111318;
-  --card-foreground:       rgba(255,255,255,0.95);
-  --popover:               #181D27;
-  --popover-foreground:    rgba(255,255,255,0.95);
+  /* Finance Premium — deeper blacks */
+  --background:            #07080C;
+  --foreground:            rgba(255,255,255,0.92);
+  --card:                  #0D1018;
+  --card-foreground:       rgba(255,255,255,0.92);
+  --popover:               #111520;
+  --popover-foreground:    rgba(255,255,255,0.92);
   --primary:               #C41E3A;
   --primary-foreground:    #ffffff;
-  --secondary:             #181D27;
+  --secondary:             #131824;
   --secondary-foreground:  rgba(255,255,255,0.80);
-  --muted:                 #181D27;
-  --muted-foreground:      rgba(255,255,255,0.50);
-  --accent:                #252A36;
-  --accent-foreground:     rgba(255,255,255,0.95);
+  --muted:                 #131824;
+  --muted-foreground:      rgba(255,255,255,0.45);
+  --accent:                #1C2030;
+  --accent-foreground:     rgba(255,255,255,0.92);
   --destructive:           #EF4444;
-  --border:                #252A36;
-  --input:                 #252A36;
+  --border:                rgba(255,255,255,0.07);
+  --input:                 rgba(255,255,255,0.07);
   --ring:                  #C41E3A;
   --radius:                0.625rem;
 
@@ -110,13 +111,13 @@
   --chart-4: #F59E0B;
   --chart-5: #8B5CF6;
 
-  --sidebar:                    #0C0C0E;
-  --sidebar-foreground:         rgba(255,255,255,0.95);
+  --sidebar:                    #080A0F;
+  --sidebar-foreground:         rgba(255,255,255,0.92);
   --sidebar-primary:            #C41E3A;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent:             #181D27;
+  --sidebar-accent:             #131824;
   --sidebar-accent-foreground:  rgba(255,255,255,0.80);
-  --sidebar-border:             #252A36;
+  --sidebar-border:             rgba(255,255,255,0.06);
   --sidebar-ring:               #C41E3A;
 }
 
@@ -132,16 +133,16 @@
     @apply h-full;
   }
   body {
-    background: #0C0C0E;
-    color: rgba(255,255,255,0.95);
+    background: #07080C;
+    color: rgba(255,255,255,0.92);
     font-size: 15px;
     line-height: 1.6;
     @apply min-h-full;
   }
   ::-webkit-scrollbar       { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: #252A36; border-radius: 3px; }
-  ::-webkit-scrollbar-thumb:hover { background: #363D52; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.10); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
   :focus-visible { outline: 2px solid #C41E3A; outline-offset: 2px; }
   :focus:not(:focus-visible) { outline: none; }
 }
@@ -158,12 +159,16 @@
     font-family: "Instrument Serif", Georgia, serif;
   }
   .card-surface {
-    background: #111318;
-    border: 1px solid #252A36;
-    border-radius: 10px;
-    transition: border-color 120ms ease;
+    background: #0D1018;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
   }
-  .card-surface:hover { border-color: #363D52; }
+  .card-surface:hover {
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  }
   .badge-success { color: #4ADE80; background: rgba(34,197,94,0.12); }
   .badge-warning { color: #FCD34D; background: rgba(245,158,11,0.12); }
   .badge-danger  { color: #F87171; background: rgba(239,68,68,0.12); }

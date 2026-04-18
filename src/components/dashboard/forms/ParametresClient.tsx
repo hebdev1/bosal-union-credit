@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 /* ── Constants ──────────────────────────────────────────────────────────── */
 const SUPABASE_URL = 'https://ebioqgjyzrhjxxlugzcz.supabase.co'
 const INPUT = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
-const IS = { background: '#0F1117', border: '1px solid #3B4260', color: 'rgba(255,255,255,0.90)' }
+const IS = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.90)' }
 const ROLE_LABELS: Record<string, string> = { admin: 'Admin', manager: 'Manager', cashier: 'Caissier' }
 const STATUS_CFG: Record<string, { color: string; bg: string }> = {
   active:    { color: '#4ADE80', bg: 'rgba(34,197,94,0.12)'  },
@@ -72,7 +72,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (v: string)
     <div ref={ref}>
       <button ref={btnRef} type="button" onClick={handleOpen}
         className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs font-medium transition-colors"
-        style={{ background: '#0F1117', border: '1px solid #3B4260', color: 'rgba(255,255,255,0.80)' }}>
+        style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.80)' }}>
         <span className="w-4 h-4 rounded-sm flex-shrink-0 shadow-sm" style={{ background: value }} />
         <span className="font-mono">{value}</span>
         <Palette size={11} className="ml-1 opacity-50" />
@@ -85,7 +85,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (v: string)
             position: 'fixed',
             zIndex: 9999,
             background: '#181D27',
-            border: '1px solid #252A36',
+            border: '1px solid rgba(255,255,255,0.09)',
             ...dropPos,
           }}
         >
@@ -105,7 +105,7 @@ function ColorPicker({ value, onChange }: { value: string; onChange: (v: string)
               <input type="color" value={custom} onChange={e => setCustom(e.target.value)}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
               <div className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs"
-                style={{ background: '#0F1117', border: '1px solid #3B4260', color: 'rgba(255,255,255,0.70)' }}>
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.70)' }}>
                 <span className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: custom }} />
                 <span className="font-mono">{custom}</span>
               </div>
@@ -152,12 +152,12 @@ function LogoUpload({ settingKey, current }: { settingKey: string; current: stri
     <div className="flex items-center gap-3">
       {url ? (
         <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0"
-          style={{ background: '#0F1117', border: '1px solid #252A36' }}>
+          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)' }}>
           <img src={url} alt="Logo" className="w-full h-full object-contain" />
         </div>
       ) : (
         <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: '#0F1117', border: '1px dashed #3B4260' }}>
+          style={{ background: 'rgba(255,255,255,0.03)', border: '1px dashed rgba(255,255,255,0.15)' }}>
           <Upload size={16} style={{ color: 'rgba(255,255,255,0.25)' }} />
         </div>
       )}
@@ -188,7 +188,7 @@ function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean
   return (
     <button type="button" onClick={() => onChange(!checked)} role="switch" aria-checked={checked}
       className="relative inline-flex h-6 w-11 flex-shrink-0 rounded-full transition-colors"
-      style={{ background: checked ? '#C41E3A' : '#252A36' }}>
+      style={{ background: checked ? '#C41E3A' : 'rgba(255,255,255,0.10)' }}>
       <span className="inline-block h-4 w-4 rounded-full shadow-sm transition-transform"
         style={{ background: '#fff', transform: checked ? 'translateX(24px)' : 'translateX(4px)', marginTop: 4 }} />
     </button>
@@ -264,7 +264,7 @@ function EmailControl({ value, onChange, placeholder }: { value: string; onChang
   if (!editing) return (
     <button type="button" onClick={() => setEditing(true)}
       className="flex items-center gap-2 h-8 px-3 rounded-lg text-xs group transition-colors"
-      style={{ background: '#0F1117', border: '1px solid #252A36', color: value ? 'rgba(255,255,255,0.80)' : 'rgba(255,255,255,0.30)' }}>
+      style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: value ? 'rgba(255,255,255,0.80)' : 'rgba(255,255,255,0.30)' }}>
       <Mail size={12} style={{ color: '#C41E3A', flexShrink: 0 }} />
       <span className="font-mono">{value || placeholder || 'non défini'}</span>
       <Pencil size={10} className="ml-1 opacity-0 group-hover:opacity-60 transition-opacity" />
@@ -312,7 +312,7 @@ function SettingRow({ s, value, onChange }: { s: Setting; value: unknown; onChan
 
   return (
     <div className="flex items-center justify-between gap-6 px-5 py-3.5"
-      style={{ borderTop: '1px solid #1a1f2e' }}>
+      style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.82)' }}>{s.label}</p>
         {s.description && <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.30)' }}>{s.description}</p>}
@@ -537,15 +537,15 @@ function CoopEditor({ coop }: { coop: Coop }) {
   }
   if (!editing) return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: '#1a1f2e' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
         {[{ label: 'Nom', value: coop.name },{ label: 'Adresse', value: coop.address ?? '—' },{ label: 'Téléphone', value: coop.phone ?? '—' }].map(f => (
-          <div key={f.label} className="px-5 py-4" style={{ borderColor: '#1a1f2e' }}>
+          <div key={f.label} className="px-5 py-4" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
             <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{f.label}</p>
             <p className="text-sm font-medium mt-1" style={{ color: 'rgba(255,255,255,0.85)' }}>{f.value}</p>
           </div>
         ))}
       </div>
-      <div className="px-5 py-3 flex justify-end" style={{ borderTop: '1px solid #1a1f2e' }}>
+      <div className="px-5 py-3 flex justify-end" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
         <button type="button" onClick={() => setEditing(true)}
           className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium"
           style={{ background: 'rgba(196,30,58,0.12)', color: '#E8314F', border: '1px solid rgba(196,30,58,0.25)' }}>
@@ -568,7 +568,7 @@ function CoopEditor({ coop }: { coop: Coop }) {
       <div className="flex gap-2 justify-end">
         <button type="button" onClick={() => { setEditing(false); setErr(null) }}
           className="h-8 px-3 rounded-lg text-xs font-medium"
-          style={{ border: '1px solid #252A36', color: 'rgba(255,255,255,0.55)', background: 'transparent' }}>Annuler</button>
+          style={{ border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.55)', background: 'transparent' }}>Annuler</button>
         <button type="submit" disabled={saving}
           className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium"
           style={{ background: '#C41E3A', color: '#fff', opacity: saving ? 0.7 : 1 }}>
@@ -621,7 +621,7 @@ function SectionCard({ title, icon: Icon, description, children, accent, scrolla
           {description && <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{description}</p>}
         </div>
       </div>
-      <div className="rounded-xl overflow-hidden" style={{ background: '#111318', border: '1px solid #252A36' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
         {scrollable ? (
           <div className="overflow-y-auto" style={{ maxHeight: 340 }}>
             {children}
@@ -700,7 +700,7 @@ export function ParametresClient({ coop, agents, grouped }: {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 p-1 rounded-xl" style={{ background: '#111318', border: '1px solid #252A36' }}>
+      <div className="flex gap-1 p-1 rounded-xl" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
         {TABS.map(t => {
           const active = tab === t.id
           return (
@@ -854,7 +854,7 @@ export function ParametresClient({ coop, agents, grouped }: {
           )}
           <SectionCard title="Agents" icon={Settings} description={`${agents.length} agent${agents.length !== 1 ? 's' : ''} — cliquez sur le statut pour le modifier`} accent="#60A5FA">
             {agents.map(a => (
-              <div key={a.id} className="flex items-center gap-4 px-5 py-3.5" style={{ borderTop: '1px solid #1a1f2e' }}>
+              <div key={a.id} className="flex items-center gap-4 px-5 py-3.5" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
                   style={{ background: '#C41E3A20', color: '#C41E3A' }}>
                   {a.name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2)}
@@ -917,7 +917,7 @@ export function ParametresClient({ coop, agents, grouped }: {
           <div className="rounded-2xl px-5 py-3 flex items-center justify-between gap-4 shadow-2xl"
             style={{
               background: '#181D27',
-              border: '1px solid #252A36',
+              border: '1px solid rgba(255,255,255,0.09)',
               backdropFilter: 'blur(12px)',
               boxShadow: '0 -4px 32px rgba(0,0,0,0.50)',
             }}>

@@ -4,7 +4,7 @@ import { PlusCircle, X, Loader2 } from 'lucide-react'
 import { createAccount } from '@/app/(dashboard)/tableau-de-bord/comptes/actions'
 
 const INPUT = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
-const INPUT_STYLE = { background: '#0F1117', border: '1px solid #252A36', color: 'rgba(255,255,255,0.85)' }
+const INPUT_STYLE = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.85)' }
 const LABEL = 'block text-xs font-medium mb-1'
 const LABEL_STYLE = { color: 'rgba(255,255,255,0.50)' }
 
@@ -52,11 +52,11 @@ export function CreateAccountModal({ members, plans = [] }: { members: Member[];
         >
           <div
             className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
-            style={{ background: '#111318', border: '1px solid #252A36', maxHeight: '90vh', overflowY: 'auto' }}
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', maxHeight: '90vh', overflowY: 'auto' }}
           >
             <div
               className="flex items-center justify-between px-6 py-4 sticky top-0"
-              style={{ borderBottom: '1px solid #1a1f2e', background: '#111318' }}
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: '#0D1018' }}
             >
               <h2 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.92)' }}>
                 Nouveau compte
@@ -151,7 +151,7 @@ export function CreateAccountModal({ members, plans = [] }: { members: Member[];
               <div className="flex justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setOpen(false)}
                   className="h-9 px-4 rounded-lg text-sm font-medium"
-                  style={{ background: 'transparent', border: '1px solid #252A36', color: 'rgba(255,255,255,0.60)' }}>
+                  style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.60)' }}>
                   Annuler
                 </button>
                 <button type="submit" disabled={pending}

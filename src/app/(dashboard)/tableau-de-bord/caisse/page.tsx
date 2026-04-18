@@ -35,7 +35,7 @@ export default async function CaissePage() {
         {/* Vault balance card */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="sm:col-span-2 rounded-xl p-6 flex flex-col gap-4"
-            style={{ background: '#111318', border: '1px solid #C41E3A33' }}>
+            style={{ background: '#0D1018', border: '1px solid #C41E3A33' }}>
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl flex items-center justify-center"
                 style={{ background: 'rgba(196,30,58,0.15)' }} aria-hidden="true">
@@ -55,7 +55,7 @@ export default async function CaissePage() {
             )}
           </div>
 
-          <div className="rounded-xl p-6 space-y-4" style={{ background: '#111318', border: '1px solid #252A36' }}>
+          <div className="rounded-xl p-6 space-y-4" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
             <div>
               <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>Solde d'ouverture</p>
               <p className="text-lg font-semibold kpi-value mt-0.5" style={{ color: 'rgba(255,255,255,0.85)' }}>
@@ -83,16 +83,16 @@ export default async function CaissePage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-sm" style={{ borderCollapse: 'collapse' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid #252A36' }}>
+                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
                       {['Date', 'Solde ouv.', 'Dépôts', 'Retraits', 'Décais. prêts', 'Remb. prêts', 'Change in', 'Change out', 'Frais', 'Solde clôt.', 'Statut'].map(h => (
                         <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider whitespace-nowrap"
-                          style={{ color: 'rgba(255,255,255,0.30)', background: '#0F1117' }}>{h}</th>
+                          style={{ color: 'rgba(255,255,255,0.30)', background: 'rgba(255,255,255,0.04)' }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {closings.map((c: any) => (
-                      <tr key={c.id} style={{ borderBottom: '1px solid #1a1f2e' }}>
+                      <tr key={c.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
                         <td className="px-4 py-3 font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
                           {new Date(c.closing_date).toLocaleDateString('fr-HT', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </td>

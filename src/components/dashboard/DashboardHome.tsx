@@ -56,31 +56,56 @@ function KpiCard({ label, value, sub, icon: Icon, accent, badge, badgeColor }: {
   icon: React.ElementType; accent?: string
   badge?: string; badgeColor?: string
 }) {
+  const [hovered, setHovered] = React.useState(false)
   return (
     <article
-      className="rounded-xl p-5 flex flex-col gap-4 transition-colors duration-120 cursor-default"
-      style={{ background: '#111318', border: '1px solid #252A36' }}
-      onMouseEnter={e => (e.currentTarget.style.borderColor = '#363D52')}
-      onMouseLeave={e => (e.currentTarget.style.borderColor = '#252A36')}
+      className="rounded-xl p-5 flex flex-col gap-4 cursor-default"
+      style={{
+        background: '#0D1018',
+        border: `1px solid ${hovered ? 'rgba(255,255,255,0.11)' : 'rgba(255,255,255,0.07)'}`,
+        boxShadow: hovered ? '0 4px 20px rgba(0,0,0,0.3)' : '0 1px 3px rgba(0,0,0,0.2)',
+        transition: 'border-color 150ms, box-shadow 150ms',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
       <div className="flex items-start justify-between">
-        <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-          style={{ background: accent ? `${accent}18` : 'rgba(255,255,255,0.06)' }} aria-hidden="true">
-          <Icon size={17} style={{ color: accent ?? 'rgba(255,255,255,0.55)' }} />
+        <div
+          className="flex items-center justify-center"
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            background: accent ? `${accent}14` : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${accent ? `${accent}20` : 'rgba(255,255,255,0.07)'}`,
+          }}
+          aria-hidden="true"
+        >
+          <Icon size={16} style={{ color: accent ?? 'rgba(255,255,255,0.50)' }} />
         </div>
         {badge && (
-          <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold kpi-value"
-            style={{ background: `${badgeColor ?? '#C41E3A'}18`, color: badgeColor ?? '#C41E3A' }}>
+          <span
+            className="rounded-full text-[10px] font-semibold kpi-value"
+            style={{
+              padding: '2px 8px',
+              background: `${badgeColor ?? '#C41E3A'}18`,
+              color: badgeColor ?? '#C41E3A',
+              border: `1px solid ${badgeColor ?? '#C41E3A'}28`,
+            }}
+          >
             {badge}
           </span>
         )}
       </div>
       <div>
-        <p className="text-xl font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.95)', letterSpacing: '-0.02em' }}>
+        <p
+          className="text-xl font-semibold kpi-value"
+          style={{ color: 'rgba(255,255,255,0.94)', letterSpacing: '-0.03em', lineHeight: 1.2 }}
+        >
           {value}
         </p>
-        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.40)' }}>{label}</p>
-        {sub && <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.25)' }}>{sub}</p>}
+        <p className="text-[12px] mt-1" style={{ color: 'rgba(255,255,255,0.38)' }}>{label}</p>
+        {sub && <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.22)' }}>{sub}</p>}
       </div>
     </article>
   )
@@ -96,23 +121,60 @@ const TX_STATUS_COLORS: Record<string, string> = {
 const TX_STATUS_LABELS: Record<string, string> = {
   completed: 'Complété', pending: 'En attente', failed: 'Échoué', cancelled: 'Annulé',
 }
-const SEVERITY_CONFIG: Record<string, { color: string; bg: string; label: string }> = {
-  critical: { color: '#F87171', bg: 'rgba(239,68,68,0.12)', label: 'Critique' },
-  high:     { color: '#FCD34D', bg: 'rgba(245,158,11,0.12)', label: 'Élevé' },
-  medium:   { color: '#60A5FA', bg: 'rgba(59,130,246,0.12)', label: 'Moyen' },
-  low:      { color: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.06)', label: 'Faible' },
+const SEVERITY_CONFIG: Record<string, { color: string; bg: string; border: string; label: string }> = {
+  critical: { color: '#F87171', bg: 'rgba(248,113,113,0.10)', border: 'rgba(248,113,113,0.20)', label: 'Critique' },
+  high:     { color: '#FCD34D', bg: 'rgba(252,211,77,0.10)',  border: 'rgba(252,211,77,0.20)',  label: 'Élevé'   },
+  medium:   { color: '#60A5FA', bg: 'rgba(96,165,250,0.10)',  border: 'rgba(96,165,250,0.20)',  label: 'Moyen'   },
+  low:      { color: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.05)', border: 'rgba(255,255,255,0.10)', label: 'Faible' },
 }
 
-/* ── Currency pair label ────────────────────────────────────────────────── */
+/* ── Currency flag chip ─────────────────────────────────────────────────── */
 function CurrencyFlag({ code }: { code: string }) {
   const colors: Record<string, string> = {
     HTG: '#C41E3A', USD: '#3B82F6', CAD: '#EF4444', DOP: '#22C55E',
   }
+  const color = colors[code] ?? '#888'
   return (
-    <span className="inline-flex items-center justify-center rounded px-1.5 py-0.5 text-[10px] font-bold kpi-value"
-      style={{ background: `${colors[code] ?? '#555'}22`, color: colors[code] ?? 'rgba(255,255,255,0.6)', minWidth: 36 }}>
+    <span
+      className="inline-flex items-center justify-center font-bold kpi-value"
+      style={{
+        fontSize: 10,
+        padding: '2px 6px',
+        borderRadius: 4,
+        background: `${color}18`,
+        color,
+        border: `1px solid ${color}28`,
+        minWidth: 36,
+        letterSpacing: '0.04em',
+      }}
+    >
       {code}
     </span>
+  )
+}
+
+/* ── Section header helper ──────────────────────────────────────────────── */
+function SectionHeader({ title, href, label }: { title: string; href?: string; label?: string }) {
+  return (
+    <div className="flex items-center justify-between mb-4">
+      <h3
+        className="text-[13px] font-semibold"
+        style={{ color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.01em' }}
+      >
+        {title}
+      </h3>
+      {href && (
+        <a
+          href={href}
+          className="text-[12px] font-medium transition-colors"
+          style={{ color: 'var(--color-brand, #C41E3A)' }}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.75')}
+          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
+        >
+          {label ?? 'Voir tout'} →
+        </a>
+      )}
+    </div>
   )
 }
 
@@ -126,51 +188,81 @@ export function DashboardHome({
 
   return (
     <div className="px-6 py-6 space-y-8 max-w-[1280px] mx-auto w-full">
+
       {/* Page header */}
       <div>
-        <h2 className="text-lg font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>Vue d&rsquo;ensemble</h2>
-        <p className="text-sm mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>Indicateurs de la coopérative en temps réel</p>
+        <h2
+          className="text-[18px] font-semibold"
+          style={{ color: 'rgba(255,255,255,0.92)', letterSpacing: '-0.03em' }}
+        >
+          Vue d&rsquo;ensemble
+        </h2>
+        <p className="text-[13px] mt-1" style={{ color: 'rgba(255,255,255,0.32)' }}>
+          Indicateurs de la coopérative en temps réel
+        </p>
       </div>
 
       {/* KPIs */}
       <section aria-label="Indicateurs clés">
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <KpiCard label="Membres actifs" value={String(activeMembers)}
-            sub="Comptes ouverts et opérationnels" icon={Users} accent="#3B82F6" />
-          <KpiCard label="Solde total HTG" value={formatHTG(totalBalanceHTG)}
-            sub={`USD : ${formatUSD(totalBalanceUSD)}`} icon={Banknote} accent="#22C55E" />
-          <KpiCard label="Cash Vault" value={vaultBalance !== null ? formatHTG(Number(vaultBalance)) : '—'}
-            icon={Landmark} accent="#F59E0B" />
-          <KpiCard label="Prêts actifs" value={formatHTG(activeLoansTotal)}
+          <KpiCard
+            label="Membres actifs"
+            value={String(activeMembers)}
+            sub="Comptes ouverts et opérationnels"
+            icon={Users}
+            accent="#3B82F6"
+          />
+          <KpiCard
+            label="Solde total HTG"
+            value={formatHTG(totalBalanceHTG)}
+            sub={`USD : ${formatUSD(totalBalanceUSD)}`}
+            icon={Banknote}
+            accent="#22C55E"
+          />
+          <KpiCard
+            label="Cash Vault"
+            value={vaultBalance !== null ? formatHTG(Number(vaultBalance)) : '—'}
+            icon={Landmark}
+            accent="#F59E0B"
+          />
+          <KpiCard
+            label="Prêts actifs"
+            value={formatHTG(activeLoansTotal)}
             sub={`${activeLoansCount} prêt${activeLoansCount !== 1 ? 's' : ''} en cours`}
-            icon={TrendingUp} accent="#8B5CF6"
+            icon={TrendingUp}
+            accent="#8B5CF6"
             badge={openFraud > 0 ? `${openFraud} alerte${openFraud > 1 ? 's' : ''}` : undefined}
-            badgeColor="#EF4444" />
+            badgeColor="#EF4444"
+          />
         </div>
       </section>
 
       {/* Exchange rates */}
       {exchangeRates.length > 0 && (
         <section aria-label="Taux de change actifs">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.85)' }}>Taux de change</h3>
-            <a href="/tableau-de-bord/bureau-de-change" className="text-xs font-medium transition-colors"
-              style={{ color: '#C41E3A' }}>Gérer →</a>
-          </div>
+          <SectionHeader title="Taux de change" href="/tableau-de-bord/bureau-de-change" label="Gérer" />
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {exchangeRates.map(r => (
-              <div key={`${r.from_currency}-${r.to_currency}-${r.created_at}`}
-                className="rounded-xl p-3.5 space-y-2"
-                style={{ background: '#111318', border: '1px solid #252A36' }}>
-                <div className="flex items-center gap-1.5">
+              <div
+                key={`${r.from_currency}-${r.to_currency}-${r.created_at}`}
+                className="rounded-xl p-3.5 space-y-2.5"
+                style={{
+                  background: '#0D1018',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                }}
+              >
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <CurrencyFlag code={r.from_currency} />
-                  <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10 }}>→</span>
+                  <span style={{ color: 'rgba(255,255,255,0.20)', fontSize: 10 }}>→</span>
                   <CurrencyFlag code={r.to_currency} />
                 </div>
-                <p className="text-base font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.95)' }}>
+                <p
+                  className="text-[15px] font-semibold kpi-value"
+                  style={{ color: 'rgba(255,255,255,0.94)', letterSpacing: '-0.02em' }}
+                >
                   {Number(r.rate).toLocaleString('fr-HT', { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
                 </p>
-                <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                <p className="text-[10px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
                   {formatRelative(r.created_at)}
                 </p>
               </div>
@@ -180,23 +272,40 @@ export function DashboardHome({
       )}
 
       {/* Transactions + Fraud */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+
         {/* Recent transactions */}
-        <section aria-label="Transactions récentes" className="lg:col-span-3 rounded-xl overflow-hidden"
-          style={{ background: '#111318', border: '1px solid #252A36' }}>
-          <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: '#252A36' }}>
-            <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>Transactions récentes</h3>
-            <a href="/tableau-de-bord/transactions" className="text-xs font-medium" style={{ color: '#C41E3A' }}>Tout voir</a>
+        <section
+          aria-label="Transactions récentes"
+          className="lg:col-span-3 rounded-xl overflow-hidden"
+          style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div
+            className="flex items-center justify-between px-5 py-4"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <h3 className="text-[13px] font-semibold" style={{ color: 'rgba(255,255,255,0.88)', letterSpacing: '-0.01em' }}>
+              Transactions récentes
+            </h3>
+            <a
+              href="/tableau-de-bord/transactions"
+              className="text-[12px] font-medium transition-opacity"
+              style={{ color: 'var(--color-brand, #C41E3A)' }}
+              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.75')}
+              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
+            >
+              Tout voir →
+            </a>
           </div>
 
           {recentTransactions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
-              <RefreshCw size={24} style={{ color: 'rgba(255,255,255,0.15)' }} aria-hidden="true" />
-              <p className="mt-3 text-sm" style={{ color: 'rgba(255,255,255,0.30)' }}>Aucune transaction</p>
+              <RefreshCw size={22} style={{ color: 'rgba(255,255,255,0.12)' }} aria-hidden="true" />
+              <p className="mt-3 text-[13px]" style={{ color: 'rgba(255,255,255,0.28)' }}>Aucune transaction</p>
             </div>
           ) : (
             <ul role="list">
-              {recentTransactions.map(tx => {
+              {recentTransactions.map((tx, i) => {
                 const isCredit = tx.transaction_type === 'deposit'
                 const statusColor = TX_STATUS_COLORS[tx.status] ?? 'rgba(255,255,255,0.35)'
                 const member = (tx.accounts as any)?.members
@@ -204,34 +313,54 @@ export function DashboardHome({
                 const currency = (tx.accounts as any)?.currency ?? 'HTG'
 
                 return (
-                  <li key={tx.id}
-                    className="flex items-center gap-4 px-5 py-3.5 transition-colors"
-                    style={{ borderTop: '1px solid #1a1f2e' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                      style={{ background: isCredit ? 'rgba(34,197,94,0.10)' : 'rgba(239,68,68,0.08)' }}
-                      aria-hidden="true">
+                  <li
+                    key={tx.id}
+                    className="flex items-center gap-3.5 px-5 py-3.5 transition-colors"
+                    style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                    onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.025)')}
+                    onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+                  >
+                    {/* Icon */}
+                    <div
+                      className="flex items-center justify-center flex-shrink-0"
+                      style={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: 9,
+                        background: isCredit ? 'rgba(74,222,128,0.09)' : 'rgba(248,113,113,0.09)',
+                        border: `1px solid ${isCredit ? 'rgba(74,222,128,0.15)' : 'rgba(248,113,113,0.15)'}`,
+                      }}
+                      aria-hidden="true"
+                    >
                       {isCredit
-                        ? <ArrowDownRight size={15} style={{ color: '#4ADE80' }} />
-                        : <ArrowUpRight size={15} style={{ color: '#F87171' }} />}
+                        ? <ArrowDownRight size={14} style={{ color: '#4ADE80' }} />
+                        : <ArrowUpRight size={14} style={{ color: '#F87171' }} />
+                      }
                     </div>
+
+                    {/* Details */}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                      <p className="text-[13px] font-medium truncate" style={{ color: 'rgba(255,255,255,0.84)' }}>
                         {TX_LABELS[tx.transaction_type] ?? tx.transaction_type}
                       </p>
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.30)' }}>{memberName}</span>
-                        <span style={{ color: 'rgba(255,255,255,0.15)' }}>·</span>
-                        <Clock size={10} aria-hidden="true" style={{ color: 'rgba(255,255,255,0.20)', flexShrink: 0 }} />
-                        <time dateTime={tx.created_at} className="text-xs" style={{ color: 'rgba(255,255,255,0.25)' }}>
+                        <span className="text-[11px] truncate" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                          {memberName}
+                        </span>
+                        <span style={{ color: 'rgba(255,255,255,0.15)', fontSize: 10 }}>·</span>
+                        <Clock size={9} aria-hidden="true" style={{ color: 'rgba(255,255,255,0.18)', flexShrink: 0 }} />
+                        <time dateTime={tx.created_at} className="text-[11px]" style={{ color: 'rgba(255,255,255,0.22)' }}>
                           {formatRelative(tx.created_at)}
                         </time>
                       </div>
                     </div>
+
+                    {/* Amount */}
                     <div className="text-right flex-shrink-0">
-                      <p className="text-sm font-semibold kpi-value"
-                        style={{ color: isCredit ? '#4ADE80' : '#F87171' }}>
+                      <p
+                        className="text-[13px] font-semibold kpi-value"
+                        style={{ color: isCredit ? '#4ADE80' : '#F87171', letterSpacing: '-0.01em' }}
+                      >
                         {isCredit ? '+' : '-'}
                         {currency === 'USD' ? formatUSD(tx.amount) : formatHTG(tx.amount)}
                       </p>
@@ -247,49 +376,99 @@ export function DashboardHome({
         </section>
 
         {/* Fraud flags */}
-        <section aria-label="Alertes fraude" className="lg:col-span-2 rounded-xl overflow-hidden"
-          style={{ background: '#111318', border: '1px solid #252A36' }}>
-          <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: '#252A36' }}>
-            <h3 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.90)' }}>Alertes fraude</h3>
+        <section
+          aria-label="Alertes fraude"
+          className="lg:col-span-2 rounded-xl overflow-hidden"
+          style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.07)' }}
+        >
+          <div
+            className="flex items-center justify-between px-5 py-4"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
+          >
+            <h3 className="text-[13px] font-semibold" style={{ color: 'rgba(255,255,255,0.88)', letterSpacing: '-0.01em' }}>
+              Alertes fraude
+            </h3>
             {openFraud > 0 && (
-              <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold kpi-value"
-                style={{ background: 'rgba(239,68,68,0.12)', color: '#F87171' }}>{openFraud}</span>
+              <span
+                className="rounded-full text-[10px] font-semibold kpi-value"
+                style={{
+                  padding: '2px 8px',
+                  background: 'rgba(248,113,113,0.12)',
+                  color: '#F87171',
+                  border: '1px solid rgba(248,113,113,0.20)',
+                }}
+              >
+                {openFraud}
+              </span>
             )}
           </div>
 
           {fraudFlags.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center mb-3"
-                style={{ background: 'rgba(34,197,94,0.10)' }} aria-hidden="true">
-                <AlertTriangle size={18} style={{ color: '#4ADE80' }} />
+              <div
+                className="flex items-center justify-center mb-3"
+                style={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 12,
+                  background: 'rgba(74,222,128,0.09)',
+                  border: '1px solid rgba(74,222,128,0.15)',
+                }}
+                aria-hidden="true"
+              >
+                <AlertTriangle size={17} style={{ color: '#4ADE80' }} />
               </div>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.30)' }}>Aucune alerte active</p>
+              <p className="text-[13px]" style={{ color: 'rgba(255,255,255,0.30)' }}>Aucune alerte active</p>
             </div>
           ) : (
             <ul role="list">
-              {fraudFlags.map(flag => {
+              {fraudFlags.map((flag, i) => {
                 const cfg = SEVERITY_CONFIG[flag.severity] ?? SEVERITY_CONFIG.medium
                 return (
-                  <li key={flag.id}
+                  <li
+                    key={flag.id}
                     className="px-5 py-3.5 transition-colors"
-                    style={{ borderTop: '1px solid #1a1f2e' }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.02)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                    style={{ borderTop: i > 0 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                    onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.025)')}
+                    onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
+                  >
                     <div className="flex items-start gap-3">
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ background: 'rgba(239,68,68,0.10)' }} aria-hidden="true">
-                        <AlertTriangle size={13} style={{ color: '#F87171' }} />
+                      <div
+                        className="flex items-center justify-center flex-shrink-0 mt-0.5"
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: 8,
+                          background: 'rgba(248,113,113,0.09)',
+                          border: '1px solid rgba(248,113,113,0.15)',
+                        }}
+                        aria-hidden="true"
+                      >
+                        <AlertTriangle size={12} style={{ color: '#F87171' }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium leading-snug" style={{ color: 'rgba(255,255,255,0.80)' }}>
+                        <p className="text-[13px] font-medium leading-snug" style={{ color: 'rgba(255,255,255,0.80)' }}>
                           {flag.rule_triggered}
                         </p>
-                        <time dateTime={flag.created_at} className="text-xs block mt-0.5" style={{ color: 'rgba(255,255,255,0.28)' }}>
+                        <time
+                          dateTime={flag.created_at}
+                          className="text-[11px] block mt-0.5"
+                          style={{ color: 'rgba(255,255,255,0.25)' }}
+                        >
                           {formatRelative(flag.created_at)}
                         </time>
                       </div>
-                      <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold flex-shrink-0"
-                        style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
+                      <span
+                        className="rounded-full text-[10px] font-semibold flex-shrink-0"
+                        style={{
+                          padding: '2px 7px',
+                          background: cfg.bg,
+                          color: cfg.color,
+                          border: `1px solid ${cfg.border}`,
+                        }}
+                      >
+                        {cfg.label}
+                      </span>
                     </div>
                   </li>
                 )
@@ -298,8 +477,14 @@ export function DashboardHome({
           )}
 
           {fraudFlags.length > 0 && (
-            <div className="px-5 py-3 border-t" style={{ borderColor: '#252A36' }}>
-              <a href="/tableau-de-bord/alertes-fraude" className="text-xs font-medium" style={{ color: '#C41E3A' }}>
+            <div className="px-5 py-3.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <a
+                href="/tableau-de-bord/alertes-fraude"
+                className="text-[12px] font-medium transition-opacity"
+                style={{ color: 'var(--color-brand, #C41E3A)' }}
+                onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.75')}
+                onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
+              >
                 Gérer les alertes →
               </a>
             </div>

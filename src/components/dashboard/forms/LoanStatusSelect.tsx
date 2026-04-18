@@ -75,7 +75,7 @@ export function LoanStatusSelect({ loanId, currentStatus }: Props) {
       {open && (
         <div
           className="absolute z-40 mt-1 w-36 rounded-xl overflow-hidden shadow-xl"
-          style={{ background: '#161B27', border: '1px solid #252A36', right: 0 }}
+          style={{ background: '#161B27', border: '1px solid rgba(255,255,255,0.09)', right: 0 }}
         >
           {STATUSES.map(s => (
             <button

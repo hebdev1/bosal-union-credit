@@ -42,7 +42,7 @@ export default async function AlertesFraudePage() {
             const cfg = SEVERITY_CFG[s]
             return (
               <div key={s} className="rounded-xl px-5 py-4 flex flex-col gap-2"
-                style={{ background: '#111318', border: `1px solid ${cfg.color}30` }}>
+                style={{ background: '#0D1018', border: `1px solid ${cfg.color}30` }}>
                 <span className="rounded-full px-2 py-0.5 text-[11px] font-medium self-start"
                   style={{ background: cfg.bg, color: cfg.color }}>{cfg.label}</span>
                 <p className="text-2xl font-bold kpi-value" style={{ color: cfg.color }}>

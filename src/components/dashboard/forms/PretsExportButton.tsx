@@ -240,7 +240,7 @@ export function PretsExportButton({ loans, repayments, config }: Props) {
       className="flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-opacity"
       style={{
         background: 'rgba(255,255,255,0.07)',
-        border: '1px solid #252A36',
+        border: '1px solid rgba(255,255,255,0.09)',
         color: 'rgba(255,255,255,0.75)',
         opacity: (exporting || loans.length === 0) ? 0.5 : 1,
       }}

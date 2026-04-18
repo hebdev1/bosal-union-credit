@@ -5,7 +5,7 @@ import { createExchangeTransaction } from '@/app/(dashboard)/tableau-de-bord/bur
 import { generateExchangeTicketPDF, type TicketData, type TicketConfig, DEFAULT_CONFIG } from './ExchangeTicketPDF'
 
 const INPUT = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
-const INPUT_STYLE = { background: '#0F1117', border: '1px solid #252A36', color: 'rgba(255,255,255,0.85)' }
+const INPUT_STYLE = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.85)' }
 const LABEL = 'block text-xs font-medium mb-1'
 const LABEL_STYLE = { color: 'rgba(255,255,255,0.50)' }
 
@@ -80,10 +80,10 @@ export function CreateExchangeModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
           style={{ background: 'rgba(0,0,0,0.70)' }}>
           <div className="w-full max-w-md rounded-2xl overflow-hidden shadow-2xl"
-            style={{ background: '#111318', border: '1px solid #252A36' }}>
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
 
             <div className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: '1px solid #1a1f2e' }}>
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <h2 className="text-base font-semibold" style={{ color: 'rgba(255,255,255,0.92)' }}>
                 {lastTicket ? 'Opération enregistrée' : 'Nouvelle opération de change'}
               </h2>
@@ -133,7 +133,7 @@ export function CreateExchangeModal({
                   <button type="button"
                     onClick={() => generateExchangeTicketPDF(lastTicket, ticketConfig)}
                     className="flex-1 flex items-center justify-center gap-2 h-9 rounded-lg text-sm font-medium"
-                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid #252A36', color: 'rgba(255,255,255,0.75)' }}>
+                    style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.75)' }}>
                     <Printer size={14} />
                     Réimprimer
                   </button>
@@ -218,7 +218,7 @@ export function CreateExchangeModal({
                 <div className="flex justify-end gap-3 pt-2">
                   <button type="button" onClick={handleClose}
                     className="h-9 px-4 rounded-lg text-sm font-medium"
-                    style={{ background: 'transparent', border: '1px solid #252A36', color: 'rgba(255,255,255,0.60)' }}>
+                    style={{ background: 'transparent', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.60)' }}>
                     Annuler
                   </button>
                   <button type="submit" disabled={pending || rates.length === 0}

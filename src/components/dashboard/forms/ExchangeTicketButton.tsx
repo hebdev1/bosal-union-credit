@@ -28,7 +28,7 @@ export function ExchangeTicketButton({
       style={{
         width: 28, height: 28,
         background: 'rgba(255,255,255,0.05)',
-        border: '1px solid #252A36',
+        border: '1px solid rgba(255,255,255,0.09)',
         color: 'rgba(255,255,255,0.50)',
         opacity: loading ? 0.6 : 1,
         flexShrink: 0,

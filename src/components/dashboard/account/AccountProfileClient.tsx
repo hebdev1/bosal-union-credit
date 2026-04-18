@@ -187,7 +187,7 @@ export function AccountProfileClient({ transactions, currency }: Props) {
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Tabs */}
         <div className="flex items-center gap-1 rounded-xl p-1 flex-wrap flex-shrink-0"
-          style={{ background: '#111318', border: '1px solid #252A36' }}>
+          style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
           {TABS.map(tab => {
             const active = activeTab === tab.key
             const cfg = TYPE_CFG[tab.key] ?? { color: 'rgba(255,255,255,0.70)', bg: 'transparent' }
@@ -226,7 +226,7 @@ export function AccountProfileClient({ transactions, currency }: Props) {
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="w-full rounded-xl pl-8 pr-4 h-9 text-sm outline-none"
-            style={{ background: '#111318', border: '1px solid #252A36', color: 'rgba(255,255,255,0.75)' }}
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.75)' }}
           />
         </div>
 
@@ -238,7 +238,7 @@ export function AccountProfileClient({ transactions, currency }: Props) {
           className="flex items-center gap-2 h-9 px-4 rounded-xl text-sm font-medium flex-shrink-0"
           style={{
             background: 'rgba(255,255,255,0.07)',
-            border: '1px solid #252A36',
+            border: '1px solid rgba(255,255,255,0.09)',
             color: 'rgba(255,255,255,0.75)',
             opacity: (exporting || filtered.length === 0) ? 0.5 : 1,
           }}
@@ -249,7 +249,7 @@ export function AccountProfileClient({ transactions, currency }: Props) {
       </div>
 
       {/* Table */}
-      <div className="rounded-xl overflow-hidden" style={{ background: '#111318', border: '1px solid #252A36' }}>
+      <div className="rounded-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
         {filtered.length === 0 ? (
           <div className="py-12 text-center">
             <p className="text-sm" style={{ color: 'rgba(255,255,255,0.35)' }}>
@@ -260,7 +260,7 @@ export function AccountProfileClient({ transactions, currency }: Props) {
           <>
             {/* Table header */}
             <div className="grid grid-cols-[1fr_110px_130px_2fr_90px_160px] gap-4 px-5 py-3"
-              style={{ borderBottom: '1px solid #1a1f2e', background: '#0F1117' }}>
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.04)' }}>
               {['Référence', 'Type', 'Montant', 'Motif', 'Statut', 'Date'].map(h => (
                 <p key={h} className="text-[11px] font-semibold uppercase tracking-wide"
                   style={{ color: 'rgba(255,255,255,0.30)' }}>{h}</p>

@@ -26,16 +26,16 @@ export default async function DashboardLayout({
 
   const themeVars = {
     brandColor:     tm['brand_color']           || '#C41E3A',
-    sidebarBg:      tm['sidebar_bg_color']       || '#0C0C0E',
-    surfaceColor:   tm['surface_color']          || '#111318',
-    borderColor:    tm['border_color']           || '#252A36',
-    textPrimary:    tm['text_primary_color']     || 'rgba(255,255,255,0.95)',
-    textSecondary:  tm['text_secondary_color']   || 'rgba(255,255,255,0.50)',
+    sidebarBg:      tm['sidebar_bg_color']       || '#080A0F',
+    surfaceColor:   tm['surface_color']          || '#0D1018',
+    borderColor:    tm['border_color']           || 'rgba(255,255,255,0.07)',
+    textPrimary:    tm['text_primary_color']     || 'rgba(255,255,255,0.92)',
+    textSecondary:  tm['text_secondary_color']   || 'rgba(255,255,255,0.42)',
     kpiValueColor:  tm['kpi_value_color']        || 'inherit',
   }
 
   return (
-    <div className="flex h-dvh overflow-hidden" style={{ background: '#0C0C0E' }}>
+    <div className="flex h-dvh overflow-hidden" style={{ background: '#07080C' }}>
       <ThemeInjector vars={themeVars} />
 
       {/* Sidebar — desktop only */}

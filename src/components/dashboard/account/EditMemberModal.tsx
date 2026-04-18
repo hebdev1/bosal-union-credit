@@ -4,7 +4,7 @@ import { Pencil, X, Loader2, Check } from 'lucide-react'
 import { updateMember } from '@/app/(dashboard)/tableau-de-bord/membres/actions'
 
 const INPUT  = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
-const INPUT_STYLE = { background: '#0F1117', border: '1px solid #252A36', color: 'rgba(255,255,255,0.85)' }
+const INPUT_STYLE = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.85)' }
 const LABEL  = 'block text-xs font-medium mb-1'
 const LABEL_STYLE = { color: 'rgba(255,255,255,0.50)' }
 
@@ -75,7 +75,7 @@ export function EditMemberModal({ member }: Props) {
         type="button"
         onClick={handleOpen}
         className="inline-flex items-center gap-2 h-9 px-4 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
-        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid #252A36', color: 'rgba(255,255,255,0.75)' }}
+        style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.75)' }}
       >
         <Pencil size={13} />
         Modifier le profil
@@ -89,11 +89,11 @@ export function EditMemberModal({ member }: Props) {
         >
           <div
             className="w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl"
-            style={{ background: '#111318', border: '1px solid #252A36' }}
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4"
-              style={{ borderBottom: '1px solid #1a1f2e' }}>
+              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-lg flex items-center justify-center"
                   style={{ background: 'rgba(196,30,58,0.15)' }}>
@@ -227,7 +227,7 @@ export function EditMemberModal({ member }: Props) {
               <div className="flex justify-end gap-3 pt-1">
                 <button type="button" onClick={() => setOpen(false)}
                   className="h-9 px-4 rounded-lg text-sm font-medium"
-                  style={{ border: '1px solid #252A36', color: 'rgba(255,255,255,0.55)' }}>
+                  style={{ border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.55)' }}>
                   Annuler
                 </button>
                 <button

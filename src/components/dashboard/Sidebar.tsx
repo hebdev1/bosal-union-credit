@@ -49,19 +49,42 @@ function NavLink({ item, collapsed, active }: { item: NavItem; collapsed: boolea
       aria-current={active ? 'page' : undefined}
       title={collapsed ? item.label : undefined}
       className={cn(
-        'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600',
-        collapsed && 'justify-center px-2',
+        'group relative flex items-center gap-3 rounded-lg text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600',
+        collapsed ? 'justify-center px-0 py-2.5 mx-auto w-10 h-10' : 'px-3 py-2.5',
+        active ? 'nav-link-active' : 'nav-link-idle'
       )}
-      style={{
-        color: active ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.45)',
-        background: active ? '#181D27' : 'transparent',
-        borderLeft: active ? '2px solid var(--color-brand, #C41E3A)' : '2px solid transparent',
-        paddingLeft: active && !collapsed ? 10 : undefined,
+      style={active ? {
+        background: 'linear-gradient(90deg, rgba(196,30,58,0.12) 0%, rgba(196,30,58,0.04) 100%)',
+        color: 'rgba(255,255,255,0.95)',
+        boxShadow: 'inset 3px 0 0 var(--color-brand, #C41E3A)',
+      } : {
+        color: 'rgba(255,255,255,0.42)',
+        background: 'transparent',
       }}
-      onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.80)' } }}
-      onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.45)' } }}
+      onMouseEnter={e => {
+        if (!active) {
+          const el = e.currentTarget as HTMLElement
+          el.style.background = 'rgba(255,255,255,0.05)'
+          el.style.color = 'rgba(255,255,255,0.78)'
+        }
+      }}
+      onMouseLeave={e => {
+        if (!active) {
+          const el = e.currentTarget as HTMLElement
+          el.style.background = 'transparent'
+          el.style.color = 'rgba(255,255,255,0.42)'
+        }
+      }}
     >
-      <Icon size={17} aria-hidden="true" style={{ color: active ? 'var(--color-brand, #C41E3A)' : 'inherit', flexShrink: 0 }} />
+      <Icon
+        size={16}
+        aria-hidden="true"
+        style={{
+          color: active ? 'var(--color-brand, #C41E3A)' : 'inherit',
+          flexShrink: 0,
+          transition: 'color 150ms',
+        }}
+      />
       {!collapsed && <span className="truncate">{item.label}</span>}
     </Link>
   )
@@ -76,10 +99,10 @@ export function Sidebar() {
     <aside
       aria-label="Navigation principale"
       style={{
-        width: collapsed ? 60 : 260,
-        transition: 'width 220ms cubic-bezier(0.4,0,0.2,1)',
-        background: 'var(--color-sidebar, #0C0C0E)',
-        borderRight: '1px solid #252A36',
+        width: collapsed ? 64 : 256,
+        transition: 'width 240ms cubic-bezier(0.4,0,0.2,1)',
+        background: 'var(--color-sidebar, #080A0F)',
+        borderRight: '1px solid rgba(255,255,255,0.06)',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -89,34 +112,60 @@ export function Sidebar() {
       }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-3 px-4 flex-shrink-0"
-        style={{ height: 56, borderBottom: '1px solid #252A36', justifyContent: collapsed ? 'center' : undefined }}>
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ background: 'var(--color-brand, #C41E3A)', boxShadow: '0 0 16px rgba(196,30,58,0.25)' }} aria-hidden="true">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" opacity="0.9" />
-            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
+      <div
+        className="flex items-center gap-3 flex-shrink-0"
+        style={{
+          height: 56,
+          padding: collapsed ? '0 12px' : '0 20px',
+          justifyContent: collapsed ? 'center' : undefined,
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}
+      >
+        <div
+          className="flex items-center justify-center flex-shrink-0"
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: 10,
+            background: 'var(--color-brand, #C41E3A)',
+            boxShadow: '0 0 20px rgba(196,30,58,0.35), 0 2px 8px rgba(0,0,0,0.4)',
+          }}
+          aria-hidden="true"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" opacity="0.95" />
+            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.65" />
           </svg>
         </div>
         {!collapsed && (
-          <span className="text-sm font-semibold truncate" style={{ color: 'rgba(255,255,255,0.95)' }}>
-            Bosal Union Credit
-          </span>
+          <div className="min-w-0">
+            <span className="block text-[13px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.92)', letterSpacing: '-0.01em' }}>
+              Bosal Union Credit
+            </span>
+            <span className="block text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.28)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              Cooperative
+            </span>
+          </div>
         )}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4" aria-label="Menu">
+      <nav className="flex-1 overflow-y-auto py-4 space-y-5" style={{ padding: collapsed ? '16px 10px' : '16px 10px' }} aria-label="Menu">
         {Array.from(sections.entries()).map(([section, items]) => (
           <div key={section}>
-            {!collapsed && (
-              <p className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-wider"
-                style={{ color: 'rgba(255,255,255,0.20)' }}>
+            {!collapsed ? (
+              <p
+                className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-[0.1em]"
+                style={{ color: 'rgba(255,255,255,0.18)' }}
+              >
                 {section}
               </p>
-            )}
-            {collapsed && (
-              <div className="mx-2 mb-2 border-t" style={{ borderColor: '#252A36' }} aria-hidden="true" />
+            ) : (
+              <div
+                className="mb-2"
+                style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '0 8px 8px' }}
+                aria-hidden="true"
+              />
             )}
             <ul className="space-y-0.5" role="list">
               {items.map(item => (
@@ -138,20 +187,35 @@ export function Sidebar() {
       </nav>
 
       {/* Collapse toggle */}
-      <div className="flex-shrink-0 px-2 pb-4">
+      <div
+        className="flex-shrink-0 pb-4"
+        style={{ padding: collapsed ? '0 10px 16px' : '0 10px 16px' }}
+      >
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 12 }} aria-hidden="true" />
         <button
           type="button"
           onClick={() => setCollapsed(v => !v)}
-          aria-label={collapsed ? 'Déplier' : 'Replier'}
+          aria-label={collapsed ? 'Déplier la navigation' : 'Replier la navigation'}
           className={cn(
-            'flex items-center gap-2 w-full rounded-lg px-3 py-2.5 text-xs font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600',
-            collapsed && 'justify-center',
+            'flex items-center gap-2 w-full rounded-lg text-xs font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600',
+            collapsed ? 'justify-center px-0 py-2.5 mx-auto w-10 h-10' : 'px-3 py-2.5',
           )}
-          style={{ color: 'rgba(255,255,255,0.30)', background: 'transparent' }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.65)' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.30)' }}
+          style={{ color: 'rgba(255,255,255,0.28)', background: 'transparent' }}
+          onMouseEnter={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.background = 'rgba(255,255,255,0.05)'
+            el.style.color = 'rgba(255,255,255,0.60)'
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.background = 'transparent'
+            el.style.color = 'rgba(255,255,255,0.28)'
+          }}
         >
-          {collapsed ? <ChevronRight size={15} aria-hidden="true" /> : <><ChevronLeft size={15} aria-hidden="true" /><span>Replier</span></>}
+          {collapsed
+            ? <ChevronRight size={14} aria-hidden="true" />
+            : <><ChevronLeft size={14} aria-hidden="true" /><span>Replier</span></>
+          }
         </button>
       </div>
     </aside>

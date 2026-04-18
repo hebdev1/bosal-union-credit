@@ -46,7 +46,7 @@ export function CloseAccountButton({
         >
           <div
             className="w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden"
-            style={{ background: '#111318', border: '1px solid #252A36' }}
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}
           >
             <div className="px-6 pt-6 pb-4">
               <div className="flex items-center gap-3 mb-4">
@@ -99,7 +99,7 @@ export function CloseAccountButton({
                 className="flex-1 h-9 rounded-lg text-sm font-medium"
                 style={{
                   background: 'transparent',
-                  border: '1px solid #252A36',
+                  border: '1px solid rgba(255,255,255,0.09)',
                   color: 'rgba(255,255,255,0.60)',
                 }}
               >

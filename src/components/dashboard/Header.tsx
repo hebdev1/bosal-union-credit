@@ -46,38 +46,74 @@ export function Header({ title }: { title?: string }) {
     router.refresh()
   }
 
-  // agents table has single `name` field
   const displayName = agent?.name ?? 'Agent'
   const initials = displayName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2) || 'A'
   const roleLabel = agent?.role ? (ROLE_LABELS[agent.role] ?? agent.role) : ''
 
   return (
     <header
-      className="flex items-center justify-between px-6 flex-shrink-0 z-20"
+      className="flex items-center justify-between flex-shrink-0 z-20"
       style={{
-        height: 'var(--header-height)',
-        background: '#0C0C0E',
-        borderBottom: '1px solid #252A36',
+        height: 'var(--header-height, 56px)',
+        paddingLeft: 24,
+        paddingRight: 20,
+        background: 'rgba(8,10,15,0.92)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
         position: 'sticky',
         top: 0,
       }}
     >
-      <h1 className="text-sm font-semibold truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>
-        {title ?? 'Tableau de bord'}
-      </h1>
+      {/* Page title */}
+      <div className="flex items-center gap-3">
+        <div
+          style={{
+            width: 3,
+            height: 16,
+            borderRadius: 2,
+            background: 'var(--color-brand, #C41E3A)',
+            flexShrink: 0,
+          }}
+          aria-hidden="true"
+        />
+        <h1
+          className="text-sm font-semibold"
+          style={{ color: 'rgba(255,255,255,0.88)', letterSpacing: '-0.01em' }}
+        >
+          {title ?? 'Tableau de bord'}
+        </h1>
+      </div>
 
-      <div className="flex items-center gap-2">
+      {/* Right actions */}
+      <div className="flex items-center gap-1.5">
+        {/* Notification bell */}
         <button
           type="button"
           aria-label="Notifications"
-          className="w-9 h-9 rounded-lg flex items-center justify-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
-          style={{ color: 'rgba(255,255,255,0.45)' }}
-          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = '#181D27'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.80)' }}
-          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.45)' }}
+          className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+          style={{ color: 'rgba(255,255,255,0.38)' }}
+          onMouseEnter={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.background = 'rgba(255,255,255,0.06)'
+            el.style.color = 'rgba(255,255,255,0.78)'
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.background = 'transparent'
+            el.style.color = 'rgba(255,255,255,0.38)'
+          }}
         >
-          <Bell size={17} aria-hidden="true" />
+          <Bell size={16} aria-hidden="true" />
         </button>
 
+        {/* Separator */}
+        <div
+          style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)', margin: '0 4px' }}
+          aria-hidden="true"
+        />
+
+        {/* User menu */}
         <div className="relative" ref={menuRef}>
           <button
             ref={triggerRef}
@@ -86,64 +122,145 @@ export function Header({ title }: { title?: string }) {
             aria-haspopup="menu"
             aria-expanded={menuOpen}
             aria-label="Menu utilisateur"
-            className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
-            style={{ background: menuOpen ? '#181D27' : 'transparent' }}
-            onMouseEnter={(e) => { if (!menuOpen) (e.currentTarget as HTMLElement).style.background = '#181D27' }}
-            onMouseLeave={(e) => { if (!menuOpen) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+            className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
+            style={{
+              background: menuOpen ? 'rgba(255,255,255,0.07)' : 'transparent',
+              border: `1px solid ${menuOpen ? 'rgba(255,255,255,0.10)' : 'transparent'}`,
+            }}
+            onMouseEnter={e => {
+              if (!menuOpen) {
+                const el = e.currentTarget as HTMLElement
+                el.style.background = 'rgba(255,255,255,0.05)'
+                el.style.borderColor = 'rgba(255,255,255,0.08)'
+              }
+            }}
+            onMouseLeave={e => {
+              if (!menuOpen) {
+                const el = e.currentTarget as HTMLElement
+                el.style.background = 'transparent'
+                el.style.borderColor = 'transparent'
+              }
+            }}
           >
+            {/* Avatar */}
             <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
-              style={{ background: '#C41E3A', color: '#fff' }}
+              className="flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+              style={{
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                background: 'var(--color-brand, #C41E3A)',
+                color: '#fff',
+                boxShadow: '0 0 0 2px rgba(196,30,58,0.25)',
+              }}
               aria-hidden="true"
             >
               {initials}
             </div>
+
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-medium leading-tight" style={{ color: 'rgba(255,255,255,0.90)' }}>
+              <p className="text-[13px] font-medium leading-tight" style={{ color: 'rgba(255,255,255,0.88)', letterSpacing: '-0.01em' }}>
                 {displayName}
               </p>
               {roleLabel && (
-                <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.35)' }}>{roleLabel}</p>
+                <p className="text-[10px] leading-tight mt-0.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
+                  {roleLabel}
+                </p>
               )}
             </div>
-            <ChevronDown size={14} aria-hidden="true" className="transition-transform duration-120"
-              style={{ color: 'rgba(255,255,255,0.35)', transform: menuOpen ? 'rotate(180deg)' : 'rotate(0)' }} />
+
+            <ChevronDown
+              size={13}
+              aria-hidden="true"
+              className="transition-transform duration-150"
+              style={{
+                color: 'rgba(255,255,255,0.30)',
+                transform: menuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
           </button>
 
+          {/* Dropdown */}
           {menuOpen && (
             <div
               role="menu"
-              className="absolute right-0 mt-1.5 w-52 rounded-xl py-1 z-50"
-              style={{ background: '#181D27', border: '1px solid #252A36', boxShadow: '0 8px 32px rgba(0,0,0,0.6)', top: '100%' }}
+              className="absolute right-0 mt-2 w-56 rounded-xl py-1 z-50"
+              style={{
+                background: '#111520',
+                border: '1px solid rgba(255,255,255,0.09)',
+                boxShadow: '0 16px 48px rgba(0,0,0,0.7), 0 4px 12px rgba(0,0,0,0.4)',
+                top: '100%',
+              }}
             >
-              <div className="px-3 py-2.5 border-b" style={{ borderColor: '#252A36' }}>
-                <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.90)' }}>{displayName}</p>
-                {agent?.email && (
-                  <p className="text-xs truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{agent.email}</p>
-                )}
+              {/* User info */}
+              <div className="px-3.5 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className="flex items-center justify-center text-[11px] font-bold flex-shrink-0"
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: '50%',
+                      background: 'var(--color-brand, #C41E3A)',
+                      color: '#fff',
+                    }}
+                    aria-hidden="true"
+                  >
+                    {initials}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold leading-tight truncate" style={{ color: 'rgba(255,255,255,0.92)' }}>
+                      {displayName}
+                    </p>
+                    {agent?.email && (
+                      <p className="text-[11px] truncate mt-0.5" style={{ color: 'rgba(255,255,255,0.32)' }}>
+                        {agent.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <button role="menuitem" type="button"
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm transition-colors focus-visible:outline-none"
-                style={{ color: 'rgba(255,255,255,0.70)' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.90)' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'rgba(255,255,255,0.70)' }}
-                onClick={() => { setMenuOpen(false); router.push('/tableau-de-bord/parametres') }}
-              >
-                <User size={15} aria-hidden="true" /> Mon profil
-              </button>
+              {/* Menu items */}
+              <div className="py-1">
+                <button
+                  role="menuitem"
+                  type="button"
+                  className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] transition-all duration-100 focus-visible:outline-none"
+                  style={{ color: 'rgba(255,255,255,0.65)' }}
+                  onMouseEnter={e => {
+                    const el = e.currentTarget as HTMLElement
+                    el.style.background = 'rgba(255,255,255,0.05)'
+                    el.style.color = 'rgba(255,255,255,0.90)'
+                  }}
+                  onMouseLeave={e => {
+                    const el = e.currentTarget as HTMLElement
+                    el.style.background = 'transparent'
+                    el.style.color = 'rgba(255,255,255,0.65)'
+                  }}
+                  onClick={() => { setMenuOpen(false); router.push('/tableau-de-bord/parametres') }}
+                >
+                  <User size={14} aria-hidden="true" />
+                  Mon profil
+                </button>
+              </div>
 
-              <div className="my-1 border-t" style={{ borderColor: '#252A36' }} aria-hidden="true" />
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', margin: '2px 0' }} aria-hidden="true" />
 
-              <button role="menuitem" type="button"
-                className="flex items-center gap-2.5 w-full px-3 py-2 text-sm transition-colors focus-visible:outline-none"
-                style={{ color: '#F87171' }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)' }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                onClick={signOut}
-              >
-                <LogOut size={15} aria-hidden="true" /> Se déconnecter
-              </button>
+              <div className="py-1">
+                <button
+                  role="menuitem"
+                  type="button"
+                  className="flex items-center gap-2.5 w-full px-3.5 py-2.5 text-[13px] transition-all duration-100 focus-visible:outline-none"
+                  style={{ color: '#F87171' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.08)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                  onClick={signOut}
+                >
+                  <LogOut size={14} aria-hidden="true" />
+                  Se déconnecter
+                </button>
+              </div>
             </div>
           )}
         </div>
