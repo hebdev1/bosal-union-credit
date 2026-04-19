@@ -113,7 +113,7 @@ const STEPS = [
 
 const TESTIMONIALS = [
   {
-    quote: "Mache Kay BOSAL a transformé notre façon de gérer les comptes. Nos membres apprécient la rapidité et la transparence des opérations.",
+    quote: "Bosal Credit Union a transformé notre façon de gérer les comptes. Nos membres apprécient la rapidité et la transparence des opérations.",
     name: 'Marie-Josée F.',
     role: 'Directrice, Coopérative Solèy',
     initials: 'MF',
@@ -178,9 +178,9 @@ export default function LandingPage() {
                 id="hero-heading"
                 className="font-display text-[44px] sm:text-[56px] lg:text-[68px] leading-[1.05] tracking-[-0.035em] text-white"
               >
-                Mache Kay{' '}
+                Bosal{' '}
                 <em className="not-italic text-[#C41E3A] font-display italic relative inline-block">
-                  BOSAL
+                  Credit Union
                   <span className="absolute -bottom-2 left-0 right-0 h-1 bg-[#C41E3A]/30 blur-sm" aria-hidden="true" />
                 </em>
                 <br />
@@ -239,7 +239,7 @@ export default function LandingPage() {
 
               <div
                 className="relative w-full max-w-[560px] rounded-2xl border border-white/10 bg-[#0F1219] p-5 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_30px_80px_rgba(0,0,0,0.8)]"
-                aria-label="Aperçu du tableau de bord Mache Kay BOSAL"
+                aria-label="Aperçu du tableau de bord Bosal Credit Union"
                 role="img"
               >
                 {/* Titre bar */}
@@ -423,7 +423,7 @@ export default function LandingPage() {
             Prêt à moderniser<br className="hidden sm:block" /> votre coopérative&nbsp;?
           </h2>
           <p className="text-[15px] text-white/80 max-w-[460px] mx-auto leading-relaxed mb-8">
-            Rejoignez les coopératives haïtiennes qui font confiance à Mache Kay BOSAL.
+            Rejoignez les coopératives haïtiennes qui font confiance à Bosal Credit Union.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">
             <LinkButton

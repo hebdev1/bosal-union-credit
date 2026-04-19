@@ -15,14 +15,14 @@ export default function Page() {
       <Section title="1. Objet">
         <p>
           Les présentes Conditions Générales d’Utilisation (CGU) encadrent l’utilisation de la
-          plateforme Mache Kay BOSAL par les coopératives d’épargne et de crédit haïtiennes
+          plateforme Bosal Credit Union par les coopératives d’épargne et de crédit haïtiennes
           ainsi que leurs agents autorisés.
         </p>
       </Section>
 
       <Section title="2. Accès au service">
         <p>
-          L’accès à Mache Kay BOSAL est réservé aux coopératives disposant d’un compte validé par
+          L’accès à Bosal Credit Union est réservé aux coopératives disposant d’un compte validé par
           notre équipe. Chaque agent reçoit des identifiants personnels qu’il s’engage à ne pas
           partager.
         </p>
@@ -38,7 +38,7 @@ export default function Page() {
 
       <Section title="4. Propriété intellectuelle">
         <p>
-          La plateforme, son code source, ses interfaces et sa marque « Mache Kay BOSAL » sont
+          La plateforme, son code source, ses interfaces et sa marque « Bosal Credit Union » sont
           protégés. Toute reproduction non autorisée est interdite. Les données saisies par la
           coopérative lui appartiennent et sont exportables à tout moment.
         </p>
@@ -46,7 +46,7 @@ export default function Page() {
 
       <Section title="5. Responsabilité">
         <p>
-          Mache Kay BOSAL met tout en œuvre pour garantir la disponibilité et la sécurité du
+          Bosal Credit Union met tout en œuvre pour garantir la disponibilité et la sécurité du
           service. Toutefois, notre responsabilité ne saurait être engagée en cas de mauvaise
           utilisation, d’indisponibilité ponctuelle (voir <a href="/statut" style={{ color: '#C41E3A' }} className="underline underline-offset-4">statut</a>)
           ou de force majeure.
@@ -70,7 +70,7 @@ export default function Page() {
       <Section title="8. Contact">
         <p>
           Pour toute question, contactez-nous via <a href="/contact" style={{ color: '#C41E3A' }} className="underline underline-offset-4">le formulaire</a> ou
-          à l’adresse legal@machekay-bosal.ht.
+          à l’adresse legal@bosal-credit-union.ht.
         </p>
       </Section>
     </PageShell>

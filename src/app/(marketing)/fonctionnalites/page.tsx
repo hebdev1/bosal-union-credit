@@ -11,7 +11,7 @@ export default function Page() {
     <PageShell slug={SLUG}>
       <Section title="Tout ce dont votre coopérative a besoin">
         <p>
-          Mache Kay BOSAL regroupe dans une seule plateforme toutes les opérations quotidiennes
+          Bosal Credit Union regroupe dans une seule plateforme toutes les opérations quotidiennes
           d’une coopérative haïtienne moderne — de l’ouverture d’un compte membre à la clôture
           journalière de la caisse.
         </p>

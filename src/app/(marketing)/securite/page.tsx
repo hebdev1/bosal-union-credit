@@ -11,7 +11,7 @@ export default function Page() {
     <PageShell slug={SLUG}>
       <Section title="La sécurité, en fondation — pas en option">
         <p>
-          Une coopérative gère l’argent de ses membres. Chez Mache Kay BOSAL, la sécurité est
+          Une coopérative gère l’argent de ses membres. Chez Bosal Credit Union, la sécurité est
           intégrée à chaque couche : du chiffrement au niveau du disque jusqu’au contrôle d’accès
           par rôle, en passant par l’audit de chaque transaction.
         </p>

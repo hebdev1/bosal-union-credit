@@ -21,7 +21,7 @@ export default function Page() {
           </Section>
 
           {[
-            { icon: <Mail size={16} />, label: 'Email',        value: 'contact@machekay-bosal.ht', href: 'mailto:contact@machekay-bosal.ht' },
+            { icon: <Mail size={16} />, label: 'Email',        value: 'contact@bosal-credit-union.ht', href: 'mailto:contact@bosal-credit-union.ht' },
             { icon: <Phone size={16} />, label: 'Téléphone',    value: '+509 36 00 00 00',         href: 'tel:+50936000000' },
             { icon: <MessageSquare size={16} />, label: 'WhatsApp', value: '+509 36 00 00 01',      href: 'https://wa.me/50936000001' },
             { icon: <MapPin size={16} />, label: 'Bureau',      value: 'Delmas 75, Port-au-Prince, Haïti' },

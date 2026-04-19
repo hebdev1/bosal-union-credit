@@ -65,7 +65,7 @@ export default function LoginPage() {
         return
       }
 
-      toast.success('Connexion réussie', { description: 'Bienvenue sur Mache Kay BOSAL.' })
+      toast.success('Connexion réussie', { description: 'Bienvenue sur Bosal Credit Union.' })
       router.push(callbackUrl)
       router.refresh()
     } catch {

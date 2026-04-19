@@ -28,10 +28,10 @@ const instrumentSerif = Instrument_Serif({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Mache Kay BOSAL',
-    template: '%s — Mache Kay BOSAL',
+    default: 'Bosal Credit Union',
+    template: '%s — Bosal Credit Union',
   },
-  description: "Mache Kay BOSAL — la force de la coopérative. Plateforme core banking pour coopératives financières haïtiennes.",
+  description: "Bosal Credit Union — la force de la coopérative. Plateforme core banking pour coopératives financières haïtiennes.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
 }
 

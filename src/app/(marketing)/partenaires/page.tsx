@@ -10,7 +10,7 @@ export const metadata = { title: p.title, description: p.description }
 export default function Page() {
   return (
     <PageShell slug={SLUG}>
-      <Section title="Rejoignez l’écosystème Mache Kay BOSAL">
+      <Section title="Rejoignez l’écosystème Bosal Credit Union">
         <p>
           Cabinets comptables, intégrateurs techniques, fédérations coopératives — nous
           construisons un réseau de partenaires qui partagent notre vision : moderniser le
@@ -21,7 +21,7 @@ export default function Page() {
       <FeatureGrid
         items={[
           { icon: <Briefcase size={18} />, title: 'Cabinets comptables', description: 'Accompagnez vos clients coopératifs avec une plateforme certifiée BRH et exports comptables.' },
-          { icon: <Code2 size={18} />, title: 'Intégrateurs techniques', description: 'Connectez Mache Kay BOSAL à d’autres systèmes via notre API REST et webhooks.' },
+          { icon: <Code2 size={18} />, title: 'Intégrateurs techniques', description: 'Connectez Bosal Credit Union à d’autres systèmes via notre API REST et webhooks.' },
           { icon: <Users size={18} />, title: 'Fédérations & réseaux', description: 'Bénéficiez de tarifs préférentiels pour les COOPEC membres de votre fédération.' },
         ]}
       />

@@ -2,8 +2,8 @@
 import * as React from 'react'
 
 /**
- * Mache Kay BOSAL — logo mark (SVG recréation stylisée)
- * Figure musclée + forme nuage rouge avec texte "Mache Kay BOSAL"
+ * Bosal Credit Union — logo mark (SVG recréation stylisée)
+ * Figure musclée + forme nuage rouge avec texte "Bosal Credit Union"
  *
  * Variantes:
  *  - "mark"     : juste le symbole (figure + cloud) — pour sidebar, favicon
@@ -45,8 +45,8 @@ export function BosalLogo({
           gap: 4,
         }}
       >
-        <span style={{ color }}>Mache Kay</span>
-        <span style={{ fontStyle: 'normal', fontWeight: 800, letterSpacing: '0.02em' }}>BOSAL</span>
+        <span style={{ color }}>Bosal</span>
+        <span style={{ fontStyle: 'normal', fontWeight: 800, letterSpacing: '0.02em' }}>Credit Union</span>
       </span>
     )
   }

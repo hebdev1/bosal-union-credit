@@ -11,14 +11,15 @@ export default function Page() {
     <PageShell slug={SLUG}>
       <Section title="Renforcer la coopérative haïtienne par la technologie">
         <p>
-          Mache Kay BOSAL est née d’un constat simple : les coopératives haïtiennes portent
+          Bosal Credit Union est née d’un constat simple : les coopératives haïtiennes portent
           une partie immense de l’économie du pays, mais sont souvent équipées d’outils hérités,
           lents et coûteux. Notre équipe, basée à Port-au-Prince, conçoit un logiciel qui parle
           leur langue, respecte leurs pratiques et amplifie leur impact.
         </p>
         <p>
-          Le nom ? <em>Mache Kay</em> — en créole, « marcher ensemble, construire ensemble ». Et <em>BOSAL</em>,
-          la force tranquille de la coopérative qui avance, pas à pas.
+          Le nom ? <em>Bosal Credit Union</em> — <em>Bosal</em> évoque la force tranquille et la
+          solidité qui tiennent la coopérative debout, tandis que <em>Credit Union</em> affirme
+          notre mission : unir les membres autour d’un crédit juste, transparent et coopératif.
         </p>
       </Section>
 

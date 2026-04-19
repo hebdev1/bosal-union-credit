@@ -126,7 +126,7 @@ export function Sidebar() {
         {!collapsed && (
           <div className="min-w-0">
             <span className="block text-[13px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.92)', letterSpacing: '-0.01em' }}>
-              Mache Kay <span className="font-bold">BOSAL</span>
+              Bosal <span className="font-bold">Credit Union</span>
             </span>
             <span className="block text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.28)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               Cooperative

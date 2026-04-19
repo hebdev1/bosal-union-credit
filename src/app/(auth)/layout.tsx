@@ -5,7 +5,7 @@ import { BosalBadge } from '@/components/brand/BosalLogo'
 export const metadata: Metadata = {
   title: {
     default: 'Authentification',
-    template: '%s — Mache Kay BOSAL',
+    template: '%s — Bosal Credit Union',
   },
 }
 
@@ -38,7 +38,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <Link href="/" className="relative z-10 flex items-center gap-3 w-fit">
           <BosalBadge size={40} />
           <span className="font-semibold text-base" style={{ color: 'rgba(255,255,255,0.95)' }}>
-            Mache Kay <span className="font-bold">BOSAL</span>
+            Bosal <span className="font-bold">Credit Union</span>
           </span>
         </Link>
 
@@ -49,7 +49,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               className="text-2xl leading-snug font-display italic"
               style={{ color: 'rgba(255,255,255,0.92)' }}
             >
-              &ldquo;La force de l&rsquo;union, la rigueur du crédit — Mache Kay BOSAL,
+              &ldquo;La force de l&rsquo;union, la rigueur du crédit — Bosal Credit Union,
               pensée pour la coopérative haïtienne moderne.&rdquo;
             </p>
             <footer className="space-y-0.5">
@@ -95,7 +95,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           <Link href="/" className="flex items-center gap-2.5">
             <BosalBadge size={32} />
             <span className="font-semibold text-sm" style={{ color: 'rgba(255,255,255,0.95)' }}>
-              Mache Kay <span className="font-bold">BOSAL</span>
+              Bosal <span className="font-bold">Credit Union</span>
             </span>
           </Link>
         </div>
@@ -109,7 +109,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         {/* Footer minimal */}
         <p className="text-center text-xs pb-6 px-6" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          © {new Date().getFullYear()} Mache Kay BOSAL · Tous droits réservés
+          © {new Date().getFullYear()} Bosal Credit Union · Tous droits réservés
         </p>
       </div>
     </div>

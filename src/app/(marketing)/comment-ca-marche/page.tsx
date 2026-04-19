@@ -11,7 +11,7 @@ export default function Page() {
       <Section title="De l’inscription au premier décaissement">
         <p>
           En moins d’une semaine, votre coopérative peut être pleinement opérationnelle sur
-          Mache Kay BOSAL — sans interruption de service, sans migration complexe.
+          Bosal Credit Union — sans interruption de service, sans migration complexe.
         </p>
       </Section>
 

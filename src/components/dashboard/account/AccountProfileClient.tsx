@@ -142,7 +142,7 @@ async function exportAccountPDF(txs: Tx[], currency: string, accountRef: string)
     doc.setPage(p)
     doc.setFontSize(7)
     doc.setTextColor(60, 60, 60)
-    doc.text(`Relevé compte ${accountRef} · Mache Kay BOSAL · Page ${p}/${pages}`, W / 2, 205, { align: 'center' })
+    doc.text(`Relevé compte ${accountRef} · Bosal Credit Union · Page ${p}/${pages}`, W / 2, 205, { align: 'center' })
   }
   doc.save(`releve-${accountRef}-${new Date().toISOString().slice(0, 10)}.pdf`)
 }

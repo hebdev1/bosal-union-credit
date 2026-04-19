@@ -11,7 +11,7 @@ export default function Page() {
     <PageShell slug={SLUG}>
       <Section title="Une coopérative, plusieurs agences — une seule plateforme">
         <p>
-          Que vous gériez deux succursales ou vingt, Mache Kay BOSAL consolide les opérations,
+          Que vous gériez deux succursales ou vingt, Bosal Credit Union consolide les opérations,
           les membres et les finances sans sacrifier l’autonomie de chaque agence.
         </p>
       </Section>

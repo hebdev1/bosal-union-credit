@@ -14,7 +14,7 @@ export default function Page() {
 
       <Section title="Vos données vous appartiennent">
         <p>
-          Cette politique décrit comment Mache Kay BOSAL collecte, utilise et protège les
+          Cette politique décrit comment Bosal Credit Union collecte, utilise et protège les
           informations personnelles des coopératives utilisatrices et de leurs membres.
         </p>
       </Section>
@@ -55,7 +55,7 @@ export default function Page() {
         <p>
           Vous pouvez à tout moment : accéder à vos données, les rectifier, les exporter au format
           CSV/PDF, ou demander leur suppression (90 jours après la résiliation du contrat).
-          Contact : privacy@machekay-bosal.ht.
+          Contact : privacy@bosal-credit-union.ht.
         </p>
       </Section>
 
@@ -76,7 +76,7 @@ export default function Page() {
 
       <Section title="8. Contact">
         <p>
-          Délégué à la protection des données : privacy@machekay-bosal.ht — ou
+          Délégué à la protection des données : privacy@bosal-credit-union.ht — ou
           via <a href="/contact" style={{ color: '#C41E3A' }} className="underline underline-offset-4">le formulaire de contact</a>.
         </p>
       </Section>

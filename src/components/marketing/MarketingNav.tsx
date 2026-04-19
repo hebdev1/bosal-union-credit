@@ -54,11 +54,11 @@ export function MarketingNav() {
           <Link
             href="/"
             className="group flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C41E3A] rounded-md"
-            aria-label="Mache Kay BOSAL — Accueil"
+            aria-label="Bosal Credit Union — Accueil"
           >
             <BosalBadge size={32} />
             <span className="hidden text-[14px] font-medium tracking-[-0.01em] text-white/90 sm:block">
-              Mache Kay <span className="font-bold">BOSAL</span>
+              Bosal <span className="font-bold">Credit Union</span>
             </span>
           </Link>
 

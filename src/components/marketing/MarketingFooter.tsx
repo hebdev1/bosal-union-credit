@@ -70,11 +70,11 @@ export function MarketingFooter() {
             <Link
               href="/"
               className="group flex items-center gap-2.5 w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C41E3A] rounded-md"
-              aria-label="Mache Kay BOSAL — Accueil"
+              aria-label="Bosal Credit Union — Accueil"
             >
               <BosalBadge size={36} />
               <div className="flex flex-col">
-                <span className="text-[14px] font-semibold text-white leading-tight">Mache Kay <span className="font-bold">BOSAL</span></span>
+                <span className="text-[14px] font-semibold text-white leading-tight">Bosal <span className="font-bold">Credit Union</span></span>
                 <span className="text-[11px] text-white/35 tracking-[0.02em]">Core Banking · Haïti</span>
               </div>
             </Link>
@@ -146,7 +146,7 @@ export function MarketingFooter() {
       <div className="border-t border-[#252A36]/60">
         <div className="mx-auto max-w-[1280px] px-5 md:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[12px] text-white/25 text-center sm:text-left">
-            © {new Date().getFullYear()} Mache Kay BOSAL. Tous droits réservés.
+            © {new Date().getFullYear()} Bosal Credit Union. Tous droits réservés.
           </p>
           <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-end">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#252A36] text-[11px] text-white/30">

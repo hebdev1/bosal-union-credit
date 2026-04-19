@@ -29,7 +29,7 @@ export default function Page() {
     <PageShell slug={SLUG}>
       <Section title="API REST — simple, prévisible, documentée">
         <p>
-          Intégrez Mache Kay BOSAL à vos outils internes : comptabilité, CRM, reporting externe.
+          Intégrez Bosal Credit Union à vos outils internes : comptabilité, CRM, reporting externe.
           Authentification par clé API, réponses JSON, webhooks en temps réel.
         </p>
       </Section>
@@ -37,7 +37,7 @@ export default function Page() {
       <Section title="Exemple — créer un dépôt">
         <pre className="rounded-xl p-5 text-[12.5px] overflow-x-auto"
           style={{ background: '#05060A', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.85)', fontFamily: 'JetBrains Mono, monospace' }}>
-{`curl -X POST https://api.machekay-bosal.ht/v1/transactions \\
+{`curl -X POST https://api.bosal-credit-union.ht/v1/transactions \\
   -H "Authorization: Bearer \${API_KEY}" \\
   -H "Content-Type: application/json" \\
   -d '{

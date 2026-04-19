@@ -14,7 +14,7 @@ interface Rate { id: string; from_currency: string; to_currency: string; rate: n
 export function CreateExchangeModal({
   rates,
   ticketConfig = DEFAULT_CONFIG,
-  coopName  = 'Mache Kay BOSAL',
+  coopName  = 'Bosal Credit Union',
   agentName = '—',
 }: {
   rates: Rate[]

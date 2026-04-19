@@ -10,7 +10,7 @@ const POSTS = [
   {
     date: '2026-04-10',
     category: 'Produit',
-    title: 'Pourquoi nous avons rebrandé en Mache Kay BOSAL',
+    title: 'Pourquoi nous avons rebrandé en Bosal Credit Union',
     excerpt: 'Une nouvelle identité qui reflète notre engagement envers la coopérative haïtienne : plus claire, plus forte, plus ancrée.',
   },
   {
@@ -44,7 +44,7 @@ export default function Page() {
     <PageShell slug={SLUG}>
       <Section title="Actualités et analyses">
         <p>
-          Le blog de Mache Kay BOSAL — actualités produit, bonnes pratiques coopératives,
+          Le blog de Bosal Credit Union — actualités produit, bonnes pratiques coopératives,
           études de cas haïtiennes et analyse du secteur.
         </p>
       </Section>

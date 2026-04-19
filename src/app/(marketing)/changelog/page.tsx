@@ -10,7 +10,7 @@ const RELEASES = [
     version: 'v2.4.0',
     date: '2026-04-15',
     highlights: [
-      'Rebrand complet — nouvelle identité Mache Kay BOSAL',
+      'Rebrand complet — nouvelle identité Bosal Credit Union',
       'Refonte de la landing et des pages marketing',
       'Amélioration des performances du tableau de bord (−40% de temps de chargement)',
     ],
@@ -49,7 +49,7 @@ export default function Page() {
     <PageShell slug={SLUG}>
       <Section title="Chaque mois, la plateforme s’améliore">
         <p>
-          Suivez ici l’évolution de Mache Kay BOSAL. Vous avez une suggestion ?
+          Suivez ici l’évolution de Bosal Credit Union. Vous avez une suggestion ?
           Écrivez-nous via le <a href="/contact" style={{ color: '#C41E3A' }} className="underline underline-offset-4">formulaire de contact</a>.
         </p>
       </Section>

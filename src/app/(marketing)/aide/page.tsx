@@ -8,7 +8,7 @@ export const metadata = { title: p.title, description: p.description }
 
 const FAQ = [
   {
-    q: 'Combien de temps faut-il pour déployer Mache Kay BOSAL ?',
+    q: 'Combien de temps faut-il pour déployer Bosal Credit Union ?',
     a: 'En moyenne 5 à 7 jours ouvrables : création du compte, import des membres, formation des agents. Plus de détails sur la page Comment ça marche.',
   },
   {
@@ -24,7 +24,7 @@ const FAQ = [
     a: 'Email pour toutes les formules, chat en direct pour Croissance, et téléphone prioritaire avec chargé de compte dédié pour Entreprise.',
   },
   {
-    q: 'Mache Kay BOSAL est-il conforme à la BRH ?',
+    q: 'Bosal Credit Union est-il conforme à la BRH ?',
     a: 'Oui. Les indicateurs prudentiels, les rapports mensuels et la piste d’audit sont conçus pour répondre aux exigences de la Banque de la République d’Haïti.',
   },
   {

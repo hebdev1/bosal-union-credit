@@ -12,7 +12,7 @@ export const DEFAULT_PDF_CONFIG: PdfReportConfig = {
   headerColor: '#0C0C0E',
   accentColor: '#C41E3A',
   textColor:   '#111318',
-  footerText:  'Mache Kay BOSAL — Document confidentiel',
+  footerText:  'Bosal Credit Union — Document confidentiel',
   logoUrl:     '',
   logoEnabled: true,
 }

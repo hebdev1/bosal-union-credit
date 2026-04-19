@@ -247,7 +247,7 @@ async function generateRapportsPDF(d: RapportData) {
   const pages = doc.getNumberOfPages()
   for (let p = 1; p <= pages; p++) {
     doc.setPage(p)
-    doc.text(`Document généré le ${new Date().toLocaleDateString('fr-HT')} — Mache Kay BOSAL · Page ${p}/${pages}`, W / 2, 290, { align: 'center' })
+    doc.text(`Document généré le ${new Date().toLocaleDateString('fr-HT')} — Bosal Credit Union · Page ${p}/${pages}`, W / 2, 290, { align: 'center' })
   }
   doc.save(`rapport-${new Date().toISOString().slice(0, 10)}.pdf`)
 }

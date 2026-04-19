@@ -127,7 +127,7 @@ export async function createExchangeTransaction(
       notes,
       created_at:        createdAt,
       agent_name:        agent.name ?? '—',
-      coop_name:         coop?.name ?? 'Mache Kay BOSAL',
+      coop_name:         coop?.name ?? 'Bosal Credit Union',
     },
   }
 }
