@@ -9,6 +9,7 @@ import {
   BarChart3, Settings, ChevronLeft, ChevronRight,
   BookCheck,
 } from 'lucide-react'
+import { BosalBadge } from '@/components/brand/BosalLogo'
 import { cn } from '@/lib/utils'
 
 interface NavItem {
@@ -121,26 +122,11 @@ export function Sidebar() {
           borderBottom: '1px solid rgba(255,255,255,0.06)',
         }}
       >
-        <div
-          className="flex items-center justify-center flex-shrink-0"
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 10,
-            background: 'var(--color-brand, #C41E3A)',
-            boxShadow: '0 0 20px rgba(196,30,58,0.35), 0 2px 8px rgba(0,0,0,0.4)',
-          }}
-          aria-hidden="true"
-        >
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
-            <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" opacity="0.95" />
-            <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.65" />
-          </svg>
-        </div>
+        <BosalBadge size={32} />
         {!collapsed && (
           <div className="min-w-0">
             <span className="block text-[13px] font-semibold truncate" style={{ color: 'rgba(255,255,255,0.92)', letterSpacing: '-0.01em' }}>
-              Bosal Union Credit
+              Mache Kay <span className="font-bold">BOSAL</span>
             </span>
             <span className="block text-[10px] truncate" style={{ color: 'rgba(255,255,255,0.28)', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
               Cooperative

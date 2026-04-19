@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Menu, X, Landmark } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
 import { LinkButton } from '@/components/ui/link-button'
+import { BosalBadge } from '@/components/brand/BosalLogo'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
@@ -53,13 +54,11 @@ export function MarketingNav() {
           <Link
             href="/"
             className="group flex items-center gap-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C41E3A] rounded-md"
-            aria-label="Bosal Union Credit — Accueil"
+            aria-label="Mache Kay BOSAL — Accueil"
           >
-            <span className="flex h-8 w-8 items-center justify-center rounded-[6px] bg-[#C41E3A] shadow-[0_0_12px_rgba(196,30,58,0.35)] transition-shadow duration-200 group-hover:shadow-[0_0_18px_rgba(196,30,58,0.5)]">
-              <Landmark className="h-4 w-4 text-white" strokeWidth={1.75} aria-hidden="true" />
-            </span>
+            <BosalBadge size={32} />
             <span className="hidden text-[14px] font-medium tracking-[-0.01em] text-white/90 sm:block">
-              Bosal Union Credit
+              Mache Kay <span className="font-bold">BOSAL</span>
             </span>
           </Link>
 

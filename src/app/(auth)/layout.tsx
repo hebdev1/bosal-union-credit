@@ -1,10 +1,11 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { BosalBadge } from '@/components/brand/BosalLogo'
 
 export const metadata: Metadata = {
   title: {
     default: 'Authentification',
-    template: '%s — Bosal Union Credit',
+    template: '%s — Mache Kay BOSAL',
   },
 }
 
@@ -14,7 +15,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* ── Panneau gauche : branding ───────────────────────────────────── */}
       <div
         className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden"
-        style={{ background: 'linear-gradient(135deg, #0C0C0E 0%, #111318 60%, #181D27 100%)' }}
+        style={{ background: 'linear-gradient(135deg, #07080C 0%, #0D1018 60%, #14181F 100%)' }}
         aria-hidden="true"
       >
         {/* Grid bg subtil */}
@@ -30,22 +31,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         {/* Accent glow */}
         <div
           className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full pointer-events-none"
-          style={{ background: 'radial-gradient(circle, rgba(196,30,58,0.18) 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(196,30,58,0.22) 0%, transparent 70%)' }}
         />
 
         {/* Logo */}
         <Link href="/" className="relative z-10 flex items-center gap-3 w-fit">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0"
-            style={{ background: '#C41E3A', boxShadow: '0 0 24px rgba(196,30,58,0.35)' }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" opacity="0.9" />
-              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
-            </svg>
-          </div>
+          <BosalBadge size={40} />
           <span className="font-semibold text-base" style={{ color: 'rgba(255,255,255,0.95)' }}>
-            Bosal Union Credit
+            Mache Kay <span className="font-bold">BOSAL</span>
           </span>
         </Link>
 
@@ -56,8 +49,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               className="text-2xl leading-snug font-display italic"
               style={{ color: 'rgba(255,255,255,0.92)' }}
             >
-              &ldquo;La force de l&rsquo;union, la rigueur du crédit — une plateforme pensée pour
-              la coopérative haïtienne moderne.&rdquo;
+              &ldquo;La force de l&rsquo;union, la rigueur du crédit — Mache Kay BOSAL,
+              pensée pour la coopérative haïtienne moderne.&rdquo;
             </p>
             <footer className="space-y-0.5">
               <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
@@ -95,22 +88,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       {/* ── Panneau droit : formulaire ──────────────────────────────────── */}
       <div
         className="flex flex-col min-h-dvh lg:min-h-0"
-        style={{ background: '#0C0C0E' }}
+        style={{ background: '#07080C' }}
       >
         {/* Logo mobile uniquement */}
         <div className="lg:hidden flex items-center gap-3 px-6 pt-6 pb-0">
           <Link href="/" className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center"
-              style={{ background: '#C41E3A' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M12 2L2 7l10 5 10-5-10-5z" fill="white" opacity="0.9" />
-                <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" opacity="0.7" />
-              </svg>
-            </div>
+            <BosalBadge size={32} />
             <span className="font-semibold text-sm" style={{ color: 'rgba(255,255,255,0.95)' }}>
-              Bosal Union Credit
+              Mache Kay <span className="font-bold">BOSAL</span>
             </span>
           </Link>
         </div>
@@ -124,7 +109,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
 
         {/* Footer minimal */}
         <p className="text-center text-xs pb-6 px-6" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          © {new Date().getFullYear()} Bosal Union Credit · Tous droits réservés
+          © {new Date().getFullYear()} Mache Kay BOSAL · Tous droits réservés
         </p>
       </div>
     </div>

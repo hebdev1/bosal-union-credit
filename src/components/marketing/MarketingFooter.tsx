@@ -1,5 +1,6 @@
 import Link from 'next/link'
-import { Landmark, Mail, Phone, MapPin } from 'lucide-react'
+import { Mail, Phone, MapPin } from 'lucide-react'
+import { BosalBadge } from '@/components/brand/BosalLogo'
 
 const FOOTER_LINKS = {
   Produit: [
@@ -69,13 +70,11 @@ export function MarketingFooter() {
             <Link
               href="/"
               className="group flex items-center gap-2.5 w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C41E3A] rounded-md"
-              aria-label="Bosal Union Credit — Accueil"
+              aria-label="Mache Kay BOSAL — Accueil"
             >
-              <span className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#C41E3A] shadow-[0_0_14px_rgba(196,30,58,0.30)] transition-shadow duration-200 group-hover:shadow-[0_0_22px_rgba(196,30,58,0.50)]">
-                <Landmark className="h-4 w-4 text-white" strokeWidth={1.75} aria-hidden="true" />
-              </span>
+              <BosalBadge size={36} />
               <div className="flex flex-col">
-                <span className="text-[14px] font-semibold text-white leading-tight">Bosal Union Credit</span>
+                <span className="text-[14px] font-semibold text-white leading-tight">Mache Kay <span className="font-bold">BOSAL</span></span>
                 <span className="text-[11px] text-white/35 tracking-[0.02em]">Core Banking · Haïti</span>
               </div>
             </Link>
@@ -147,7 +146,7 @@ export function MarketingFooter() {
       <div className="border-t border-[#252A36]/60">
         <div className="mx-auto max-w-[1280px] px-5 md:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-[12px] text-white/25 text-center sm:text-left">
-            © {new Date().getFullYear()} Bosal Union Credit. Tous droits réservés.
+            © {new Date().getFullYear()} Mache Kay BOSAL. Tous droits réservés.
           </p>
           <div className="flex items-center gap-1.5 flex-wrap justify-center sm:justify-end">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-[#252A36] text-[11px] text-white/30">

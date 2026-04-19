@@ -514,7 +514,7 @@ function ReportPreview({ headerColor, accentColor, textColor, footerText, logoUr
         {/* Footer */}
         <div style={{ padding: '5px 14px', borderTop: '1px solid #e5e7eb', background: '#f9f9f9', flexShrink: 0 }}>
           <p style={{ color: '#bbb', fontSize: 6, textAlign: 'center' }}>
-            {footerText || 'Bosal Union Crédit · Document confidentiel'}
+            {footerText || 'Mache Kay BOSAL · Document confidentiel'}
           </p>
         </div>
       </div>

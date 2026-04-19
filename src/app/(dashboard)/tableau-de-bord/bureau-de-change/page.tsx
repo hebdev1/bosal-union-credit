@@ -36,7 +36,7 @@ export default async function BureauDeChangePage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: coopRow } = agentRow ? await (supabase as any)
     .from('cooperatives').select('name').eq('id', agentRow.cooperative_id).single() : { data: null }
-  const coopName  = (coopRow as any)?.name  ?? 'Bosal Union Crédit'
+  const coopName  = (coopRow as any)?.name  ?? 'Mache Kay BOSAL'
   const agentName = (agentRow as any)?.name ?? '—'
 
   const [ratesRes, txRes, pdfRes] = await Promise.allSettled([
