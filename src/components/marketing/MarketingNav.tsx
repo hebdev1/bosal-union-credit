@@ -8,10 +8,10 @@ import { BosalBadge } from '@/components/brand/BosalLogo'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
-  { label: 'Fonctionnalités', href: '#features' },
-  { label: 'Comment ça marche', href: '#how-it-works' },
-  { label: 'Témoignages', href: '#testimonials' },
-  { label: 'Tarifs', href: '#pricing' },
+  { label: 'Fonctionnalités', href: '/fonctionnalites' },
+  { label: 'Comment ça marche', href: '/comment-ca-marche' },
+  { label: 'Tarifs', href: '/tarifs' },
+  { label: 'Blog', href: '/blog' },
 ]
 
 export function MarketingNav() {

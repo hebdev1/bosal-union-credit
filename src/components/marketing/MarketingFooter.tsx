@@ -4,9 +4,9 @@ import { BosalBadge } from '@/components/brand/BosalLogo'
 
 const FOOTER_LINKS = {
   Produit: [
-    { label: 'Fonctionnalités', href: '#features' },
-    { label: 'Comment ça marche', href: '#how-it-works' },
-    { label: 'Tarifs', href: '#pricing' },
+    { label: 'Fonctionnalités', href: '/fonctionnalites' },
+    { label: 'Comment ça marche', href: '/comment-ca-marche' },
+    { label: 'Tarifs', href: '/tarifs' },
     { label: 'Sécurité', href: '/securite' },
     { label: 'Mises à jour', href: '/changelog' },
   ],
