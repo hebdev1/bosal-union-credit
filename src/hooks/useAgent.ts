@@ -10,7 +10,7 @@ export interface Agent {
   name: string
   email: string
   phone?: string | null
-  status?: string
+  status?: string | null
 }
 
 export function useAgent() {
