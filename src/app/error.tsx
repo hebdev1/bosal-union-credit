@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { RefreshCw, AlertTriangle } from 'lucide-react'
 
 export default function GlobalError({
@@ -66,13 +67,13 @@ export default function GlobalError({
             <RefreshCw size={15} aria-hidden="true" />
             Réessayer
           </button>
-          <a
+          <Link
             href="/"
             className="flex items-center justify-center h-10 px-5 rounded-lg border text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
             style={{ borderColor: '#252A36', color: 'rgba(255,255,255,0.70)', background: 'transparent' }}
           >
             Accueil
-          </a>
+          </Link>
         </div>
       </div>
     </div>
