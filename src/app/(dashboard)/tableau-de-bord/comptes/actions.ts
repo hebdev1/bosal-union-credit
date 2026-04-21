@@ -1,6 +1,8 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
+import { runFraudCheck } from '@/lib/fraud/check'
 
 export async function createAccount(
   formData: FormData,
@@ -33,6 +35,14 @@ export async function createAccount(
     if (error.code === '23505') return { error: 'Ce numéro de compte est déjà utilisé.' }
     return { error: error.message }
   }
+
+  await logAudit({
+    action: 'account.open',
+    cooperativeId: agent.cooperative_id,
+    targetTable: 'accounts',
+    metadata: { account_number: formData.get('account_number') as string },
+  })
+
   revalidatePath('/tableau-de-bord/comptes')
   return null
 }
@@ -72,7 +82,7 @@ export async function closeAccount(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: account, error: accErr } = await (supabase as any)
     .from('accounts')
-    .select('balance, currency, status, account_number')
+    .select('balance, currency, status, account_number, member_id')
     .eq('id', accountId)
     .single()
   if (accErr || !account) return { error: 'Compte introuvable' }
@@ -90,7 +100,7 @@ export async function closeAccount(
 
   // Enregistrer les frais de fermeture comme transaction d'ajustement
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from('transactions').insert({
+  const { data: tx } = await (supabase as any).from('transactions').insert({
     cooperative_id:   agent.cooperative_id,
     account_id:       accountId,
     agent_id:         agent.id,
@@ -99,7 +109,27 @@ export async function closeAccount(
     motif:            `Frais de fermeture — compte ${account.account_number}`,
     reference:        `CLOSE-${Date.now().toString(36).toUpperCase()}`,
     status:           'completed',
+  }).select('id').single()
+
+  await logAudit({
+    action: 'account.close',
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'accounts',
+    targetId: accountId,
+    metadata: { account_number: account.account_number, closing_fee: CLOSING_FEE, final_balance: newBalance },
   })
+
+  // Fraud check sur la transaction de fermeture
+  if (tx?.id && account.member_id) {
+    await runFraudCheck({
+      cooperativeId: agent.cooperative_id,
+      memberId: account.member_id,
+      transactionId: tx.id,
+      amount: CLOSING_FEE,
+      currency: account.currency,
+    })
+  }
 
   revalidatePath('/tableau-de-bord/comptes')
   revalidatePath('/tableau-de-bord/transactions')

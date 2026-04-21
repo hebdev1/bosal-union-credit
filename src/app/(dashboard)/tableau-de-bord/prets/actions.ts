@@ -1,6 +1,9 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
+import { createNotification } from '@/lib/notifications/inapp'
+import { evaluateApproval, APPROVAL_RULES, type Role } from '@/lib/approvals/four-eyes'
 
 /* ─── Update loan status ──────────────────────────────────────────────────── */
 export async function updateLoanStatus(
@@ -13,8 +16,44 @@ export async function updateLoanStatus(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent } = await (supabase as any)
-    .from('agents').select('cooperative_id').eq('id', user.id).single()
+    .from('agents').select('cooperative_id, id, role').eq('id', user.id).single()
   if (!agent) return { error: 'Agent introuvable' }
+
+  // Fetch loan for notification + metadata
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: loan } = await (supabase as any)
+    .from('loans')
+    .select('id, loan_number, member_id, status, agent_id, created_at, principal_amount, monthly_payment')
+    .eq('id', loanId)
+    .eq('cooperative_id', agent.cooperative_id)
+    .single()
+  if (!loan) return { error: 'Prêt introuvable' }
+
+  // Four-eyes check when transitioning to 'active' (i.e. approving)
+  if (newStatus === 'active' && loan.status !== 'active') {
+    const rule = APPROVAL_RULES['loan.approve']
+    const evalResult = evaluateApproval({
+      state: {
+        initiatorId: loan.agent_id,
+        initiatorRole: 'agent',
+        initiatedAt: new Date(loan.created_at ?? Date.now()),
+        approverId: agent.id,
+        approverRole: (agent.role ?? 'agent') as Role,
+        approvedAt: new Date(),
+      },
+      amount: Number(loan.principal_amount),
+      rule,
+    })
+    if (!evalResult.allowed) {
+      const reasons: Record<string, string> = {
+        'missing-approver': 'Approbateur manquant.',
+        'same-person': "L'initiateur ne peut pas s'auto-approuver (principe des 4 yeux).",
+        'wrong-role': 'Votre rôle ne vous permet pas d\'approuver ce prêt.',
+        'expired': 'Approbation expirée.',
+      }
+      return { error: reasons[evalResult.reason] ?? 'Approbation refusée.' }
+    }
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
@@ -24,7 +63,34 @@ export async function updateLoanStatus(
     .eq('cooperative_id', agent.cooperative_id)
 
   if (error) return { error: error.message }
+
+  // Audit trail
+  const action =
+    newStatus === 'active'    ? 'loan.approve'   :
+    newStatus === 'rejected'  ? 'loan.reject'    :
+    newStatus === 'defaulted' ? 'loan.writeoff'  :
+    'loan.approve'
+  await logAudit({
+    action,
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'loans',
+    targetId: loanId,
+    metadata: { loan_number: loan.loan_number, previous_status: loan.status, new_status: newStatus },
+  })
+
+  // In-app notification to the borrower
+  if (newStatus === 'active' && loan.member_id) {
+    await createNotification({
+      cooperativeId: agent.cooperative_id,
+      memberId: loan.member_id,
+      type: 'loan_approved',
+      message: `Votre prêt ${loan.loan_number} a été approuvé. Mensualité : ${Number(loan.monthly_payment).toLocaleString('fr-FR')} HTG.`,
+    })
+  }
+
   revalidatePath('/tableau-de-bord/prets')
+  revalidatePath(`/tableau-de-bord/prets/${loanId}`)
   return null
 }
 
@@ -68,7 +134,7 @@ export async function createLoan(formData: FormData): Promise<{ error: string } 
   dueDate.setMonth(dueDate.getMonth() + durationMonths)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from('loans').insert({
+  const { data: inserted, error } = await (supabase as any).from('loans').insert({
     cooperative_id:    agent.cooperative_id,
     agent_id:          agent.id,
     member_id:         memberId,
@@ -83,9 +149,19 @@ export async function createLoan(formData: FormData): Promise<{ error: string } 
     status:            'pending',
     purpose,
     due_date:          dueDate.toISOString().split('T')[0],
-  })
+  }).select('id').single()
 
   if (error) return { error: error.message }
+
+  await logAudit({
+    action: 'loan.approve', // creation event — will be reviewed
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'loans',
+    targetId: inserted?.id,
+    metadata: { loan_number: loanNumber, principal, purpose, duration_months: durationMonths, status: 'pending' },
+  })
+
   revalidatePath('/tableau-de-bord/prets')
   return null
 }

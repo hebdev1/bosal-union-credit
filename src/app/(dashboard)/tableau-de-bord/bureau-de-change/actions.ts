@@ -1,6 +1,7 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
 
 export async function createExchangeRate(
   formData: FormData,
@@ -112,6 +113,19 @@ export async function createExchangeTransaction(
   })
 
   if (error) return { error: error.message }
+
+  await logAudit({
+    action: 'exchange.create',
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'exchange_transactions',
+    metadata: {
+      ticket_number: ticketNumber,
+      from_currency: fromCcy, to_currency: toCcy,
+      amount_given: amountGiven, rate_applied: rateApplied, amount_received: amountReceived,
+    },
+  })
+
   revalidatePath('/tableau-de-bord/bureau-de-change')
 
   return {

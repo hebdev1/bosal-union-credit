@@ -1,6 +1,8 @@
 'use server'
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
+import { logAudit } from '@/lib/audit'
+import { createNotification } from '@/lib/notifications/inapp'
 
 export async function updateMember(
   memberId: string,
@@ -11,25 +13,26 @@ export async function updateMember(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  // Verify the agent belongs to the same cooperative as the member
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent } = await (supabase as any)
-    .from('agents').select('cooperative_id').eq('id', user.id).single()
+    .from('agents').select('cooperative_id, id').eq('id', user.id).single()
   if (!agent) return { error: 'Agent introuvable' }
+
+  const payload = {
+    first_name:    (formData.get('first_name')  as string).trim(),
+    last_name:     (formData.get('last_name')   as string).trim(),
+    birth_date:    (formData.get('birth_date')  as string) || null,
+    phone:         (formData.get('phone')       as string) || null,
+    email:         (formData.get('email')       as string) || null,
+    address:       (formData.get('address')     as string) || null,
+    profession:    (formData.get('profession')  as string) || null,
+    member_number: (formData.get('member_number') as string).trim(),
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (supabase as any)
     .from('members')
-    .update({
-      first_name:    (formData.get('first_name')  as string).trim(),
-      last_name:     (formData.get('last_name')   as string).trim(),
-      birth_date:    (formData.get('birth_date')  as string) || null,
-      phone:         (formData.get('phone')       as string) || null,
-      email:         (formData.get('email')       as string) || null,
-      address:       (formData.get('address')     as string) || null,
-      profession:    (formData.get('profession')  as string) || null,
-      member_number: (formData.get('member_number') as string).trim(),
-    })
+    .update(payload)
     .eq('id', memberId)
     .eq('cooperative_id', agent.cooperative_id)
 
@@ -38,10 +41,19 @@ export async function updateMember(
     return { error: error.message }
   }
 
+  await logAudit({
+    action: 'member.update',
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'members',
+    targetId: memberId,
+    metadata: { member_number: payload.member_number },
+  })
+
   revalidatePath('/tableau-de-bord/membres')
   revalidatePath('/tableau-de-bord/comptes')
-  // Revalidate any account profile that shows this member
   revalidatePath('/tableau-de-bord/comptes/[id]', 'page')
+  revalidatePath(`/tableau-de-bord/membres/${memberId}`)
   return null
 }
 
@@ -53,11 +65,10 @@ export async function createMember(formData: FormData): Promise<{ error: string 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent, error: agentErr } = await (supabase as any)
-    .from('agents').select('cooperative_id').eq('id', user.id).single()
+    .from('agents').select('cooperative_id, id').eq('id', user.id).single()
   if (agentErr || !agent) return { error: 'Agent introuvable' }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from('members').insert({
+  const payload = {
     cooperative_id: agent.cooperative_id,
     member_number:  (formData.get('member_number') as string).trim(),
     first_name:     (formData.get('first_name') as string).trim(),
@@ -68,12 +79,39 @@ export async function createMember(formData: FormData): Promise<{ error: string 
     address:        (formData.get('address') as string) || null,
     profession:     (formData.get('profession') as string) || null,
     status:         'active',
-  })
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: inserted, error } = await (supabase as any)
+    .from('members')
+    .insert(payload)
+    .select('id')
+    .single()
 
   if (error) {
     if (error.code === '23505') return { error: 'Ce numéro de membre existe déjà. Veuillez en choisir un autre.' }
     return { error: error.message }
   }
+
+  await logAudit({
+    action: 'member.create',
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'members',
+    targetId: inserted?.id,
+    metadata: { member_number: payload.member_number, name: `${payload.first_name} ${payload.last_name}` },
+  })
+
+  // Welcome notification
+  if (inserted?.id) {
+    await createNotification({
+      cooperativeId: agent.cooperative_id,
+      memberId: inserted.id,
+      type: 'member_created',
+      message: `Bienvenue ${payload.first_name} ${payload.last_name} ! Votre compte membre ${payload.member_number} a été créé.`,
+    })
+  }
+
   revalidatePath('/tableau-de-bord/membres')
   return null
 }
