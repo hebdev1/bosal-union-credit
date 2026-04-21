@@ -2,10 +2,11 @@
 
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
-import { LogOut, User, ChevronDown, Bell } from 'lucide-react'
+import { LogOut, User, ChevronDown } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useAgent } from '@/hooks/useAgent'
+import { NotificationBell } from './NotificationBell'
 
 const ROLE_LABELS: Record<string, string> = {
   admin:   'Administrateur',
@@ -88,24 +89,7 @@ export function Header({ title }: { title?: string }) {
       {/* Right actions */}
       <div className="flex items-center gap-1.5">
         {/* Notification bell */}
-        <button
-          type="button"
-          aria-label="Notifications"
-          className="relative w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600"
-          style={{ color: 'rgba(255,255,255,0.38)' }}
-          onMouseEnter={e => {
-            const el = e.currentTarget as HTMLElement
-            el.style.background = 'rgba(255,255,255,0.06)'
-            el.style.color = 'rgba(255,255,255,0.78)'
-          }}
-          onMouseLeave={e => {
-            const el = e.currentTarget as HTMLElement
-            el.style.background = 'transparent'
-            el.style.color = 'rgba(255,255,255,0.38)'
-          }}
-        >
-          <Bell size={16} aria-hidden="true" />
-        </button>
+        <NotificationBell />
 
         {/* Separator */}
         <div
