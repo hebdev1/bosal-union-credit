@@ -7,7 +7,14 @@ import { CreateRateModal } from '@/components/dashboard/forms/CreateRateModal'
 import { BureauDeChangeHistoryClient } from '@/components/dashboard/forms/BureauDeChangeHistoryClient'
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
 import { buildPdfConfig, buildTicketConfig } from '@/lib/pdfConfig'
-import { formatHTG, formatDate } from '@/lib/formatters'
+import { formatCurrency, formatDate } from '@/lib/formatters'
+
+type SupportedCurrency = 'HTG' | 'USD' | 'CAD' | 'DOP'
+function asCurrency(code: string): SupportedCurrency {
+  return (['HTG', 'USD', 'CAD', 'DOP'] as const).includes(code as SupportedCurrency)
+    ? (code as SupportedCurrency)
+    : 'HTG'
+}
 
 export const metadata: Metadata = { title: 'Bureau de change' }
 
@@ -62,7 +69,12 @@ export default async function BureauDeChangePage() {
 
   const activeRates       = rates.filter(r => r.is_active)
   const inactiveRates     = rates.filter(r => !r.is_active)
-  const totalVolumeGiven  = txs.reduce((s, t) => s + Number(t.amount_given ?? 0), 0)
+  const volumeByCurrency = txs.reduce<Record<string, number>>((acc, t) => {
+    const k = String(t.from_currency)
+    acc[k] = (acc[k] ?? 0) + Number(t.amount_given ?? 0)
+    return acc
+  }, {})
+  const volumeEntries = Object.entries(volumeByCurrency).sort((a, b) => b[1] - a[1])
 
   return (
     <>
@@ -91,10 +103,9 @@ export default async function BureauDeChangePage() {
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[
-            { label: 'Taux actifs',            value: activeRates.length },
-            { label: 'Taux archivés',          value: inactiveRates.length },
-            { label: 'Opérations de change',   value: txs.length },
-            { label: 'Volume total échangé',   value: formatHTG(totalVolumeGiven) },
+            { label: 'Taux actifs',          value: String(activeRates.length) },
+            { label: 'Taux archivés',        value: String(inactiveRates.length) },
+            { label: 'Opérations de change', value: String(txs.length) },
           ].map(k => (
             <div key={k.label} className="rounded-xl px-5 py-4"
               style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
@@ -102,6 +113,21 @@ export default async function BureauDeChangePage() {
               <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>{k.label}</p>
             </div>
           ))}
+          <div className="rounded-xl px-5 py-4"
+            style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
+            {volumeEntries.length === 0 ? (
+              <p className="text-xl font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.95)' }}>—</p>
+            ) : (
+              <div className="space-y-0.5">
+                {volumeEntries.map(([ccy, amount]) => (
+                  <p key={ccy} className="text-sm font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.90)' }}>
+                    {formatCurrency(amount, asCurrency(ccy))}
+                  </p>
+                ))}
+              </div>
+            )}
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.38)' }}>Volume échangé par devise</p>
+          </div>
         </div>
 
         {/* ── Taux actifs ── */}

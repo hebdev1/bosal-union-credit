@@ -6,13 +6,16 @@ import { ExchangeTicketButton } from '@/components/dashboard/forms/ExchangeTicke
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
 import { type TicketConfig } from '@/components/dashboard/forms/ExchangeTicketPDF'
 import { type PdfReportConfig } from '@/lib/pdfConfig'
+import { formatCurrency } from '@/lib/formatters'
 
-function formatHTG(n: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
+type SupportedCurrency = 'HTG' | 'USD' | 'CAD' | 'DOP'
+
+function asCurrency(code: string): SupportedCurrency {
+  return (['HTG', 'USD', 'CAD', 'DOP'] as const).includes(code as SupportedCurrency)
+    ? (code as SupportedCurrency)
+    : 'HTG'
 }
-function formatUSD(n: number) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(n)
-}
+
 function formatDate(d: string) {
   return new Intl.DateTimeFormat('fr-HT', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(d))
 }
@@ -144,13 +147,13 @@ export function BureauDeChangeHistoryClient({ txs, rates, ticketConfig, reportCo
                 <TD><CurrencyTag code={t.to_currency} /></TD>
                 <TD>
                   <span className="font-semibold kpi-value" style={{ color: '#F87171' }}>
-                    {t.from_currency === 'USD' ? formatUSD(Number(t.amount_given)) : formatHTG(Number(t.amount_given))}
+                    {formatCurrency(Number(t.amount_given), asCurrency(t.from_currency))}
                   </span>
                 </TD>
                 <TD mono>{Number(t.rate_applied).toFixed(4)}</TD>
                 <TD>
                   <span className="font-semibold kpi-value" style={{ color: '#4ADE80' }}>
-                    {t.to_currency === 'USD' ? formatUSD(Number(t.amount_received)) : formatHTG(Number(t.amount_received))}
+                    {formatCurrency(Number(t.amount_received), asCurrency(t.to_currency))}
                   </span>
                 </TD>
                 <TD>{t.agents?.name ?? '—'}</TD>
