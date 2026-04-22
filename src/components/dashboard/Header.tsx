@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { useAgent } from '@/hooks/useAgent'
 import { NotificationBell } from './NotificationBell'
+import { CloseDayButton } from './forms/CloseDayButton'
 
 const ROLE_LABELS: Record<string, string> = {
   admin:   'Administrateur',
@@ -87,7 +88,10 @@ export function Header({ title }: { title?: string }) {
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2">
+        {/* Close day */}
+        <CloseDayButton />
+
         {/* Notification bell */}
         <NotificationBell />
 

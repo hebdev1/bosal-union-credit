@@ -186,7 +186,7 @@ export async function closeDay(notes?: string): Promise<ClosureResult | { error:
     status:          'open',
   }, { onConflict: 'cooperative_id,closing_date' })
 
-  revalidatePath('/tableau-de-bord/cloture')
+  revalidatePath('/tableau-de-bord/rapports')
   revalidatePath('/tableau-de-bord')
 
   return {
@@ -237,6 +237,6 @@ export async function openNewDay(
   }, { onConflict: 'cooperative_id,closing_date' })
 
   if (error) return { error: error.message }
-  revalidatePath('/tableau-de-bord/cloture')
+  revalidatePath('/tableau-de-bord/rapports')
   return null
 }

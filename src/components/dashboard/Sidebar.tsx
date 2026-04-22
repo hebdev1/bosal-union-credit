@@ -7,7 +7,6 @@ import {
   LayoutDashboard, Users, Banknote, ArrowLeftRight,
   Landmark, TrendingUp, Vault, AlertTriangle,
   BarChart3, Settings, ChevronLeft, ChevronRight,
-  BookCheck,
 } from 'lucide-react'
 import { BosalBadge } from '@/components/brand/BosalLogo'
 import { cn } from '@/lib/utils'
@@ -27,7 +26,6 @@ const NAV: NavItem[] = [
   { label: 'Prêts',            href: '/tableau-de-bord/prets',             icon: Landmark,        section: 'Gestion'       },
   { label: 'Bureau de change', href: '/tableau-de-bord/bureau-de-change',  icon: TrendingUp,      section: 'Services'      },
   { label: 'Caisse (Vault)',   href: '/tableau-de-bord/caisse',            icon: Vault,           section: 'Services'      },
-  { label: 'Clôture journée',  href: '/tableau-de-bord/cloture',          icon: BookCheck,       section: 'Services'      },
   { label: 'Alertes fraude',   href: '/tableau-de-bord/alertes-fraude',   icon: AlertTriangle,   section: 'Sécurité'      },
   { label: 'Rapports',         href: '/tableau-de-bord/rapports',          icon: BarChart3,       section: 'Analytique'    },
   { label: 'Paramètres',       href: '/tableau-de-bord/parametres',       icon: Settings,        section: 'Configuration' },

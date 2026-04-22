@@ -18,7 +18,20 @@ export default async function RapportsPage() {
 
   const cooperativeId = (agentRow as any)?.cooperative_id
 
-  const [closingsRes, todayStats, globalTxRes, globalLoanRes, globalMembersRes] = await Promise.allSettled([
+  // Window for detailed operation tables: last 90 days
+  const since = new Date(); since.setDate(since.getDate() - 90)
+  const sinceIso = since.toISOString()
+
+  const [
+    closingsRes,
+    todayStats,
+    globalTxRes,
+    globalLoanRes,
+    globalMembersRes,
+    detailTxRes,
+    detailExRes,
+    detailRepRes,
+  ] = await Promise.allSettled([
     cooperativeId
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ? (supabase as any)
@@ -32,6 +45,25 @@ export default async function RapportsPage() {
     supabase.from('transactions').select('transaction_type, amount'),
     supabase.from('loans').select('status, principal_amount, amount_paid'),
     supabase.from('members').select('status'),
+    // Detailed operations (last 90 d), always visible on the rapports page
+    supabase
+      .from('transactions')
+      .select('id, created_at, transaction_type, amount, status, reference, motif, accounts(account_number, currency, members(first_name, last_name))')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .limit(1000),
+    supabase
+      .from('exchange_transactions')
+      .select('id, created_at, from_currency, to_currency, amount_given, amount_received, rate_applied, ticket_number')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .limit(1000),
+    supabase
+      .from('loan_repayments')
+      .select('id, created_at, amount_paid, status, loans(loan_number, members(first_name, last_name))')
+      .gte('created_at', sinceIso)
+      .order('created_at', { ascending: false })
+      .limit(1000),
   ])
 
   const closings   = closingsRes.status === 'fulfilled' ? ((closingsRes.value as any).data ?? []) : []
@@ -39,6 +71,57 @@ export default async function RapportsPage() {
   const allTxs     = globalTxRes.status === 'fulfilled' ? (globalTxRes.value.data ?? []) : []
   const allLoans   = globalLoanRes.status === 'fulfilled' ? (globalLoanRes.value.data ?? []) : []
   const allMembers = globalMembersRes.status === 'fulfilled' ? (globalMembersRes.value.data ?? []) : []
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawTx = detailTxRes.status === 'fulfilled' ? ((detailTxRes.value as any).data ?? []) : []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawEx = detailExRes.status === 'fulfilled' ? ((detailExRes.value as any).data ?? []) : []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rawRep = detailRepRes.status === 'fulfilled' ? ((detailRepRes.value as any).data ?? []) : []
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detailTransactions = rawTx.map((t: any) => {
+    const acct = Array.isArray(t.accounts) ? t.accounts[0] : t.accounts
+    const member = acct ? (Array.isArray(acct.members) ? acct.members[0] : acct.members) : null
+    return {
+      id: t.id,
+      created_at: t.created_at,
+      transaction_type: t.transaction_type,
+      amount: Number(t.amount ?? 0),
+      status: t.status,
+      reference: t.reference ?? null,
+      motif: t.motif ?? null,
+      account_number: acct?.account_number ?? null,
+      currency: acct?.currency ?? null,
+      member_name: member ? `${member.first_name} ${member.last_name}` : null,
+    }
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detailExchanges = rawEx.map((e: any) => ({
+    id: e.id,
+    created_at: e.created_at,
+    from_currency: e.from_currency,
+    to_currency: e.to_currency,
+    amount_given: Number(e.amount_given ?? 0),
+    amount_received: Number(e.amount_received ?? 0),
+    rate_applied: Number(e.rate_applied ?? 0),
+    ticket_number: e.ticket_number ?? null,
+  }))
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const detailRepayments = rawRep.map((r: any) => {
+    const loan = Array.isArray(r.loans) ? r.loans[0] : r.loans
+    const member = loan ? (Array.isArray(loan.members) ? loan.members[0] : loan.members) : null
+    return {
+      id: r.id,
+      created_at: r.created_at,
+      amount_paid: Number(r.amount_paid ?? 0),
+      status: r.status,
+      loan_number: loan?.loan_number ?? null,
+      member_name: member ? `${member.first_name} ${member.last_name}` : null,
+    }
+  })
 
   const isOpen = (closings as any[]).some((c: any) => c.status === 'open')
 
@@ -79,6 +162,9 @@ export default async function RapportsPage() {
           closings={closings as any[]}
           todayStats={todayS}
           isOpen={isOpen}
+          detailTransactions={detailTransactions}
+          detailExchanges={detailExchanges}
+          detailRepayments={detailRepayments}
         />
       </PageShell>
     </>
