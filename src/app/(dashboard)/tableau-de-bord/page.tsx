@@ -2,15 +2,21 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { DashboardHome } from '@/components/dashboard/DashboardHome'
+import { getCurrentSessionStart } from '@/lib/sessions/getSessionStart'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
 
 export default async function TableauDeBordPage() {
   const supabase = await createClient()
 
-  // Analytics window: last 365 days (client filters down to 7/30/90)
-  const analyticsStart = new Date(); analyticsStart.setDate(analyticsStart.getDate() - 365)
-  const analyticsStartIso = analyticsStart.toISOString()
+  // Session cut-off: after each clôture the dashboard "resets" to show only
+  // post-closure activity. Historical ops remain visible on the rapports page.
+  const sessionStart = await getCurrentSessionStart()
+
+  // Analytics window: last 365 days (client filters down to 7/30/90),
+  // but never before the current session start.
+  const fallbackStart = new Date(); fallbackStart.setDate(fallbackStart.getDate() - 365)
+  const analyticsStartIso = sessionStart ?? fallbackStart.toISOString()
 
   const [
     summaryRes,
@@ -36,16 +42,30 @@ export default async function TableauDeBordPage() {
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(6),
-    supabase
-      .from('transactions')
-      .select('id, transaction_type, amount, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
-      .order('created_at', { ascending: false })
-      .limit(8),
-    supabase
-      .from('fraud_flags')
-      .select('id, rule_triggered, severity, created_at, transaction_id')
-      .order('created_at', { ascending: false })
-      .limit(5),
+    (sessionStart
+      ? supabase
+          .from('transactions')
+          .select('id, transaction_type, amount, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
+          .gte('created_at', sessionStart)
+          .order('created_at', { ascending: false })
+          .limit(8)
+      : supabase
+          .from('transactions')
+          .select('id, transaction_type, amount, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
+          .order('created_at', { ascending: false })
+          .limit(8)),
+    (sessionStart
+      ? supabase
+          .from('fraud_flags')
+          .select('id, rule_triggered, severity, created_at, transaction_id')
+          .gte('created_at', sessionStart)
+          .order('created_at', { ascending: false })
+          .limit(5)
+      : supabase
+          .from('fraud_flags')
+          .select('id, rule_triggered, severity, created_at, transaction_id')
+          .order('created_at', { ascending: false })
+          .limit(5)),
     supabase
       .from('transactions')
       .select('transaction_type, amount, status, created_at')

@@ -1,7 +1,8 @@
 'use client'
 import * as React from 'react'
-import { MoonStar, Calendar, Loader2, Check, X, AlertTriangle, FileText } from 'lucide-react'
+import { MoonStar, Calendar, Loader2, Check, X, AlertTriangle, FileText, ChevronDown, ChevronRight, ArrowRightLeft, Receipt, Coins } from 'lucide-react'
 import { closeDay } from '@/app/(dashboard)/tableau-de-bord/cloture/actions'
+import { getSessionDetail, type SessionDetail } from '@/app/(dashboard)/tableau-de-bord/rapports/actions'
 import { useRouter } from 'next/navigation'
 import { DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 
@@ -66,6 +67,29 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
   // Date filter for history
   const [dateFrom, setDateFrom] = React.useState('')
   const [dateTo, setDateTo] = React.useState('')
+
+  // Per-session drill-down
+  const [expandedId, setExpandedId] = React.useState<string | null>(null)
+  const [detailCache, setDetailCache] = React.useState<Record<string, SessionDetail>>({})
+  const [loadingId, setLoadingId] = React.useState<string | null>(null)
+  const [detailError, setDetailError] = React.useState<Record<string, string>>({})
+
+  async function toggleSession(id: string) {
+    if (expandedId === id) {
+      setExpandedId(null)
+      return
+    }
+    setExpandedId(id)
+    if (detailCache[id]) return
+    setLoadingId(id)
+    const res = await getSessionDetail(id)
+    setLoadingId(null)
+    if ('error' in res) {
+      setDetailError(prev => ({ ...prev, [id]: res.error }))
+      return
+    }
+    setDetailCache(prev => ({ ...prev, [id]: res }))
+  }
 
   const closedClosings = React.useMemo(
     () => closings.filter(c => c.status === 'closed'),
@@ -209,11 +233,26 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
               description={dateFrom || dateTo ? 'Aucune clôture dans cette période.' : 'Les clôtures journalières apparaîtront ici.'}
             />
           ) : (
-            <Table headers={['Date', 'Sol. ouverture', 'Dépôts', 'Retraits', 'Remboursements', 'Change net', 'Sol. clôture', 'Clôturé par', 'Heure', 'Remarques']}>
+            <Table headers={['', 'Date', 'Sol. ouverture', 'Dépôts', 'Retraits', 'Remboursements', 'Change net', 'Sol. clôture', 'Clôturé par', 'Heure', 'Remarques']}>
               {filteredClosings.map(c => {
                 const netChange = (Number(c.closing_balance ?? 0)) - (Number(c.opening_balance))
+                const isExpanded = expandedId === c.id
+                const detail = detailCache[c.id]
+                const err = detailError[c.id]
                 return (
-                  <TR key={c.id}>
+                  <React.Fragment key={c.id}>
+                  <TR>
+                    <TD>
+                      <button
+                        type="button"
+                        onClick={() => toggleSession(c.id)}
+                        aria-label={isExpanded ? 'Masquer le détail' : 'Afficher le détail'}
+                        className="w-6 h-6 flex items-center justify-center rounded-md transition-colors"
+                        style={{ background: isExpanded ? 'rgba(196,30,58,0.15)' : 'rgba(255,255,255,0.04)', color: isExpanded ? '#E8314F' : 'rgba(255,255,255,0.55)' }}
+                      >
+                        {loadingId === c.id ? <Loader2 size={11} className="animate-spin" /> : isExpanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                      </button>
+                    </TD>
                     <TD mono>{fDate(c.closing_date)}</TD>
                     <TD>
                       <span className="kpi-value text-xs" style={{ color: 'rgba(255,255,255,0.65)' }}>
@@ -256,6 +295,14 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
                       ) : '—'}
                     </TD>
                   </TR>
+                  {isExpanded && (
+                    <tr style={{ background: 'rgba(255,255,255,0.015)' }}>
+                      <td colSpan={11} style={{ padding: 0 }}>
+                        <SessionDetailPanel detail={detail} loading={loadingId === c.id} error={err} />
+                      </td>
+                    </tr>
+                  )}
+                  </React.Fragment>
                 )
               })}
             </Table>
@@ -414,5 +461,164 @@ export function RapportsClient({ closings, todayStats, isOpen }: Props) {
         </div>
       )}
     </>
+  )
+}
+
+const TX_LABEL: Record<string, string> = {
+  deposit: 'Dépôt',
+  withdrawal: 'Retrait',
+  transfer: 'Transfert',
+  adjustment: 'Ajustement',
+  loan_disbursement: 'Décaissement',
+  loan_repayment: 'Remboursement',
+}
+
+const TX_COLOR: Record<string, string> = {
+  deposit: '#4ADE80',
+  withdrawal: '#F87171',
+  transfer: '#60A5FA',
+  adjustment: '#FCD34D',
+  loan_disbursement: '#A78BFA',
+  loan_repayment: '#34D399',
+}
+
+function fTime(iso: string) {
+  if (!iso) return '—'
+  return new Intl.DateTimeFormat('fr-HT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }).format(new Date(iso))
+}
+
+function SessionDetailPanel({
+  detail,
+  loading,
+  error,
+}: {
+  detail: SessionDetail | undefined
+  loading: boolean
+  error: string | undefined
+}) {
+  if (loading && !detail) {
+    return (
+      <div className="px-6 py-6 flex items-center gap-2 text-xs" style={{ color: 'rgba(255,255,255,0.50)' }}>
+        <Loader2 size={13} className="animate-spin" />
+        Chargement du détail de la session…
+      </div>
+    )
+  }
+  if (error) {
+    return (
+      <div className="px-6 py-5 text-xs" style={{ color: '#F87171' }}>
+        Erreur : {error}
+      </div>
+    )
+  }
+  if (!detail) return null
+
+  const { transactions, exchanges, repayments } = detail
+  const totalOps = transactions.length + exchanges.length + repayments.length
+
+  if (totalOps === 0) {
+    return (
+      <div className="px-6 py-5 text-xs italic" style={{ color: 'rgba(255,255,255,0.40)' }}>
+        Aucune opération enregistrée durant cette session.
+      </div>
+    )
+  }
+
+  const SectionTitle = ({ icon, label, count, color }: { icon: React.ReactNode; label: string; count: number; color: string }) => (
+    <div className="flex items-center gap-2 mb-2">
+      <span className="w-6 h-6 flex items-center justify-center rounded-md" style={{ background: `${color}15`, color }}>
+        {icon}
+      </span>
+      <h4 className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.70)', letterSpacing: '0.07em' }}>
+        {label}
+      </h4>
+      <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}>
+        {count}
+      </span>
+    </div>
+  )
+
+  return (
+    <div className="px-6 py-5 space-y-5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      {transactions.length > 0 && (
+        <section>
+          <SectionTitle icon={<Receipt size={12} />} label="Transactions" count={transactions.length} color="#4ADE80" />
+          <div className="rounded-lg overflow-hidden" style={{ background: '#0B0E15', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="grid grid-cols-[90px_120px_1fr_1fr_120px_100px] gap-3 px-3 py-2 text-[10px] font-semibold uppercase"
+              style={{ background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>
+              <span>Heure</span><span>Type</span><span>Membre</span><span>Compte / Réf.</span><span className="text-right">Montant</span><span>Statut</span>
+            </div>
+            {transactions.map(t => (
+              <div key={t.id} className="grid grid-cols-[90px_120px_1fr_1fr_120px_100px] gap-3 px-3 py-2 items-center text-xs"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                <span className="font-mono" style={{ color: 'rgba(255,255,255,0.55)' }}>{fTime(t.created_at)}</span>
+                <span className="font-semibold" style={{ color: TX_COLOR[t.transaction_type] ?? 'rgba(255,255,255,0.80)' }}>
+                  {TX_LABEL[t.transaction_type] ?? t.transaction_type}
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.75)' }}>{t.member_name ?? '—'}</span>
+                <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  {t.account_number ?? t.reference ?? '—'}
+                </span>
+                <span className="text-right font-semibold kpi-value" style={{ color: TX_COLOR[t.transaction_type] ?? 'rgba(255,255,255,0.85)' }}>
+                  {fHTG(t.amount)}
+                </span>
+                <span className="text-[10px] uppercase" style={{ color: t.status === 'completed' || t.status === 'approved' ? '#4ADE80' : t.status === 'pending' ? '#FCD34D' : 'rgba(255,255,255,0.50)' }}>
+                  {t.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {exchanges.length > 0 && (
+        <section>
+          <SectionTitle icon={<ArrowRightLeft size={12} />} label="Opérations de change" count={exchanges.length} color="#FCD34D" />
+          <div className="rounded-lg overflow-hidden" style={{ background: '#0B0E15', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="grid grid-cols-[90px_110px_140px_140px_100px_1fr] gap-3 px-3 py-2 text-[10px] font-semibold uppercase"
+              style={{ background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>
+              <span>Heure</span><span>Ticket</span><span>Donné</span><span>Reçu</span><span>Taux</span><span>Paire</span>
+            </div>
+            {exchanges.map(e => (
+              <div key={e.id} className="grid grid-cols-[90px_110px_140px_140px_100px_1fr] gap-3 px-3 py-2 items-center text-xs"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                <span className="font-mono" style={{ color: 'rgba(255,255,255,0.55)' }}>{fTime(e.created_at)}</span>
+                <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{e.ticket_number ?? '—'}</span>
+                <span className="kpi-value" style={{ color: '#F87171' }}>
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: e.from_currency, minimumFractionDigits: 2 }).format(e.amount_given)}
+                </span>
+                <span className="kpi-value" style={{ color: '#4ADE80' }}>
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: e.to_currency, minimumFractionDigits: 2 }).format(e.amount_received)}
+                </span>
+                <span className="font-mono" style={{ color: 'rgba(255,255,255,0.70)' }}>{e.rate_applied.toFixed(4)}</span>
+                <span style={{ color: 'rgba(255,255,255,0.65)' }}>{e.from_currency} → {e.to_currency}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {repayments.length > 0 && (
+        <section>
+          <SectionTitle icon={<Coins size={12} />} label="Remboursements de prêt" count={repayments.length} color="#60A5FA" />
+          <div className="rounded-lg overflow-hidden" style={{ background: '#0B0E15', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="grid grid-cols-[90px_140px_1fr_140px_100px] gap-3 px-3 py-2 text-[10px] font-semibold uppercase"
+              style={{ background: 'rgba(255,255,255,0.03)', color: 'rgba(255,255,255,0.35)', letterSpacing: '0.06em' }}>
+              <span>Heure</span><span>N° prêt</span><span>Emprunteur</span><span className="text-right">Montant</span><span>Statut</span>
+            </div>
+            {repayments.map(r => (
+              <div key={r.id} className="grid grid-cols-[90px_140px_1fr_140px_100px] gap-3 px-3 py-2 items-center text-xs"
+                style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                <span className="font-mono" style={{ color: 'rgba(255,255,255,0.55)' }}>{fTime(r.created_at)}</span>
+                <span className="font-mono text-[11px]" style={{ color: 'rgba(255,255,255,0.55)' }}>{r.loan_number ?? '—'}</span>
+                <span style={{ color: 'rgba(255,255,255,0.75)' }}>{r.member_name ?? '—'}</span>
+                <span className="text-right font-semibold kpi-value" style={{ color: '#60A5FA' }}>{fHTG(r.amount_paid)}</span>
+                <span className="text-[10px] uppercase" style={{ color: r.status === 'paid' ? '#4ADE80' : 'rgba(255,255,255,0.50)' }}>{r.status}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
   )
 }
