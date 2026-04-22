@@ -8,6 +8,10 @@ export const metadata: Metadata = { title: 'Tableau de bord' }
 export default async function TableauDeBordPage() {
   const supabase = await createClient()
 
+  // Analytics window: last 365 days (client filters down to 7/30/90)
+  const analyticsStart = new Date(); analyticsStart.setDate(analyticsStart.getDate() - 365)
+  const analyticsStartIso = analyticsStart.toISOString()
+
   const [
     summaryRes,
     membersRes,
@@ -17,6 +21,9 @@ export default async function TableauDeBordPage() {
     ratesRes,
     recentTxRes,
     fraudRes,
+    analyticsTxRes,
+    analyticsExchangesRes,
+    analyticsLoansRes,
   ] = await Promise.allSettled([
     supabase.rpc('get_cooperative_summary'),
     supabase.from('members').select('id, status').eq('status', 'active'),
@@ -39,6 +46,18 @@ export default async function TableauDeBordPage() {
       .select('id, rule_triggered, severity, created_at, transaction_id')
       .order('created_at', { ascending: false })
       .limit(5),
+    supabase
+      .from('transactions')
+      .select('transaction_type, amount, status, created_at')
+      .gte('created_at', analyticsStartIso),
+    supabase
+      .from('exchange_transactions')
+      .select('from_currency, to_currency, amount_given, rate_applied, created_at')
+      .gte('created_at', analyticsStartIso),
+    supabase
+      .from('loans')
+      .select('status, principal_amount, created_at')
+      .gte('created_at', analyticsStartIso),
   ])
 
   const summary = summaryRes.status === 'fulfilled' ? (summaryRes.value.data?.[0] ?? null) : null
@@ -49,6 +68,9 @@ export default async function TableauDeBordPage() {
   const rates = ratesRes.status === 'fulfilled' ? (ratesRes.value.data ?? []) : []
   const recentTx = recentTxRes.status === 'fulfilled' ? (recentTxRes.value.data ?? []) : []
   const fraudFlags = fraudRes.status === 'fulfilled' ? (fraudRes.value.data ?? []) : []
+  const analyticsTx        = analyticsTxRes.status === 'fulfilled' ? (analyticsTxRes.value.data ?? []) : []
+  const analyticsExchanges = analyticsExchangesRes.status === 'fulfilled' ? (analyticsExchangesRes.value.data ?? []) : []
+  const analyticsLoans     = analyticsLoansRes.status === 'fulfilled' ? (analyticsLoansRes.value.data ?? []) : []
 
   // Compute totals client-side from fetched data
   const totalBalanceHTG = accounts
@@ -77,6 +99,9 @@ export default async function TableauDeBordPage() {
         exchangeRates={rates as any[]}
         recentTransactions={recentTx as any[]}
         fraudFlags={fraudFlags as any[]}
+        analyticsTx={analyticsTx as any[]}
+        analyticsExchanges={analyticsExchanges as any[]}
+        analyticsLoans={analyticsLoans as any[]}
       />
     </>
   )

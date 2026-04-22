@@ -5,7 +5,8 @@ import {
   Users, Banknote, TrendingUp, AlertTriangle,
   ArrowUpRight, ArrowDownRight, Clock, RefreshCw, Landmark,
 } from 'lucide-react'
-import { formatHTG, formatUSD, formatCompact, formatRelative } from '@/lib/formatters'
+import { formatHTG, formatUSD, formatRelative } from '@/lib/formatters'
+import { DashboardCharts, type RawTx, type RawExchange, type RawLoan } from './DashboardCharts'
 
 /* ── Types ─────────────────────────────────────────────────────────────── */
 interface ExchangeRate {
@@ -48,6 +49,10 @@ interface Props {
   exchangeRates: ExchangeRate[]
   recentTransactions: Transaction[]
   fraudFlags: FraudFlag[]
+  // Raw analytics data (last N days) for the charts section
+  analyticsTx:        RawTx[]
+  analyticsExchanges: RawExchange[]
+  analyticsLoans:     RawLoan[]
 }
 
 /* ── KPI Card ───────────────────────────────────────────────────────────── */
@@ -153,38 +158,37 @@ function CurrencyFlag({ code }: { code: string }) {
   )
 }
 
-/* ── Section header helper ──────────────────────────────────────────────── */
-function SectionHeader({ title, href, label }: { title: string; href?: string; label?: string }) {
-  return (
-    <div className="flex items-center justify-between mb-4">
-      <h3
-        className="text-[13px] font-semibold"
-        style={{ color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.01em' }}
-      >
-        {title}
-      </h3>
-      {href && (
-        <a
-          href={href}
-          className="text-[12px] font-medium transition-colors"
-          style={{ color: 'var(--color-brand, #C41E3A)' }}
-          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.75')}
-          onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
-        >
-          {label ?? 'Voir tout'} →
-        </a>
-      )}
-    </div>
-  )
-}
-
 /* ── Main ───────────────────────────────────────────────────────────────── */
 export function DashboardHome({
   activeMembers, totalBalanceHTG, totalBalanceUSD,
   vaultBalance, activeLoansTotal, activeLoansCount,
   exchangeRates, recentTransactions, fraudFlags,
+  analyticsTx, analyticsExchanges, analyticsLoans,
 }: Props) {
   const openFraud = fraudFlags.length
+
+  // ── Recent tx filter ──
+  const [txTypeFilter,   setTxTypeFilter]   = React.useState<'all' | 'deposit' | 'withdrawal' | 'transfer' | 'adjustment'>('all')
+  const [txStatusFilter, setTxStatusFilter] = React.useState<'all' | 'completed' | 'pending' | 'failed'>('all')
+  const filteredTx = React.useMemo(() => recentTransactions.filter(t =>
+    (txTypeFilter   === 'all' || t.transaction_type === txTypeFilter) &&
+    (txStatusFilter === 'all' || t.status           === txStatusFilter),
+  ), [recentTransactions, txTypeFilter, txStatusFilter])
+
+  // ── Fraud severity filter ──
+  const [sevFilter, setSevFilter] = React.useState<'all' | 'critical' | 'high' | 'medium' | 'low'>('all')
+  const filteredFraud = React.useMemo(() =>
+    sevFilter === 'all' ? fraudFlags : fraudFlags.filter(f => f.severity === sevFilter),
+  [fraudFlags, sevFilter])
+
+  // ── KPI currency filter ──
+  const [kpiCcy, setKpiCcy] = React.useState<'HTG' | 'USD'>('HTG')
+
+  // ── Exchange rate currency filter ──
+  const [rateCcy, setRateCcy] = React.useState<'ALL' | 'HTG' | 'USD' | 'CAD' | 'DOP'>('ALL')
+  const visibleRates = React.useMemo(() =>
+    rateCcy === 'ALL' ? exchangeRates : exchangeRates.filter(r => r.from_currency === rateCcy || r.to_currency === rateCcy),
+  [exchangeRates, rateCcy])
 
   return (
     <div className="px-6 py-6 space-y-8 max-w-[1280px] mx-auto w-full">
@@ -204,6 +208,22 @@ export function DashboardHome({
 
       {/* KPIs */}
       <section aria-label="Indicateurs clés">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[12px]" style={{ color: 'rgba(255,255,255,0.45)' }}>Indicateurs clés</p>
+          <div className="flex items-center gap-1 p-0.5 rounded-lg"
+            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {(['HTG', 'USD'] as const).map(c => (
+              <button key={c} type="button" onClick={() => setKpiCcy(c)}
+                className="px-2.5 h-6 rounded-md text-[11px] font-semibold transition-colors"
+                style={{
+                  background: kpiCcy === c ? 'rgba(255,255,255,0.07)' : 'transparent',
+                  color:      kpiCcy === c ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.35)',
+                }}>
+                {c}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
           <KpiCard
             label="Membres actifs"
@@ -213,9 +233,9 @@ export function DashboardHome({
             accent="#3B82F6"
           />
           <KpiCard
-            label="Solde total HTG"
-            value={formatHTG(totalBalanceHTG)}
-            sub={`USD : ${formatUSD(totalBalanceUSD)}`}
+            label={`Solde total ${kpiCcy}`}
+            value={kpiCcy === 'HTG' ? formatHTG(totalBalanceHTG) : formatUSD(totalBalanceUSD)}
+            sub={kpiCcy === 'HTG' ? `USD : ${formatUSD(totalBalanceUSD)}` : `HTG : ${formatHTG(totalBalanceHTG)}`}
             icon={Banknote}
             accent="#22C55E"
           />
@@ -237,12 +257,41 @@ export function DashboardHome({
         </div>
       </section>
 
+      {/* Charts */}
+      <DashboardCharts txs={analyticsTx} exchanges={analyticsExchanges} loans={analyticsLoans} />
+
       {/* Exchange rates */}
       {exchangeRates.length > 0 && (
         <section aria-label="Taux de change actifs">
-          <SectionHeader title="Taux de change" href="/tableau-de-bord/bureau-de-change" label="Gérer" />
+          <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+            <h3 className="text-[13px] font-semibold" style={{ color: 'rgba(255,255,255,0.85)', letterSpacing: '-0.01em' }}>
+              Taux de change
+            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1 p-0.5 rounded-lg"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                {(['ALL', 'HTG', 'USD', 'CAD', 'DOP'] as const).map(c => (
+                  <button key={c} type="button" onClick={() => setRateCcy(c)}
+                    className="px-2 h-6 rounded-md text-[11px] font-semibold transition-colors"
+                    style={{
+                      background: rateCcy === c ? 'rgba(255,255,255,0.07)' : 'transparent',
+                      color:      rateCcy === c ? 'rgba(255,255,255,0.90)' : 'rgba(255,255,255,0.35)',
+                    }}>
+                    {c === 'ALL' ? 'Tous' : c}
+                  </button>
+                ))}
+              </div>
+              <a href="/tableau-de-bord/bureau-de-change"
+                className="text-[12px] font-medium transition-opacity"
+                style={{ color: 'var(--color-brand, #C41E3A)' }}>
+                Gérer →
+              </a>
+            </div>
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {exchangeRates.map(r => (
+            {visibleRates.length === 0 ? (
+              <p className="col-span-full text-[12px] py-4" style={{ color: 'rgba(255,255,255,0.30)' }}>Aucun taux pour cette devise.</p>
+            ) : visibleRates.map(r => (
               <div
                 key={`${r.from_currency}-${r.to_currency}-${r.created_at}`}
                 className="rounded-xl p-3.5 space-y-2.5"
@@ -281,7 +330,7 @@ export function DashboardHome({
           style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.07)' }}
         >
           <div
-            className="flex items-center justify-between px-5 py-4"
+            className="flex items-center justify-between px-5 py-4 gap-2 flex-wrap"
             style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}
           >
             <h3 className="text-[13px] font-semibold" style={{ color: 'rgba(255,255,255,0.88)', letterSpacing: '-0.01em' }}>
@@ -291,21 +340,56 @@ export function DashboardHome({
               href="/tableau-de-bord/transactions"
               className="text-[12px] font-medium transition-opacity"
               style={{ color: 'var(--color-brand, #C41E3A)' }}
-              onMouseEnter={e => ((e.currentTarget as HTMLElement).style.opacity = '0.75')}
-              onMouseLeave={e => ((e.currentTarget as HTMLElement).style.opacity = '1')}
             >
               Tout voir →
             </a>
           </div>
+          <div className="px-5 py-3 flex items-center gap-1.5 flex-wrap"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            {([
+              ['all',        'Tous'],
+              ['deposit',    'Dépôts'],
+              ['withdrawal', 'Retraits'],
+              ['transfer',   'Virements'],
+              ['adjustment', 'Ajustements'],
+            ] as const).map(([k, label]) => (
+              <button key={k} type="button" onClick={() => setTxTypeFilter(k)}
+                className="px-2 h-6 rounded-md text-[11px] font-medium transition-colors"
+                style={{
+                  background: txTypeFilter === k ? 'rgba(255,255,255,0.07)' : 'transparent',
+                  color:      txTypeFilter === k ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.38)',
+                  border:     '1px solid rgba(255,255,255,0.06)',
+                }}>
+                {label}
+              </button>
+            ))}
+            <span className="mx-1" style={{ color: 'rgba(255,255,255,0.10)' }}>|</span>
+            {([
+              ['all',       'Tous statuts'],
+              ['completed', 'Complété'],
+              ['pending',   'En attente'],
+              ['failed',    'Échoué'],
+            ] as const).map(([k, label]) => (
+              <button key={k} type="button" onClick={() => setTxStatusFilter(k)}
+                className="px-2 h-6 rounded-md text-[11px] font-medium transition-colors"
+                style={{
+                  background: txStatusFilter === k ? 'rgba(255,255,255,0.07)' : 'transparent',
+                  color:      txStatusFilter === k ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.38)',
+                  border:     '1px solid rgba(255,255,255,0.06)',
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
 
-          {recentTransactions.length === 0 ? (
+          {filteredTx.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16">
               <RefreshCw size={22} style={{ color: 'rgba(255,255,255,0.12)' }} aria-hidden="true" />
               <p className="mt-3 text-[13px]" style={{ color: 'rgba(255,255,255,0.28)' }}>Aucune transaction</p>
             </div>
           ) : (
             <ul role="list">
-              {recentTransactions.map((tx, i) => {
+              {filteredTx.map((tx, i) => {
                 const isCredit = tx.transaction_type === 'deposit'
                 const statusColor = TX_STATUS_COLORS[tx.status] ?? 'rgba(255,255,255,0.35)'
                 const member = (tx.accounts as any)?.members
@@ -402,8 +486,32 @@ export function DashboardHome({
               </span>
             )}
           </div>
+          <div className="px-5 py-3 flex items-center gap-1.5 flex-wrap"
+            style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            {([
+              ['all',      'Toutes'],
+              ['critical', 'Critique'],
+              ['high',     'Élevé'],
+              ['medium',   'Moyen'],
+              ['low',      'Faible'],
+            ] as const).map(([k, label]) => {
+              const color = k === 'all' ? 'rgba(255,255,255,0.50)' : SEVERITY_CONFIG[k]?.color ?? '#888'
+              const active = sevFilter === k
+              return (
+                <button key={k} type="button" onClick={() => setSevFilter(k)}
+                  className="px-2 h-6 rounded-md text-[11px] font-medium transition-colors"
+                  style={{
+                    background: active ? `${color}18` : 'transparent',
+                    color:      active ? color : 'rgba(255,255,255,0.38)',
+                    border:     `1px solid ${active ? `${color}30` : 'rgba(255,255,255,0.06)'}`,
+                  }}>
+                  {label}
+                </button>
+              )
+            })}
+          </div>
 
-          {fraudFlags.length === 0 ? (
+          {filteredFraud.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div
                 className="flex items-center justify-center mb-3"
@@ -422,7 +530,7 @@ export function DashboardHome({
             </div>
           ) : (
             <ul role="list">
-              {fraudFlags.map((flag, i) => {
+              {filteredFraud.map((flag, i) => {
                 const cfg = SEVERITY_CONFIG[flag.severity] ?? SEVERITY_CONFIG.medium
                 return (
                   <li
@@ -476,7 +584,7 @@ export function DashboardHome({
             </ul>
           )}
 
-          {fraudFlags.length > 0 && (
+          {filteredFraud.length > 0 && (
             <div className="px-5 py-3.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <a
                 href="/tableau-de-bord/alertes-fraude"
