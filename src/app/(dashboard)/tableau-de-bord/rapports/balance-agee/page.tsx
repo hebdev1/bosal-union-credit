@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { formatHTG } from '@/lib/formatters'
 import { agedLoanBalance, par30, type LoanSnapshot } from '@/lib/accounting/reports'
+import { CsvExportButton } from '@/components/dashboard/forms/CsvExportButton'
 
 export const metadata: Metadata = { title: 'Balance âgée' }
 
@@ -56,12 +57,27 @@ export default async function AgedBalanceReport() {
       <Header title="Balance âgée" />
 
       <div className="px-6 py-6 space-y-6 max-w-[1200px] mx-auto w-full">
-        <Link href="/tableau-de-bord/rapports"
-          className="inline-flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70"
-          style={{ color: 'rgba(255,255,255,0.45)' }}>
-          <ArrowLeft size={13} />
-          Retour aux rapports
-        </Link>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Link href="/tableau-de-bord/rapports"
+            className="inline-flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70"
+            style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <ArrowLeft size={13} />
+            Retour aux rapports
+          </Link>
+          <CsvExportButton
+            rows={snapshots}
+            filename="balance-agee"
+            columns={[
+              { header: 'N° prêt',        get: s => s.loan_number },
+              { header: 'Emprunteur',     get: s => s.memberName },
+              { header: 'Restant dû',     get: s => s.outstandingPrincipal },
+              { header: 'Échéance',       get: s => s.nextDueDate instanceof Date ? s.nextDueDate.toISOString() : '' },
+              { header: 'Jours en retard', get: s => s.daysPastDue },
+              { header: 'Bucket',         get: s => s.daysPastDue <= 0 ? 'À jour' : s.daysPastDue <= 30 ? '1-30 j' : s.daysPastDue <= 60 ? '31-60 j' : s.daysPastDue <= 90 ? '61-90 j' : '> 90 j' },
+              { header: 'Statut',         get: s => s.status },
+            ]}
+          />
+        </div>
 
         {/* Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">

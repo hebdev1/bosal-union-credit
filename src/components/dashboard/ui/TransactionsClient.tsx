@@ -3,6 +3,7 @@ import * as React from 'react'
 import { FileDown, Loader2, Calendar } from 'lucide-react'
 import { DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { type PdfReportConfig, DEFAULT_PDF_CONFIG, hexToRgb, urlToBase64 } from '@/lib/pdfConfig'
+import { CsvExportButton } from '@/components/dashboard/forms/CsvExportButton'
 
 const TYPE_LABELS: Record<string, string> = {
   deposit: 'Dépôt', withdrawal: 'Retrait', transfer: 'Virement', adjustment: 'Ajustement',
@@ -263,6 +264,22 @@ export function TransactionsClient({ transactions, reportConfig }: Props) {
           onChange={e => setSearch(e.target.value)}
           className="flex-1 rounded-xl px-4 h-9 text-sm outline-none"
           style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.75)', minWidth: 0 }}
+        />
+
+        <CsvExportButton
+          rows={filtered}
+          filename="transactions"
+          columns={[
+            { header: 'Date',       get: t => new Date(t.created_at).toISOString() },
+            { header: 'Référence',  get: t => t.reference ?? '' },
+            { header: 'Type',       get: t => TYPE_LABELS[t.transaction_type] ?? t.transaction_type },
+            { header: 'Montant',    get: t => Number(t.amount) },
+            { header: 'Devise',     get: t => t.accounts?.currency ?? '' },
+            { header: 'Compte',     get: t => t.accounts?.account_number ?? '' },
+            { header: 'Membre',     get: t => t.accounts?.members ? `${t.accounts.members.first_name} ${t.accounts.members.last_name}` : '' },
+            { header: 'Motif',      get: t => t.motif ?? '' },
+            { header: 'Statut',     get: t => t.status ?? '' },
+          ]}
         />
 
         <button type="button" onClick={handleExport}

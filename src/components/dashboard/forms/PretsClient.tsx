@@ -4,7 +4,13 @@ import { Calendar } from 'lucide-react'
 import { DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { LoanStatusSelect } from '@/components/dashboard/forms/LoanStatusSelect'
 import { PretsExportButton } from '@/components/dashboard/forms/PretsExportButton'
+import { CsvExportButton } from '@/components/dashboard/forms/CsvExportButton'
 import { type PdfReportConfig } from '@/lib/pdfConfig'
+
+const LOAN_STATUS_LABELS: Record<string, string> = {
+  pending: 'En attente', active: 'Actif', completed: 'Complété',
+  defaulted: 'En défaut', rejected: 'Rejeté', closed: 'Clôturé',
+}
 
 function formatHTG(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
@@ -118,6 +124,26 @@ export function PretsClient({ loans, repayments, lateCount, reportConfig }: Prop
             <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDatePreset('all') }}
               className="h-7 rounded-lg px-2 text-xs outline-none"
               style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
+            <CsvExportButton
+              rows={filteredLoans}
+              filename="prets"
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              columns={([
+                { header: 'N° prêt',        get: (l: any) => l.loan_number ?? '' },
+                { header: 'Date',           get: (l: any) => new Date(l.created_at).toISOString() },
+                { header: 'Emprunteur',     get: (l: any) => l.members ? `${l.members.first_name} ${l.members.last_name}` : '' },
+                { header: 'N° membre',      get: (l: any) => l.members?.member_number ?? '' },
+                { header: 'Capital',        get: (l: any) => Number(l.principal_amount) },
+                { header: 'Taux (%)',       get: (l: any) => Number(l.interest_rate) },
+                { header: 'Durée (mois)',   get: (l: any) => Number(l.duration_months) },
+                { header: 'Mensualité',     get: (l: any) => Number(l.monthly_payment) },
+                { header: 'Total dû',       get: (l: any) => Number(l.total_amount_due) },
+                { header: 'Remboursé',      get: (l: any) => Number(l.amount_paid ?? 0) },
+                { header: 'Statut',         get: (l: any) => LOAN_STATUS_LABELS[l.status] ?? l.status },
+                { header: 'Objet',          get: (l: any) => l.purpose ?? '' },
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              ]) as any}
+            />
             <PretsExportButton loans={filteredLoans} repayments={filteredRepayments} config={reportConfig} />
           </div>
         </div>

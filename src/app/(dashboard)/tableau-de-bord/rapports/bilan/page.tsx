@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { formatHTG } from '@/lib/formatters'
 import { balanceSheet } from '@/lib/accounting/reports'
+import { CsvExportButton } from '@/components/dashboard/forms/CsvExportButton'
 
 export const metadata: Metadata = { title: 'Bilan' }
 
@@ -55,17 +56,46 @@ export default async function BalanceSheetReport() {
     retainedEarnings: 0,
   })
 
+  const csvRows = [
+    { section: 'Actif',  poste: 'Caisse',              montant: bs.assets.cash },
+    { section: 'Actif',  poste: 'Comptes bancaires',   montant: bs.assets.bank },
+    { section: 'Actif',  poste: 'Prêts encours',       montant: bs.assets.loans },
+    { section: 'Actif',  poste: 'Autres actifs',       montant: bs.assets.other },
+    { section: 'Actif',  poste: 'Total actif',         montant: bs.assets.total },
+    { section: 'Passif', poste: 'Dépôts membres',      montant: bs.liabilities.deposits },
+    { section: 'Passif', poste: 'Emprunts externes',   montant: bs.liabilities.borrowings },
+    { section: 'Passif', poste: 'Autres passifs',      montant: bs.liabilities.other },
+    { section: 'Passif', poste: 'Total passif',        montant: bs.liabilities.total },
+    { section: 'Capitaux', poste: 'Capital libéré',    montant: bs.equity.capital },
+    { section: 'Capitaux', poste: 'Résultats reportés', montant: bs.equity.retained },
+    { section: 'Capitaux', poste: 'Total capitaux',    montant: bs.equity.total },
+    { section: 'Total',  poste: 'Passif + capitaux',   montant: bs.liabilities.total + bs.equity.total },
+    { section: 'Contrôle', poste: 'Écart',             montant: bs.variance },
+    { section: 'Contrôle', poste: 'Équilibré',         montant: bs.balanced ? 1 : 0 },
+  ]
+
   return (
     <>
       <Header title="Bilan comptable" />
 
       <div className="px-6 py-6 space-y-6 max-w-[1200px] mx-auto w-full">
-        <Link href="/tableau-de-bord/rapports"
-          className="inline-flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70"
-          style={{ color: 'rgba(255,255,255,0.45)' }}>
-          <ArrowLeft size={13} />
-          Retour aux rapports
-        </Link>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Link href="/tableau-de-bord/rapports"
+            className="inline-flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70"
+            style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <ArrowLeft size={13} />
+            Retour aux rapports
+          </Link>
+          <CsvExportButton
+            rows={csvRows}
+            filename="bilan"
+            columns={[
+              { header: 'Section', get: r => r.section },
+              { header: 'Poste',   get: r => r.poste },
+              { header: 'Montant (HTG)', get: r => r.montant },
+            ]}
+          />
+        </div>
 
         <div className="flex items-center justify-between">
           <div>

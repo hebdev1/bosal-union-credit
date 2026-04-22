@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { formatHTG } from '@/lib/formatters'
 import { incomeStatement } from '@/lib/accounting/reports'
+import { CsvExportButton } from '@/components/dashboard/forms/CsvExportButton'
 
 export const metadata: Metadata = { title: 'Compte de résultat' }
 
@@ -90,12 +91,35 @@ export default async function IncomeStatementReport() {
       <Header title="Compte de résultat" />
 
       <div className="px-6 py-6 space-y-6 max-w-[1200px] mx-auto w-full">
-        <Link href="/tableau-de-bord/rapports"
-          className="inline-flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70"
-          style={{ color: 'rgba(255,255,255,0.45)' }}>
-          <ArrowLeft size={13} />
-          Retour aux rapports
-        </Link>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <Link href="/tableau-de-bord/rapports"
+            className="inline-flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70"
+            style={{ color: 'rgba(255,255,255,0.45)' }}>
+            <ArrowLeft size={13} />
+            Retour aux rapports
+          </Link>
+          <CsvExportButton
+            rows={[
+              { section: 'Produits', poste: 'Intérêts sur prêts',       montant: interestIncome },
+              { section: 'Produits', poste: 'Commissions & frais',      montant: feeIncome },
+              { section: 'Produits', poste: 'Marge de change',          montant: exchangeIncome },
+              { section: 'Produits', poste: 'Total revenus',            montant: stmt.revenue },
+              { section: 'Charges',  poste: 'Salaires',                 montant: salaries },
+              { section: 'Charges',  poste: 'Loyer & utilités',         montant: rent },
+              { section: 'Charges',  poste: 'Autres charges',           montant: operatingExpenses },
+              { section: 'Charges',  poste: 'Provisions pour pertes',   montant: stmt.provisions },
+              { section: 'Charges',  poste: 'Total charges',            montant: stmt.operatingExpenses + stmt.provisions },
+              { section: 'Résultat', poste: 'Résultat opérationnel',    montant: stmt.operatingIncome },
+              { section: 'Résultat', poste: 'Résultat net',             montant: stmt.netIncome },
+            ]}
+            filename={`compte-resultat-${year}`}
+            columns={[
+              { header: 'Section', get: r => r.section },
+              { header: 'Poste',   get: r => r.poste },
+              { header: 'Montant (HTG)', get: r => r.montant },
+            ]}
+          />
+        </div>
 
         <div>
           <h1 className="text-xl font-bold" style={{ color: 'rgba(255,255,255,0.95)' }}>

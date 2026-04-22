@@ -4,6 +4,7 @@ import { Calendar } from 'lucide-react'
 import { DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { ExchangeTicketButton } from '@/components/dashboard/forms/ExchangeTicketButton'
 import { BureauDeChangeExportButton } from '@/components/dashboard/forms/BureauDeChangeExportButton'
+import { CsvExportButton } from '@/components/dashboard/forms/CsvExportButton'
 import { type TicketConfig } from '@/components/dashboard/forms/ExchangeTicketPDF'
 import { type PdfReportConfig } from '@/lib/pdfConfig'
 import { formatCurrency } from '@/lib/formatters'
@@ -118,6 +119,22 @@ export function BureauDeChangeHistoryClient({ txs, rates, ticketConfig, reportCo
           <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setDatePreset('all') }}
             className="h-7 rounded-lg px-2 text-xs outline-none"
             style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', color: dateTo ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.30)', colorScheme: 'dark' }} />
+          <CsvExportButton
+            rows={filtered}
+            filename="bureau-de-change"
+            columns={[
+              { header: 'Ticket',        get: (t: any) => t.ticket_number ?? '' },
+              { header: 'Date',          get: (t: any) => new Date(t.created_at).toISOString() },
+              { header: 'Client',        get: (t: any) => `${t.client_first_name ?? ''} ${t.client_last_name ?? ''}`.trim() },
+              { header: 'De',            get: (t: any) => t.from_currency },
+              { header: 'Vers',          get: (t: any) => t.to_currency },
+              { header: 'Montant donné', get: (t: any) => Number(t.amount_given) },
+              { header: 'Taux appliqué', get: (t: any) => Number(t.rate_applied) },
+              { header: 'Montant reçu',  get: (t: any) => Number(t.amount_received) },
+              { header: 'Agent',         get: (t: any) => t.agents?.name ?? '' },
+              { header: 'Notes',         get: (t: any) => t.notes ?? '' },
+            ]}
+          />
           <BureauDeChangeExportButton txs={filtered} rates={rates} config={reportConfig} />
           <span className="text-xs" style={{ color: 'rgba(255,255,255,0.28)' }}>
             {filtered.length} opération{filtered.length !== 1 ? 's' : ''}

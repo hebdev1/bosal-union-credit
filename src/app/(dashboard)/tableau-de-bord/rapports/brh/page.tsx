@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { formatHTG } from '@/lib/formatters'
 import { agedLoanBalance, par30, keyRatios, type LoanSnapshot } from '@/lib/accounting/reports'
+import { CsvExportButton } from '@/components/dashboard/forms/CsvExportButton'
 
 export const metadata: Metadata = { title: 'Rapport BRH' }
 
@@ -113,11 +114,37 @@ export default async function BRHReport() {
               Conformité aux exigences de la Banque de la République d&apos;Haïti pour les coopératives d&apos;épargne et de crédit
             </p>
           </div>
-          <button type="button"
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
-            style={{ background: '#C41E3A', color: '#fff' }}>
-            <Download size={13} /> Exporter PDF
-          </button>
+          <div className="flex items-center gap-2">
+            <CsvExportButton
+              rows={[
+                ...checks.map(c => ({ categorie: 'Ratio', indicateur: c.label, valeur: c.value, seuil: c.threshold, conforme: c.pass ? 'Oui' : 'Non' })),
+                { categorie: 'Structure', indicateur: 'Portefeuille brut',   valeur: String(loansOutstanding), seuil: '', conforme: '' },
+                { categorie: 'Structure', indicateur: 'À jour (0 j)',         valeur: String(aged.current),       seuil: '', conforme: '' },
+                { categorie: 'Structure', indicateur: '1-30 j',               valeur: String(aged.bucket_1_30),   seuil: '', conforme: '' },
+                { categorie: 'Structure', indicateur: '31-60 j',              valeur: String(aged.bucket_31_60),  seuil: '', conforme: '' },
+                { categorie: 'Structure', indicateur: '61-90 j',              valeur: String(aged.bucket_61_90),  seuil: '', conforme: '' },
+                { categorie: 'Structure', indicateur: '> 90 j',               valeur: String(aged.bucket_90_plus), seuil: '', conforme: '' },
+                { categorie: 'Passif',    indicateur: 'Dépôts membres',       valeur: String(memberDeposits), seuil: '', conforme: '' },
+                { categorie: 'Passif',    indicateur: 'Comptes opérationnels', valeur: String(wallets),       seuil: '', conforme: '' },
+                { categorie: 'Passif',    indicateur: 'Capital libéré',       valeur: String(paidInCapital),  seuil: '', conforme: '' },
+                { categorie: 'Passif',    indicateur: 'Total actifs',         valeur: String(totalAssets),    seuil: '', conforme: '' },
+                { categorie: 'Passif',    indicateur: 'Membres actifs',       valeur: String(activeMembers),  seuil: '', conforme: '' },
+              ]}
+              filename={`rapport-brh-T${trimester}-${now.getFullYear()}`}
+              columns={[
+                { header: 'Catégorie',   get: r => r.categorie },
+                { header: 'Indicateur',  get: r => r.indicateur },
+                { header: 'Valeur',      get: r => r.valeur },
+                { header: 'Seuil',       get: r => r.seuil },
+                { header: 'Conforme',    get: r => r.conforme },
+              ]}
+            />
+            <button type="button"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition-colors"
+              style={{ background: '#C41E3A', color: '#fff' }}>
+              <Download size={13} /> Exporter PDF
+            </button>
+          </div>
         </div>
 
         {/* Global status */}
