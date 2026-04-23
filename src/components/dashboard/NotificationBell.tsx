@@ -16,7 +16,6 @@ const TYPE_LABELS: Record<string, string> = {
   loan_due: 'Échéance',
   loan_late: 'Retard',
   exchange_receipt: 'Change',
-  daily_closing: 'Clôture',
   fraud_alert: 'Alerte fraude',
   member_created: 'Nouveau membre',
   password_reset: 'Mot de passe',

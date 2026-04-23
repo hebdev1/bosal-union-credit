@@ -27,7 +27,6 @@ const CATEGORY_META: Record<string, { label: string; icon: React.ElementType; de
   pdf:     { label: 'PDF & Tickets',            icon: FileText, desc: 'Configuration des rapports PDF et tickets de caisse' },
   general: { label: 'Général',                  icon: Settings, desc: 'Paramètres généraux de la coopérative' },
   finance: { label: 'Finance',                  icon: Settings, desc: 'Règles financières et limites' },
-  closure: { label: 'Clôture journalière',      icon: Settings, desc: 'Configuration des clôtures et rapports email' },
 }
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
@@ -638,7 +637,6 @@ const TABS = [
   { id: 'pdf',     label: 'PDF',       icon: FileText },
   { id: 'general', label: 'Général',   icon: Settings },
   { id: 'finance', label: 'Finance',   icon: Settings },
-  { id: 'closure', label: 'Clôture',   icon: Mail     },
 ]
 
 /* ── Main export ────────────────────────────────────────────────────────── */
@@ -887,22 +885,6 @@ export function ParametresClient({ coop, agents, grouped }: {
             <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
           ))}
         </SectionCard>
-      )}
-
-      {/* ── CLOSURE TAB ── */}
-      {tab === 'closure' && (
-        <div className="space-y-6">
-          <SectionCard title="Rapports de clôture par email" icon={Mail} description="Configurez les destinataires des rapports journaliers" accent="#60A5FA">
-            {(grouped['closure'] ?? []).filter((s: Setting) => s.key.includes('email') || s.key.includes('subject')).map((s: Setting) => (
-              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
-            ))}
-          </SectionCard>
-          <SectionCard title="Règles de clôture" icon={Settings} description="Automatisation et verrouillage des clôtures" accent="#C41E3A">
-            {(grouped['closure'] ?? []).filter((s: Setting) => !s.key.includes('email') && !s.key.includes('subject')).map((s: Setting) => (
-              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
-            ))}
-          </SectionCard>
-        </div>
       )}
 
       {/* ── Sticky Save / Cancel bar ── */}

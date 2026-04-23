@@ -2,21 +2,15 @@ import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { DashboardHome } from '@/components/dashboard/DashboardHome'
-import { getCurrentSessionStart } from '@/lib/sessions/getSessionStart'
 
 export const metadata: Metadata = { title: 'Tableau de bord' }
 
 export default async function TableauDeBordPage() {
   const supabase = await createClient()
 
-  // Session cut-off: after each clôture the dashboard "resets" to show only
-  // post-closure activity. Historical ops remain visible on the rapports page.
-  const sessionStart = await getCurrentSessionStart()
-
-  // Analytics window: last 365 days (client filters down to 7/30/90),
-  // but never before the current session start.
+  // Analytics window: last 365 days (client filters down to 7/30/90).
   const fallbackStart = new Date(); fallbackStart.setDate(fallbackStart.getDate() - 365)
-  const analyticsStartIso = sessionStart ?? fallbackStart.toISOString()
+  const analyticsStartIso = fallbackStart.toISOString()
 
   const [
     summaryRes,
@@ -42,30 +36,16 @@ export default async function TableauDeBordPage() {
       .eq('is_active', true)
       .order('created_at', { ascending: false })
       .limit(6),
-    (sessionStart
-      ? supabase
-          .from('transactions')
-          .select('id, transaction_type, amount, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
-          .gte('created_at', sessionStart)
-          .order('created_at', { ascending: false })
-          .limit(8)
-      : supabase
-          .from('transactions')
-          .select('id, transaction_type, amount, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
-          .order('created_at', { ascending: false })
-          .limit(8)),
-    (sessionStart
-      ? supabase
-          .from('fraud_flags')
-          .select('id, rule_triggered, severity, created_at, transaction_id')
-          .gte('created_at', sessionStart)
-          .order('created_at', { ascending: false })
-          .limit(5)
-      : supabase
-          .from('fraud_flags')
-          .select('id, rule_triggered, severity, created_at, transaction_id')
-          .order('created_at', { ascending: false })
-          .limit(5)),
+    supabase
+      .from('transactions')
+      .select('id, transaction_type, amount, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
+      .order('created_at', { ascending: false })
+      .limit(8),
+    supabase
+      .from('fraud_flags')
+      .select('id, rule_triggered, severity, created_at, transaction_id')
+      .order('created_at', { ascending: false })
+      .limit(5),
     supabase
       .from('transactions')
       .select('transaction_type, amount, status, created_at')
@@ -83,6 +63,7 @@ export default async function TableauDeBordPage() {
   const summary = summaryRes.status === 'fulfilled' ? (summaryRes.value.data?.[0] ?? null) : null
   const members = membersRes.status === 'fulfilled' ? (membersRes.value.data ?? []) : []
   const accounts = accountsRes.status === 'fulfilled' ? (accountsRes.value.data ?? []) : []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const vault = vaultRes.status === 'fulfilled' ? (vaultRes.value.data as any) : null
   const loans = loansRes.status === 'fulfilled' ? (loansRes.value.data ?? []) : []
   const rates = ratesRes.status === 'fulfilled' ? (ratesRes.value.data ?? []) : []
@@ -93,14 +74,17 @@ export default async function TableauDeBordPage() {
   const analyticsLoans     = analyticsLoansRes.status === 'fulfilled' ? (analyticsLoansRes.value.data ?? []) : []
 
   // Compute totals client-side from fetched data
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const totalBalanceHTG = accounts
     .filter((a: any) => a.currency === 'HTG')
     .reduce((s: number, a: any) => s + Number(a.balance ?? 0), 0)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const totalBalanceUSD = accounts
     .filter((a: any) => a.currency === 'USD')
     .reduce((s: number, a: any) => s + Number(a.balance ?? 0), 0)
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const activeLoansTotal = loans
     .filter((l: any) => l.status === 'active')
     .reduce((s: number, l: any) => s + Number(l.principal_amount ?? 0) - Number(l.amount_paid ?? 0), 0)
@@ -115,12 +99,19 @@ export default async function TableauDeBordPage() {
         totalBalanceUSD={totalBalanceUSD}
         vaultBalance={vault?.current_balance ?? null}
         activeLoansTotal={activeLoansTotal}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         activeLoansCount={loans.filter((l: any) => l.status === 'active').length}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         exchangeRates={rates as any[]}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         recentTransactions={recentTx as any[]}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         fraudFlags={fraudFlags as any[]}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         analyticsTx={analyticsTx as any[]}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         analyticsExchanges={analyticsExchanges as any[]}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         analyticsLoans={analyticsLoans as any[]}
       />
     </>

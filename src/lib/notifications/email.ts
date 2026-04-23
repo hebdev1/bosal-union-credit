@@ -175,21 +175,6 @@ export const emailTemplates = {
     }
   },
 
-  dailyClosing({ to, branchName, date, balanced, variance }: {
-    to: string; branchName: string; date: string; balanced: boolean; variance: string
-  }): EmailPayload {
-    return {
-      to,
-      subject: `Clôture journalière ${branchName} — ${date}`,
-      html: shell('Clôture journalière', `
-        <h1 style="font-size:20px;margin:0 0 16px;">Clôture ${escapeHtml(branchName)}</h1>
-        <p>Clôture du <strong>${date}</strong> : ${balanced ? '✅ équilibrée' : '⚠️ écart détecté'}.</p>
-        ${balanced ? '' : `<p style="color:#F59E0B;">Écart : <strong>${variance}</strong></p>`}
-        <p>Consultez le rapport détaillé dans votre tableau de bord.</p>
-      `),
-    }
-  },
-
   loanDueReminder({ to, memberName, loanNumber, amountDue, dueDate }: {
     to: string; memberName: string; loanNumber: string; amountDue: string; dueDate: string
   }): EmailPayload {

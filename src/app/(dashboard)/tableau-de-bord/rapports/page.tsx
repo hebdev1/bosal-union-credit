@@ -3,7 +3,6 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell } from '@/components/dashboard/ui/DataTable'
 import { RapportsClient } from '@/components/dashboard/forms/RapportsClient'
-import { getTodayStats } from '@/app/(dashboard)/tableau-de-bord/cloture/actions'
 import { formatHTG } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Rapports' }
@@ -11,20 +10,11 @@ export const metadata: Metadata = { title: 'Rapports' }
 export default async function RapportsPage() {
   const supabase = await createClient()
 
-  const { data: { user } } = await supabase.auth.getUser()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: agentRow } = user ? await (supabase as any)
-    .from('agents').select('cooperative_id').eq('id', user.id).single() : { data: null }
-
-  const cooperativeId = (agentRow as any)?.cooperative_id
-
   // Window for detailed operation tables: last 90 days
   const since = new Date(); since.setDate(since.getDate() - 90)
   const sinceIso = since.toISOString()
 
   const [
-    closingsRes,
-    todayStats,
     globalTxRes,
     globalLoanRes,
     globalMembersRes,
@@ -32,20 +22,10 @@ export default async function RapportsPage() {
     detailExRes,
     detailRepRes,
   ] = await Promise.allSettled([
-    cooperativeId
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? (supabase as any)
-          .from('daily_closings')
-          .select('id, closing_date, opening_balance, closing_balance, total_deposits, total_withdrawals, total_loan_repayments, total_exchange_in, total_exchange_out, status, closed_at, notes, agents:closed_by(name)')
-          .eq('cooperative_id', cooperativeId)
-          .order('closing_date', { ascending: false })
-          .limit(365)
-      : Promise.resolve({ data: [] }),
-    getTodayStats(),
     supabase.from('transactions').select('transaction_type, amount'),
     supabase.from('loans').select('status, principal_amount, amount_paid'),
     supabase.from('members').select('status'),
-    // Detailed operations (last 90 d), always visible on the rapports page
+    // Detailed operations (last 90 d)
     supabase
       .from('transactions')
       .select('id, created_at, transaction_type, amount, status, reference, motif, accounts(account_number, currency, members(first_name, last_name))')
@@ -66,8 +46,6 @@ export default async function RapportsPage() {
       .limit(1000),
   ])
 
-  const closings   = closingsRes.status === 'fulfilled' ? ((closingsRes.value as any).data ?? []) : []
-  const todayS     = todayStats.status === 'fulfilled' ? todayStats.value : null
   const allTxs     = globalTxRes.status === 'fulfilled' ? (globalTxRes.value.data ?? []) : []
   const allLoans   = globalLoanRes.status === 'fulfilled' ? (globalLoanRes.value.data ?? []) : []
   const allMembers = globalMembersRes.status === 'fulfilled' ? (globalMembersRes.value.data ?? []) : []
@@ -123,8 +101,6 @@ export default async function RapportsPage() {
     }
   })
 
-  const isOpen = (closings as any[]).some((c: any) => c.status === 'open')
-
   // Global KPIs (all-time)
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const totalDeposits    = (allTxs as any[]).filter((t: any) => t.transaction_type === 'deposit').reduce((s: number, t: any) => s + Number(t.amount), 0)
@@ -139,8 +115,8 @@ export default async function RapportsPage() {
     <>
       <Header title="Rapports" />
       <PageShell
-        title="Rapports & Clôtures"
-        description={`${(closings as any[]).filter((c: any) => c.status === 'closed').length} journée${(closings as any[]).filter((c: any) => c.status === 'closed').length !== 1 ? 's' : ''} clôturée${(closings as any[]).filter((c: any) => c.status === 'closed').length !== 1 ? 's' : ''}`}
+        title="Rapports"
+        description="Détail complet des opérations (90 derniers jours)"
       >
         {/* Global KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -159,9 +135,6 @@ export default async function RapportsPage() {
         </div>
 
         <RapportsClient
-          closings={closings as any[]}
-          todayStats={todayS}
-          isOpen={isOpen}
           detailTransactions={detailTransactions}
           detailExchanges={detailExchanges}
           detailRepayments={detailRepayments}

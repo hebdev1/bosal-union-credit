@@ -14,7 +14,6 @@ export type NotificationType =
   | 'loan_due'
   | 'loan_late'
   | 'exchange_receipt'
-  | 'daily_closing'
   | 'fraud_alert'
   | 'member_created'
   | 'password_reset'
