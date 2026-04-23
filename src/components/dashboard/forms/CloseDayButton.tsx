@@ -2,7 +2,7 @@
 import * as React from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  MoonStar, Loader2, Check, X, AlertTriangle, Lock, Sunrise,
+  MoonStar, Loader2, Check, X, AlertTriangle, Sunrise, ArrowRight,
 } from 'lucide-react'
 import {
   closeDay, getTodayStats, openNewDay, type ClosureResult,
@@ -116,13 +116,11 @@ export function CloseDayButton() {
   const [loadingStats, setLoadingStats] = React.useState(false)
   const [hasOpenDay, setHasOpenDay] = React.useState<boolean | null>(null)
 
-  // Close-day state
   const [notes, setNotes] = React.useState('')
   const [closing, setClosing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [success, setSuccess] = React.useState(false)
 
-  // Open-day state (when no open day exists)
   const [openingBalance, setOpeningBalance] = React.useState('')
   const [opening, setOpening] = React.useState(false)
 
@@ -134,10 +132,7 @@ export function CloseDayButton() {
     setLoadingStats(false)
   }, [])
 
-  // Load once on mount so the button reflects real state
-  React.useEffect(() => {
-    refreshStats()
-  }, [refreshStats])
+  React.useEffect(() => { refreshStats() }, [refreshStats])
 
   function openModal() {
     setError(null); setSuccess(false); setNotes(''); setOpeningBalance('')
@@ -145,13 +140,22 @@ export function CloseDayButton() {
     refreshStats()
   }
 
+  // Prevent body scroll when modal is open
+  React.useEffect(() => {
+    if (modalOpen) {
+      const prev = document.body.style.overflow
+      document.body.style.overflow = 'hidden'
+      return () => { document.body.style.overflow = prev }
+    }
+  }, [modalOpen])
+
   async function handleClose() {
     setClosing(true); setError(null)
     const result = await closeDay(notes || undefined)
     setClosing(false)
     if ('error' in result) { setError(result.error); return }
     setSuccess(true)
-    try { await generateClosurePDF(result) } catch { /* swallow pdf errors */ }
+    try { await generateClosurePDF(result) } catch { /* ignore */ }
     setTimeout(() => {
       setModalOpen(false); setSuccess(false)
       refreshStats()
@@ -162,7 +166,7 @@ export function CloseDayButton() {
   async function handleOpenDay() {
     const n = Number(openingBalance.replace(',', '.'))
     if (!Number.isFinite(n) || n < 0) {
-      setError('Saisissez un solde d\'ouverture valide (≥ 0)')
+      setError('Solde d\'ouverture invalide')
       return
     }
     setOpening(true); setError(null)
@@ -181,136 +185,164 @@ export function CloseDayButton() {
     ? stats.openingBalance + stats.deposits - stats.withdrawals + stats.repayments + stats.exchangeIn - stats.exchangeOut
     : null
 
-  // ─── Button in header ─────────────────────────────────────────────────────
   const isOpen = hasOpenDay === true
-  const btnLabel = hasOpenDay === null ? '…' : isOpen ? 'Clôturer' : 'Ouvrir journée'
-  const btnIcon = hasOpenDay === false
-    ? <Sunrise size={12} />
-    : <MoonStar size={12} />
-  const btnColor = hasOpenDay === false
-    ? { bg: 'rgba(74,222,128,0.10)', fg: '#4ADE80', border: 'rgba(74,222,128,0.24)' }
-    : { bg: 'rgba(196,30,58,0.10)', fg: '#E8314F', border: 'rgba(196,30,58,0.24)' }
+  const isUnknown = hasOpenDay === null
 
   return (
     <>
+      {/* ─── Header trigger ───────────────────────────────────────────────── */}
       <button
         type="button"
         onClick={openModal}
-        aria-label={btnLabel}
-        className="flex items-center gap-1.5 h-8 px-2.5 sm:px-3 rounded-lg text-[11px] sm:text-xs font-medium transition-colors flex-shrink-0"
+        aria-label={isOpen ? 'Clôturer la journée' : 'Ouvrir une journée'}
+        className="group relative inline-flex items-center gap-2 h-8 rounded-lg text-xs font-semibold transition-all flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600/40"
         style={{
-          background: btnColor.bg,
-          color: btnColor.fg,
-          border: `1px solid ${btnColor.border}`,
+          paddingLeft: 10, paddingRight: 12,
+          background: 'rgba(255,255,255,0.04)',
+          border: '1px solid rgba(255,255,255,0.09)',
+          color: 'rgba(255,255,255,0.82)',
         }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)' }}
       >
-        {btnIcon}
-        <span className="hidden sm:inline whitespace-nowrap">{btnLabel}</span>
+        {/* Live status dot */}
+        <span
+          aria-hidden
+          style={{
+            width: 7, height: 7, borderRadius: '50%',
+            background: isUnknown ? 'rgba(255,255,255,0.25)' : isOpen ? '#4ADE80' : '#94A3B8',
+            boxShadow: isOpen ? '0 0 0 3px rgba(74,222,128,0.15)' : 'none',
+            flexShrink: 0,
+          }}
+        />
+        <span className="hidden sm:inline whitespace-nowrap">
+          {isUnknown ? 'Session' : isOpen ? 'Session ouverte' : 'Session fermée'}
+        </span>
+        <span className="hidden sm:inline" style={{ color: 'rgba(255,255,255,0.22)' }}>·</span>
+        <span className="whitespace-nowrap" style={{ color: isOpen ? '#E8314F' : '#4ADE80' }}>
+          {isOpen ? 'Clôturer' : 'Ouvrir'}
+        </span>
       </button>
 
+      {/* ─── Modal ────────────────────────────────────────────────────────── */}
       {modalOpen && (
         <div
-          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto"
-          style={{ background: 'rgba(0,0,0,0.80)' }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="closeday-title"
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center"
+          style={{ background: 'rgba(3,6,12,0.78)', backdropFilter: 'blur(4px)' }}
           onClick={e => { if (e.target === e.currentTarget && !closing && !opening) setModalOpen(false) }}
         >
           <div
-            className="w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl overflow-hidden my-auto"
+            className="w-full sm:max-w-[440px] flex flex-col animate-in"
             style={{
-              background: '#0D1018',
-              border: '1px solid rgba(255,255,255,0.09)',
-              boxShadow: '0 24px 64px rgba(0,0,0,0.7)',
+              background: 'linear-gradient(180deg, #12151E 0%, #0D1018 100%)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '20px 20px 0 0',
               maxHeight: '92vh',
-              display: 'flex',
-              flexDirection: 'column',
+              boxShadow: '0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset',
             }}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-4 flex-shrink-0"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
-                  style={{ background: isOpen ? 'rgba(239,68,68,0.12)' : 'rgba(74,222,128,0.12)' }}>
-                  {isOpen
-                    ? <AlertTriangle size={16} style={{ color: '#F87171' }} />
-                    : <Sunrise size={16} style={{ color: '#4ADE80' }} />}
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-sm sm:text-base font-semibold truncate" style={{ color: 'rgba(255,255,255,0.92)' }}>
-                    {isOpen ? 'Clôturer la journée' : 'Ouvrir une nouvelle journée'}
-                  </h2>
-                  <p className="text-xs mt-0.5 truncate" style={{ color: 'rgba(255,255,255,0.35)' }}>
-                    {loadingStats ? 'Chargement…'
-                      : stats?.closingDate ? fDate(stats.closingDate)
-                      : 'Aucune journée ouverte'}
-                  </p>
-                </div>
+            {/* Drag handle (mobile) */}
+            <div className="flex justify-center pt-2.5 pb-1 sm:hidden" aria-hidden>
+              <span style={{ width: 36, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.15)' }} />
+            </div>
+
+            {/* Compact header */}
+            <div className="flex items-center justify-between gap-3 px-5 pt-4 sm:pt-5 pb-3 flex-shrink-0">
+              <div className="min-w-0">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.12em]"
+                  style={{ color: isOpen ? '#E8314F' : '#4ADE80' }}>
+                  {loadingStats ? 'Chargement' : isOpen ? 'Clôture de journée' : 'Ouverture de journée'}
+                </p>
+                <h2 id="closeday-title" className="text-[17px] font-bold mt-1 tracking-tight truncate"
+                  style={{ color: 'rgba(255,255,255,0.95)' }}>
+                  {stats?.closingDate ? fDate(stats.closingDate) : new Intl.DateTimeFormat('fr-HT', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date())}
+                </h2>
               </div>
               {!closing && !opening && !success && (
                 <button type="button" onClick={() => setModalOpen(false)}
                   aria-label="Fermer"
-                  className="w-8 h-8 flex items-center justify-center rounded-lg flex-shrink-0"
-                  style={{ background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.45)' }}>
+                  className="w-8 h-8 flex items-center justify-center rounded-full flex-shrink-0 transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.55)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.10)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.06)' }}>
                   <X size={14} />
                 </button>
               )}
             </div>
 
-            {/* Body (scrollable) */}
-            <div className="px-4 sm:px-6 py-5 space-y-4 overflow-y-auto" style={{ minHeight: 0 }}>
+            {/* Hairline */}
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.06)' }} />
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4" style={{ minHeight: 0 }}>
               {loadingStats && hasOpenDay === null ? (
-                <div className="flex items-center justify-center py-10 gap-2 text-sm"
-                  style={{ color: 'rgba(255,255,255,0.55)' }}>
+                <div className="flex items-center justify-center py-12 gap-2 text-sm"
+                  style={{ color: 'rgba(255,255,255,0.50)' }}>
                   <Loader2 size={14} className="animate-spin" />
-                  Chargement de l&apos;état de la journée…
+                  Chargement…
                 </div>
               ) : isOpen ? (
                 <>
-                  <div className="rounded-xl px-4 py-3.5"
-                    style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.18)' }}>
-                    <p className="text-sm font-semibold mb-1" style={{ color: '#F87171' }}>
-                      Action irréversible
-                    </p>
-                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                      Le rapport PDF sera téléchargé automatiquement. Une nouvelle journée s&apos;ouvrira avec le solde de clôture comme solde d&apos;ouverture.
-                    </p>
-                  </div>
-
-                  {stats && (
-                    <div className="rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.09)' }}>
-                      {[
-                        { label: 'Solde d\'ouverture',                  value: fHTG(stats.openingBalance),       color: 'rgba(255,255,255,0.75)' },
-                        { label: `Dépôts (${stats.depositCount})`,     value: '+' + fHTG(stats.deposits),       color: '#4ADE80' },
-                        { label: `Retraits (${stats.withdrawalCount})`, value: '-' + fHTG(stats.withdrawals),    color: '#F87171' },
-                        { label: `Remb. (${stats.repaymentCount})`,    value: '+' + fHTG(stats.repayments),     color: '#60A5FA' },
-                        { label: 'Change entrant',                     value: '+' + fHTG(stats.exchangeIn),     color: '#34D399' },
-                        { label: 'Change sortant',                     value: '-' + fHTG(stats.exchangeOut),    color: '#F87171' },
-                      ].map((r, i) => (
-                        <div key={r.label}
-                          className="flex items-center justify-between px-3 sm:px-4 py-2.5 gap-3"
-                          style={{
-                            background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent',
-                            borderTop: i > 0 ? '1px solid rgba(255,255,255,0.05)' : undefined,
-                          }}>
-                          <span className="text-xs truncate" style={{ color: 'rgba(255,255,255,0.50)' }}>{r.label}</span>
-                          <span className="text-xs font-semibold kpi-value whitespace-nowrap" style={{ color: r.color }}>{r.value}</span>
-                        </div>
-                      ))}
-                      {liveBalance !== null && (
-                        <div className="flex items-center justify-between px-3 sm:px-4 py-3 gap-3"
-                          style={{ background: 'rgba(255,255,255,0.04)', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                          <span className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.82)' }}>Solde estimé</span>
-                          <span className="text-sm sm:text-base font-bold kpi-value whitespace-nowrap" style={{ color: '#4ADE80' }}>
-                            {fHTG(liveBalance)}
-                          </span>
-                        </div>
-                      )}
+                  {/* Hero: estimated closing balance */}
+                  {stats && liveBalance !== null && (
+                    <div className="rounded-2xl px-5 py-4"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(74,222,128,0.10) 0%, rgba(74,222,128,0.02) 100%)',
+                        border: '1px solid rgba(74,222,128,0.18)',
+                      }}>
+                      <p className="text-[10px] uppercase tracking-[0.1em] font-semibold"
+                        style={{ color: 'rgba(74,222,128,0.85)' }}>
+                        Solde estimé à la clôture
+                      </p>
+                      <p className="text-2xl sm:text-3xl font-bold mt-1.5 kpi-value tracking-tight"
+                        style={{ color: '#4ADE80' }}>
+                        {fHTG(liveBalance)}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1 text-[11px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                        <span>Ouverture {fHTG(stats.openingBalance)}</span>
+                        <ArrowRight size={10} style={{ color: 'rgba(255,255,255,0.25)' }} />
+                        <span style={{ color: liveBalance >= stats.openingBalance ? '#4ADE80' : '#F87171' }}>
+                          {liveBalance >= stats.openingBalance ? '+' : ''}{fHTG(liveBalance - stats.openingBalance)}
+                        </span>
+                      </div>
                     </div>
                   )}
 
+                  {/* 2x2 operation summary */}
+                  {stats && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { label: 'Dépôts',        count: stats.depositCount,    value: stats.deposits,     color: '#4ADE80' },
+                        { label: 'Retraits',       count: stats.withdrawalCount, value: stats.withdrawals,  color: '#F87171' },
+                        { label: 'Remboursements', count: stats.repaymentCount,  value: stats.repayments,   color: '#60A5FA' },
+                        { label: 'Change net',     count: stats.exchangeCount,   value: stats.exchangeIn - stats.exchangeOut, color: '#FCD34D' },
+                      ].map(k => (
+                        <div key={k.label} className="rounded-xl px-3 py-2.5"
+                          style={{ background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-[10px] uppercase tracking-wide font-medium"
+                              style={{ color: 'rgba(255,255,255,0.40)' }}>{k.label}</p>
+                            <span className="text-[10px] font-mono tabular-nums"
+                              style={{ color: 'rgba(255,255,255,0.35)' }}>×{k.count}</span>
+                          </div>
+                          <p className="text-sm font-bold kpi-value tabular-nums truncate"
+                            style={{ color: k.color }}>
+                            {fHTG(k.value)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Notes */}
                   <div>
-                    <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
-                      Notes <span style={{ color: 'rgba(255,255,255,0.28)' }}>(optionnel)</span>
+                    <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] mb-1.5"
+                      style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      Remarques <span className="normal-case tracking-normal font-normal"
+                        style={{ color: 'rgba(255,255,255,0.25)' }}>(optionnel)</span>
                     </label>
                     <textarea
                       value={notes}
@@ -318,107 +350,166 @@ export function CloseDayButton() {
                       rows={2}
                       disabled={closing || success}
                       placeholder="Observations, incidents du jour…"
-                      className="w-full rounded-lg px-3 py-2 text-sm outline-none resize-none"
+                      className="w-full rounded-xl px-3 py-2.5 text-sm outline-none resize-none transition-colors"
                       style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.09)',
-                        color: 'rgba(255,255,255,0.80)',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        color: 'rgba(255,255,255,0.85)',
                         opacity: closing || success ? 0.6 : 1,
                       }}
+                      onFocus={e => { e.currentTarget.style.borderColor = 'rgba(196,30,58,0.40)' }}
+                      onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
                     />
+                  </div>
+
+                  {/* Warning */}
+                  <div className="flex items-start gap-2.5 rounded-xl px-3 py-2.5"
+                    style={{ background: 'rgba(252,211,77,0.05)', border: '1px solid rgba(252,211,77,0.15)' }}>
+                    <AlertTriangle size={13} className="flex-shrink-0 mt-0.5" style={{ color: '#FCD34D' }} />
+                    <p className="text-[11px] leading-relaxed" style={{ color: 'rgba(252,211,77,0.85)' }}>
+                      Action irréversible. Un rapport PDF sera téléchargé automatiquement.
+                    </p>
                   </div>
                 </>
               ) : (
                 <>
-                  <div className="rounded-xl px-4 py-3.5"
-                    style={{ background: 'rgba(74,222,128,0.05)', border: '1px solid rgba(74,222,128,0.20)' }}>
-                    <p className="text-sm font-semibold mb-1" style={{ color: '#4ADE80' }}>
-                      Démarrer une nouvelle journée
-                    </p>
-                    <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                      Saisissez le solde d&apos;ouverture de caisse pour ouvrir la journée du jour. Toutes les opérations effectuées seront rattachées à cette session.
+                  <div className="rounded-2xl px-5 py-4"
+                    style={{
+                      background: 'linear-gradient(135deg, rgba(74,222,128,0.08) 0%, rgba(74,222,128,0.02) 100%)',
+                      border: '1px solid rgba(74,222,128,0.18)',
+                    }}>
+                    <div className="flex items-center gap-2">
+                      <Sunrise size={16} style={{ color: '#4ADE80' }} />
+                      <p className="text-sm font-semibold" style={{ color: '#4ADE80' }}>
+                        Démarrer une nouvelle session
+                      </p>
+                    </div>
+                    <p className="text-xs mt-1.5 leading-relaxed" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                      Saisissez le solde de caisse pour ouvrir la journée. Toutes les opérations seront rattachées à cette session jusqu&apos;à la prochaine clôture.
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.50)' }}>
-                      Solde d&apos;ouverture (HTG)
+                    <label className="block text-[10px] font-semibold uppercase tracking-[0.1em] mb-1.5"
+                      style={{ color: 'rgba(255,255,255,0.45)' }}>
+                      Solde d&apos;ouverture
                     </label>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      step="0.01"
-                      min="0"
-                      value={openingBalance}
-                      onChange={e => setOpeningBalance(e.target.value)}
-                      disabled={opening || success}
-                      placeholder="0.00"
-                      className="w-full rounded-lg px-3 py-2.5 text-sm outline-none"
-                      style={{
-                        background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.09)',
-                        color: 'rgba(255,255,255,0.80)',
-                        opacity: opening || success ? 0.6 : 1,
-                      }}
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        step="0.01"
+                        min="0"
+                        value={openingBalance}
+                        onChange={e => setOpeningBalance(e.target.value)}
+                        disabled={opening || success}
+                        placeholder="0.00"
+                        autoFocus
+                        className="w-full rounded-xl pl-3 pr-14 py-3 text-lg font-semibold outline-none transition-colors tabular-nums"
+                        style={{
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          color: 'rgba(255,255,255,0.95)',
+                          opacity: opening || success ? 0.6 : 1,
+                        }}
+                        onFocus={e => { e.currentTarget.style.borderColor = 'rgba(74,222,128,0.40)' }}
+                        onBlur={e => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)' }}
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium"
+                        style={{ color: 'rgba(255,255,255,0.35)' }}>HTG</span>
+                    </div>
                   </div>
                 </>
               )}
 
               {error && (
-                <p className="text-xs rounded-lg px-3 py-2"
-                  style={{ background: 'rgba(239,68,68,0.10)', color: '#F87171', border: '1px solid rgba(239,68,68,0.22)' }}>
-                  {error}
-                </p>
+                <div className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                  style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.22)' }}>
+                  <AlertTriangle size={13} style={{ color: '#F87171' }} />
+                  <p className="text-xs" style={{ color: '#F87171' }}>{error}</p>
+                </div>
               )}
 
               {success && (
-                <div className="flex items-center gap-2 rounded-lg px-3 py-2"
-                  style={{ background: 'rgba(74,222,128,0.08)', color: '#4ADE80', border: '1px solid rgba(74,222,128,0.22)' }}>
-                  <Check size={13} />
-                  <span className="text-xs">{isOpen ? 'Journée clôturée · PDF téléchargé' : 'Journée ouverte'}</span>
+                <div className="flex items-center gap-2 rounded-xl px-3 py-2.5"
+                  style={{ background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.22)' }}>
+                  <Check size={13} style={{ color: '#4ADE80' }} />
+                  <p className="text-xs font-medium" style={{ color: '#4ADE80' }}>
+                    {isOpen ? 'Journée clôturée · PDF téléchargé' : 'Nouvelle journée ouverte'}
+                  </p>
                 </div>
               )}
             </div>
 
-            {/* Footer (sticky on mobile) */}
-            <div className="flex gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 flex-shrink-0"
-              style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(0,0,0,0.2)' }}>
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                disabled={closing || opening || success || loadingStats}
-                className="flex-1 h-10 rounded-lg text-sm font-medium"
-                style={{
-                  background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.09)',
-                  color: 'rgba(255,255,255,0.60)',
-                  opacity: closing || opening || success ? 0.5 : 1,
-                }}>
-                {success ? 'Fermer' : 'Annuler'}
-              </button>
+            {/* Footer CTA */}
+            <div className="flex-shrink-0 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),1rem)] sm:pb-4"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.15)' }}>
               {isOpen ? (
-                <button
-                  type="button"
-                  onClick={handleClose}
-                  disabled={closing || success || !stats || loadingStats}
-                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium"
-                  style={{ background: '#C41E3A', color: '#fff', opacity: closing || success ? 0.75 : 1 }}>
-                  {closing ? (<><Loader2 size={14} className="animate-spin" /> Clôture…</>)
-                   : success ? (<><Check size={14} /> Clôturé</>)
-                   : (<><Lock size={14} /> Confirmer</>)}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    disabled={closing || opening || success}
+                    className="h-11 px-4 rounded-xl text-sm font-medium transition-colors"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'rgba(255,255,255,0.60)',
+                      opacity: closing || opening || success ? 0.4 : 1,
+                    }}>
+                    {success ? 'Fermer' : 'Annuler'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={closing || success || !stats || loadingStats}
+                    className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
+                    style={{
+                      background: success ? 'rgba(74,222,128,0.15)' : 'linear-gradient(180deg, #C41E3A 0%, #A51830 100%)',
+                      color: success ? '#4ADE80' : '#fff',
+                      boxShadow: success ? 'none' : '0 4px 12px rgba(196,30,58,0.30)',
+                      opacity: closing ? 0.75 : 1,
+                    }}>
+                    {closing
+                      ? (<><Loader2 size={15} className="animate-spin" /> Clôture…</>)
+                      : success
+                        ? (<><Check size={15} /> Clôturé</>)
+                        : (<><MoonStar size={14} /> Clôturer la journée</>)}
+                  </button>
+                </div>
               ) : (
-                <button
-                  type="button"
-                  onClick={handleOpenDay}
-                  disabled={opening || success || loadingStats || !openingBalance}
-                  className="flex-1 flex items-center justify-center gap-2 h-10 rounded-lg text-sm font-medium"
-                  style={{ background: '#4ADE80', color: '#0B1220', opacity: opening || success ? 0.75 : 1 }}>
-                  {opening ? (<><Loader2 size={14} className="animate-spin" /> Ouverture…</>)
-                   : success ? (<><Check size={14} /> Ouverte</>)
-                   : (<><Sunrise size={14} /> Ouvrir</>)}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setModalOpen(false)}
+                    disabled={opening || success}
+                    className="h-11 px-4 rounded-xl text-sm font-medium transition-colors"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      color: 'rgba(255,255,255,0.60)',
+                      opacity: opening || success ? 0.4 : 1,
+                    }}>
+                    {success ? 'Fermer' : 'Annuler'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleOpenDay}
+                    disabled={opening || success || loadingStats || !openingBalance}
+                    className="flex-1 flex items-center justify-center gap-2 h-11 rounded-xl text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500/40"
+                    style={{
+                      background: success ? 'rgba(74,222,128,0.15)' : 'linear-gradient(180deg, #4ADE80 0%, #22C55E 100%)',
+                      color: success ? '#4ADE80' : '#0B1220',
+                      boxShadow: success ? 'none' : '0 4px 12px rgba(74,222,128,0.25)',
+                      opacity: opening ? 0.75 : (!openingBalance ? 0.5 : 1),
+                    }}>
+                    {opening
+                      ? (<><Loader2 size={15} className="animate-spin" /> Ouverture…</>)
+                      : success
+                        ? (<><Check size={15} /> Ouverte</>)
+                        : (<><Sunrise size={14} /> Ouvrir la journée</>)}
+                  </button>
+                </div>
               )}
             </div>
           </div>
