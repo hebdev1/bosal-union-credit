@@ -188,6 +188,7 @@ export async function closeDay(notes?: string): Promise<ClosureResult | { error:
 
   revalidatePath('/tableau-de-bord/rapports')
   revalidatePath('/tableau-de-bord')
+  revalidatePath('/tableau-de-bord', 'layout')
 
   return {
     closingDate,
@@ -238,5 +239,6 @@ export async function openNewDay(
 
   if (error) return { error: error.message }
   revalidatePath('/tableau-de-bord/rapports')
+  revalidatePath('/tableau-de-bord', 'layout')
   return null
 }
