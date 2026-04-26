@@ -1,5 +1,6 @@
 'use client'
 import * as React from 'react'
+import { createPortal } from 'react-dom'
 import { ChevronDown, Check, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { updateMemberStatus } from '@/app/(dashboard)/tableau-de-bord/membres/actions'
@@ -19,15 +20,50 @@ export function MemberStatusPicker({ memberId, current }: { memberId: string; cu
   const [open, setOpen] = React.useState(false)
   const [status, setStatus] = React.useState<Status>(current)
   const [pending, setPending] = React.useState(false)
-  const ref = React.useRef<HTMLDivElement>(null)
+  const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null)
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+  const [mounted, setMounted] = React.useState(false)
 
+  React.useEffect(() => { setMounted(true) }, [])
+
+  // Keep optimistic state synced with prop after server revalidation
+  React.useEffect(() => { setStatus(current) }, [current])
+
+  // Compute menu position whenever it opens (and on scroll/resize)
+  const updateCoords = React.useCallback(() => {
+    if (!triggerRef.current) return
+    const r = triggerRef.current.getBoundingClientRect()
+    setCoords({ top: r.bottom + 6, left: r.left })
+  }, [])
+
+  React.useEffect(() => {
+    if (!open) { setCoords(null); return }
+    updateCoords()
+    window.addEventListener('scroll', updateCoords, true)
+    window.addEventListener('resize', updateCoords)
+    return () => {
+      window.removeEventListener('scroll', updateCoords, true)
+      window.removeEventListener('resize', updateCoords)
+    }
+  }, [open, updateCoords])
+
+  // Click-away
   React.useEffect(() => {
     if (!open) return
     function handle(e: MouseEvent) {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (triggerRef.current?.contains(t)) return
+      if (menuRef.current?.contains(t)) return
+      setOpen(false)
     }
+    function key(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false) }
     document.addEventListener('mousedown', handle)
-    return () => document.removeEventListener('mousedown', handle)
+    document.addEventListener('keydown', key)
+    return () => {
+      document.removeEventListener('mousedown', handle)
+      document.removeEventListener('keydown', key)
+    }
   }, [open])
 
   async function pick(next: Status) {
@@ -49,30 +85,36 @@ export function MemberStatusPicker({ memberId, current }: { memberId: string; cu
   const meta = STATUS_META[status]
 
   return (
-    <div className="relative" ref={ref}>
+    <>
       <button
+        ref={triggerRef}
         type="button"
-        onClick={() => setOpen(v => !v)}
+        onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpen(v => !v) }}
         disabled={pending}
         aria-haspopup="menu"
         aria-expanded={open}
-        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all disabled:opacity-60"
+        title="Changer le statut"
+        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all disabled:opacity-60 cursor-pointer hover:brightness-110"
         style={{
           background: meta.bg,
           color: meta.color,
           border: `1px solid ${meta.border}`,
         }}
       >
-        {pending ? <Loader2 size={11} className="animate-spin" /> : null}
+        {pending ? <Loader2 size={11} className="animate-spin" aria-hidden /> : null}
         {meta.label}
         <ChevronDown size={11} aria-hidden style={{ opacity: 0.7, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 150ms' }} />
       </button>
 
-      {open && (
+      {mounted && open && coords && createPortal(
         <div
+          ref={menuRef}
           role="menu"
-          className="absolute left-0 mt-2 min-w-[160px] rounded-xl py-1 z-50"
+          className="fixed min-w-[180px] rounded-xl py-1"
           style={{
+            top: coords.top,
+            left: coords.left,
+            zIndex: 9999,
             background: '#111520',
             border: '1px solid rgba(255,255,255,0.09)',
             boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
@@ -93,15 +135,16 @@ export function MemberStatusPicker({ memberId, current }: { memberId: string; cu
                 onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
               >
                 <span className="flex items-center gap-2">
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: m.color }} />
+                  <span aria-hidden style={{ width: 6, height: 6, borderRadius: '50%', background: m.color }} />
                   {m.label}
                 </span>
                 {active && <Check size={12} aria-hidden />}
               </button>
             )
           })}
-        </div>
+        </div>,
+        document.body,
       )}
-    </div>
+    </>
   )
 }

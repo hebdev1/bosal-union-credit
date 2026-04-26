@@ -1,8 +1,10 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
-import { PageShell, DataCard, Table, TR, TD, StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
+import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { CreateMemberModal } from '@/components/dashboard/forms/CreateMemberModal'
+import { MemberStatusPicker } from '@/components/dashboard/forms/MemberStatusPicker'
 import { formatDate } from '@/lib/formatters'
 
 export const metadata: Metadata = { title: 'Membres' }
@@ -49,23 +51,34 @@ export default async function MembresPage() {
             <EmptyState title="Aucun membre" description="Les membres apparaîtront ici une fois créés." />
           ) : (
             <Table headers={['N° Membre', 'Nom complet', 'Téléphone', 'Email', 'Profession', 'Comptes', 'Statut', 'Inscription']}>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               {rows.map((m: any) => (
                 <TR key={m.id}>
-                  <TD mono>{m.member_number}</TD>
+                  <TD mono>
+                    <Link href={`/tableau-de-bord/membres/${m.id}`} className="hover:underline" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                      {m.member_number}
+                    </Link>
+                  </TD>
                   <TD>
-                    <span className="font-medium" style={{ color: 'rgba(255,255,255,0.90)' }}>
+                    <Link href={`/tableau-de-bord/membres/${m.id}`} className="font-medium hover:underline" style={{ color: 'rgba(255,255,255,0.90)' }}>
                       {m.first_name} {m.last_name}
-                    </span>
+                    </Link>
                   </TD>
                   <TD mono>{m.phone ?? '—'}</TD>
                   <TD mono>{m.email ?? '—'}</TD>
                   <TD>{m.profession ?? '—'}</TD>
                   <TD>
                     <span className="text-sm kpi-value" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       {(m.accounts as any[])?.length ?? 0}
                     </span>
                   </TD>
-                  <TD><StatusBadge value={m.status} /></TD>
+                  <TD>
+                    <MemberStatusPicker
+                      memberId={m.id}
+                      current={(m.status ?? 'pending') as 'active' | 'suspended' | 'closed' | 'pending'}
+                    />
+                  </TD>
                   <TD>{formatDate(m.created_at)}</TD>
                 </TR>
               ))}
