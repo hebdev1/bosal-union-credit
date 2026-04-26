@@ -57,6 +57,57 @@ export async function updateMember(
   return null
 }
 
+export async function updateMemberStatus(
+  memberId: string,
+  status: 'active' | 'suspended' | 'closed' | 'pending',
+): Promise<{ error: string } | null> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agent } = await (supabase as any)
+    .from('agents').select('cooperative_id, id, role').eq('id', user.id).single()
+  if (!agent) return { error: 'Agent introuvable' }
+
+  // Only admin / manager may change member status
+  if (!['admin', 'manager'].includes(String(agent.role))) {
+    return { error: 'Action réservée aux administrateurs et gestionnaires.' }
+  }
+
+  const allowed = ['active', 'suspended', 'closed', 'pending']
+  if (!allowed.includes(status)) return { error: 'Statut invalide' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: previous } = await (supabase as any)
+    .from('members').select('status, member_number').eq('id', memberId)
+    .eq('cooperative_id', agent.cooperative_id).single()
+  if (!previous) return { error: 'Membre introuvable' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('members')
+    .update({ status })
+    .eq('id', memberId)
+    .eq('cooperative_id', agent.cooperative_id)
+
+  if (error) return { error: error.message }
+
+  await logAudit({
+    action: 'member.status_change',
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'members',
+    targetId: memberId,
+    metadata: { from: previous.status, to: status, member_number: previous.member_number },
+  })
+
+  revalidatePath('/tableau-de-bord/membres')
+  revalidatePath(`/tableau-de-bord/membres/${memberId}`)
+  return null
+}
+
 export async function createMember(formData: FormData): Promise<{ error: string } | null> {
   const supabase = await createClient()
 

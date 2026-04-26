@@ -1,7 +1,8 @@
 'use client'
 import * as React from 'react'
-import { Check, Pencil, X, Loader2, ChevronDown, Upload, Palette, Mail, Layout, FileText, Settings, Save, RotateCcw } from 'lucide-react'
-import { updateSetting, updateCooperative, updateAgentStatus } from '@/app/(dashboard)/tableau-de-bord/parametres/actions'
+import { Check, Pencil, X, Loader2, ChevronDown, Upload, Palette, Mail, Layout, FileText, Settings, Save, RotateCcw, UserMinus, Play } from 'lucide-react'
+import { toast } from 'sonner'
+import { updateSetting, updateCooperative, updateAgentStatus, runInactivityDeactivation } from '@/app/(dashboard)/tableau-de-bord/parametres/actions'
 import { createClient } from '@/lib/supabase/client'
 
 /* ── Constants ──────────────────────────────────────────────────────────── */
@@ -22,12 +23,6 @@ const PALETTE_COLORS = [
   '#34D399','#60A5FA','#A78BFA','#FCD34D',
   '#F87171','#4ADE80','#2DD4BF','#FB923C',
 ]
-const CATEGORY_META: Record<string, { label: string; icon: React.ElementType; desc: string }> = {
-  theme:   { label: 'Thème & Design',          icon: Layout,   desc: "Personnalisez l'apparence du tableau de bord" },
-  pdf:     { label: 'PDF & Tickets',            icon: FileText, desc: 'Configuration des rapports PDF et tickets de caisse' },
-  general: { label: 'Général',                  icon: Settings, desc: 'Paramètres généraux de la coopérative' },
-  finance: { label: 'Finance',                  icon: Settings, desc: 'Règles financières et limites' },
-}
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 interface Setting { key: string; label: string; value: unknown; description?: string; input_type: string; options?: { label: string; value: string }[] | null }
@@ -631,6 +626,91 @@ function SectionCard({ title, icon: Icon, description, children, accent, scrolla
   )
 }
 
+/* ── Inactivity section (member auto-deactivation) ─────────────────────── */
+function InactivitySection({ setting, value, onChange }: {
+  setting: Setting | null
+  value: unknown
+  onChange: (key: string, v: unknown) => void
+}) {
+  const [running, setRunning] = React.useState(false)
+  const days = Number((value ?? setting?.value ?? 30) as number) || 0
+
+  async function runNow() {
+    setRunning(true)
+    try {
+      const res = await runInactivityDeactivation()
+      if ('error' in res) {
+        toast.error(res.error)
+      } else {
+        toast.success(
+          res.suspended === 0
+            ? `Aucun membre à suspendre (seuil ${res.days} j).`
+            : `${res.suspended} membre${res.suspended > 1 ? 's' : ''} suspendu${res.suspended > 1 ? 's' : ''} (inactivité > ${res.days} j).`
+        )
+      }
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  return (
+    <SectionCard
+      title="Inactivité des membres"
+      icon={UserMinus}
+      description="Suspension automatique des membres sans opération depuis N jours"
+      accent="#F87171"
+    >
+      <div className="p-5 space-y-4">
+        <div className="flex items-end justify-between gap-4 flex-wrap">
+          <div className="flex-1 min-w-[220px]">
+            <label className="block text-xs font-medium mb-1.5" style={{ color: 'rgba(255,255,255,0.65)' }}>
+              Seuil d&apos;inactivité (jours)
+            </label>
+            <input
+              type="number"
+              min={0}
+              max={3650}
+              value={String(days)}
+              onChange={e => onChange('member_inactivity_days', Number(e.target.value) || 0)}
+              className={INPUT}
+              style={IS}
+              placeholder="30"
+            />
+            <p className="text-[11px] mt-1.5" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              Un membre actif sans dépôt, retrait, prêt ou remboursement depuis ce nombre de jours sera passé en{' '}
+              <span style={{ color: '#F87171', fontWeight: 600 }}>Suspendu</span>. Mettez à 0 pour désactiver la règle.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={runNow}
+            disabled={running || days <= 0}
+            className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-xs font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{
+              background: running ? 'rgba(248,113,113,0.18)' : 'rgba(248,113,113,0.12)',
+              color: '#F87171',
+              border: '1px solid rgba(248,113,113,0.30)',
+            }}
+          >
+            {running ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
+            {running ? 'Exécution…' : 'Exécuter maintenant'}
+          </button>
+        </div>
+
+        <div className="rounded-lg p-3 text-[11px] flex items-start gap-2"
+          style={{ background: 'rgba(252,211,77,0.06)', border: '1px solid rgba(252,211,77,0.18)', color: 'rgba(255,255,255,0.65)' }}>
+          <span style={{ color: '#FCD34D', fontWeight: 700 }}>!</span>
+          <span>
+            L&apos;exécution manuelle suspend immédiatement les membres concernés.
+            Pour une exécution périodique, planifiez l&apos;appel RPC <code style={{ background: 'rgba(0,0,0,0.30)', padding: '0 4px', borderRadius: 3 }}>deactivate_inactive_members</code> côté serveur (cron / edge function).
+          </span>
+        </div>
+      </div>
+    </SectionCard>
+  )
+}
+
 /* ── Tabs ───────────────────────────────────────────────────────────────── */
 const TABS = [
   { id: 'theme',   label: 'Design',    icon: Layout   },
@@ -880,11 +960,19 @@ export function ParametresClient({ coop, agents, grouped }: {
 
       {/* ── FINANCE TAB ── */}
       {tab === 'finance' && (
-        <SectionCard title="Règles financières" icon={Settings} description="Limites, taux et conditions de prêt" accent="#F59E0B">
-          {(grouped['finance'] ?? []).map((s: Setting) => (
-            <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
-          ))}
-        </SectionCard>
+        <div className="space-y-6">
+          <SectionCard title="Règles financières" icon={Settings} description="Limites, taux et conditions de prêt" accent="#F59E0B">
+            {(grouped['finance'] ?? []).filter((s: Setting) => s.key !== 'member_inactivity_days').map((s: Setting) => (
+              <SettingRow key={s.key} s={s} value={draft[s.key] ?? s.value} onChange={handleChange} />
+            ))}
+          </SectionCard>
+
+          <InactivitySection
+            setting={(grouped['finance'] ?? []).find((s: Setting) => s.key === 'member_inactivity_days') ?? null}
+            value={draft['member_inactivity_days']}
+            onChange={handleChange}
+          />
+        </div>
       )}
 
       {/* ── Sticky Save / Cancel bar ── */}

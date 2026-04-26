@@ -5,6 +5,7 @@ import { ArrowLeft, FileCheck, FileX, Upload } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
+import { MemberStatusPicker } from '@/components/dashboard/forms/MemberStatusPicker'
 import { formatHTG, formatDate } from '@/lib/formatters'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -99,7 +100,10 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
                   <h1 className="text-lg font-bold" style={{ color: 'rgba(255,255,255,0.95)' }}>
                     {member.first_name} {member.last_name}
                   </h1>
-                  <StatusBadge value={member.status ?? 'pending'} />
+                  <MemberStatusPicker
+                    memberId={member.id}
+                    current={(member.status ?? 'pending') as 'active' | 'suspended' | 'closed' | 'pending'}
+                  />
                   {kycComplete ? (
                     <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
                       style={{ background: 'rgba(74,222,128,0.12)', color: '#4ADE80', border: '1px solid rgba(74,222,128,0.25)' }}>
