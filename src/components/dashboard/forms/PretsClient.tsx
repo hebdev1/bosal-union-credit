@@ -1,6 +1,7 @@
 'use client'
 import * as React from 'react'
-import { Calendar } from 'lucide-react'
+import Link from 'next/link'
+import { Calendar, UserCircle2 } from 'lucide-react'
 import { DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { LoanStatusSelect } from '@/components/dashboard/forms/LoanStatusSelect'
 import { PretsExportButton } from '@/components/dashboard/forms/PretsExportButton'
@@ -165,12 +166,23 @@ export function PretsClient({ loans, repayments, lateCount, reportConfig }: Prop
                     <TD mono>{l.loan_number}</TD>
                     <TD>
                       {member ? (
-                        <div>
-                          <p className="font-medium" style={{ color: 'rgba(255,255,255,0.90)' }}>
-                            {member.first_name} {member.last_name}
-                          </p>
-                          <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>{member.member_number}</p>
-                        </div>
+                        <Link
+                          href={`/tableau-de-bord/membres/${member.id}`}
+                          title="Voir le profil emprunteur"
+                          className="group inline-flex items-center gap-2 transition-opacity hover:opacity-90"
+                        >
+                          <span aria-hidden
+                            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+                            style={{ background: 'rgba(196,30,58,0.12)', color: '#C41E3A' }}>
+                            <UserCircle2 size={14} />
+                          </span>
+                          <span>
+                            <span className="font-medium block group-hover:underline" style={{ color: 'rgba(255,255,255,0.90)' }}>
+                              {member.first_name} {member.last_name}
+                            </span>
+                            <span className="text-xs block kpi-value" style={{ color: 'rgba(255,255,255,0.40)' }}>{member.member_number}</span>
+                          </span>
+                        </Link>
                       ) : '—'}
                     </TD>
                     <TD>

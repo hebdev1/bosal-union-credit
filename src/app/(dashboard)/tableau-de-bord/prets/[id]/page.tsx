@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, UserCircle2, ExternalLink } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { StatusBadge } from '@/components/dashboard/ui/DataTable'
@@ -100,10 +100,34 @@ export default async function LoanDetailPage({ params }: { params: Promise<{ id:
                   {loan.loan_number}
                 </h1>
                 <StatusBadge value={loan.status ?? 'pending'} />
+                {member && (
+                  <Link
+                    href={`/tableau-de-bord/membres/${member.id}`}
+                    title="Voir le profil de l'emprunteur"
+                    className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all hover:brightness-125"
+                    style={{
+                      background: 'rgba(196,30,58,0.12)',
+                      color: '#C41E3A',
+                      border: '1px solid rgba(196,30,58,0.30)',
+                    }}
+                  >
+                    <UserCircle2 size={12} aria-hidden />
+                    Profil emprunteur
+                    <ExternalLink size={10} aria-hidden style={{ opacity: 0.7 }} />
+                  </Link>
+                )}
               </div>
               {member && (
-                <p className="text-sm mt-1" style={{ color: 'rgba(255,255,255,0.55)' }}>
-                  {member.first_name} {member.last_name} · {member.member_number}
+                <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                  <Link
+                    href={`/tableau-de-bord/membres/${member.id}`}
+                    className="font-medium hover:underline"
+                    style={{ color: 'rgba(255,255,255,0.85)' }}
+                  >
+                    {member.first_name} {member.last_name}
+                  </Link>
+                  <span style={{ color: 'rgba(255,255,255,0.30)' }}> · </span>
+                  <span className="kpi-value" style={{ color: 'rgba(255,255,255,0.55)' }}>{member.member_number}</span>
                 </p>
               )}
               {loan.purpose && (
