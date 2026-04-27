@@ -2,8 +2,10 @@
 import * as React from 'react'
 import { PlusCircle, X, Loader2 } from 'lucide-react'
 import { createAccount } from '@/app/(dashboard)/tableau-de-bord/comptes/actions'
+import { ACCOUNT_TYPES } from '@/lib/accounts/types'
 
-const INPUT = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
+const INPUT  = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
+const SELECT = 'app-select w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
 const INPUT_STYLE = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', color: 'rgba(255,255,255,0.85)' }
 const LABEL = 'block text-xs font-medium mb-1'
 const LABEL_STYLE = { color: 'rgba(255,255,255,0.50)' }
@@ -19,7 +21,11 @@ export function CreateAccountModal({ members, plans = [] }: { members: Member[];
   const [open, setOpen] = React.useState(false)
   const [pending, setPending] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [selectedType, setSelectedType] = React.useState<string>('savings')
   const formRef = React.useRef<HTMLFormElement>(null)
+
+  // Active type meta (for the live description chip under the dropdown)
+  const typeMeta = ACCOUNT_TYPES.find(t => t.value === selectedType)
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -29,6 +35,7 @@ export function CreateAccountModal({ members, plans = [] }: { members: Member[];
     setPending(false)
     if (result?.error) { setError(result.error); return }
     formRef.current?.reset()
+    setSelectedType('savings')
     setOpen(false)
   }
 
@@ -73,7 +80,7 @@ export function CreateAccountModal({ members, plans = [] }: { members: Member[];
               {/* Membre */}
               <div>
                 <label className={LABEL} style={LABEL_STYLE}>Membre *</label>
-                <select name="member_id" required className={INPUT} style={INPUT_STYLE}>
+                <select name="member_id" required className={SELECT} style={INPUT_STYLE}>
                   <option value="">Sélectionner un membre</option>
                   {members.map(m => (
                     <option key={m.id} value={m.id}>
@@ -89,23 +96,44 @@ export function CreateAccountModal({ members, plans = [] }: { members: Member[];
                 <input name="account_number" required className={INPUT} style={INPUT_STYLE} placeholder="CPT-001" />
               </div>
 
-              {/* Type + Devise */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={LABEL} style={LABEL_STYLE}>Type de compte *</label>
-                  <select name="account_type" required className={INPUT} style={INPUT_STYLE}>
-                    <option value="savings">Épargne</option>
-                    <option value="deposit">Dépôt</option>
-                    <option value="wallet">Wallet</option>
-                  </select>
-                </div>
-                <div>
-                  <label className={LABEL} style={LABEL_STYLE}>Devise *</label>
-                  <select name="currency" required className={INPUT} style={INPUT_STYLE}>
-                    <option value="HTG">HTG</option>
-                    <option value="USD">USD</option>
-                  </select>
-                </div>
+              {/* Type de compte (élargi) */}
+              <div>
+                <label className={LABEL} style={LABEL_STYLE}>
+                  Type de compte voulu *
+                </label>
+                <select
+                  name="account_type"
+                  required
+                  className={SELECT}
+                  style={INPUT_STYLE}
+                  value={selectedType}
+                  onChange={e => setSelectedType(e.target.value)}
+                >
+                  {ACCOUNT_TYPES.map(t => (
+                    <option key={t.value} value={t.value}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+                {typeMeta && (
+                  <p className="text-[11px] mt-1.5 flex items-center gap-1.5"
+                    style={{ color: 'rgba(255,255,255,0.40)' }}>
+                    <span aria-hidden style={{
+                      width: 6, height: 6, borderRadius: '50%',
+                      background: '#3B82F6', flexShrink: 0,
+                    }} />
+                    {typeMeta.description}
+                  </p>
+                )}
+              </div>
+
+              {/* Devise */}
+              <div>
+                <label className={LABEL} style={LABEL_STYLE}>Devise *</label>
+                <select name="currency" required className={SELECT} style={INPUT_STYLE}>
+                  <option value="HTG">HTG</option>
+                  <option value="USD">USD</option>
+                </select>
               </div>
 
               {/* Plan d'épargne */}
@@ -114,7 +142,7 @@ export function CreateAccountModal({ members, plans = [] }: { members: Member[];
                   Plan d&apos;épargne
                   <span className="ml-1 text-[10px]" style={{ color: 'rgba(255,255,255,0.28)' }}>(optionnel)</span>
                 </label>
-                <select name="savings_product_id" className={INPUT} style={INPUT_STYLE}>
+                <select name="savings_product_id" className={SELECT} style={INPUT_STYLE}>
                   <option value="">— Aucun plan —</option>
                   {plans.map(p => (
                     <option key={p.id} value={p.id}>

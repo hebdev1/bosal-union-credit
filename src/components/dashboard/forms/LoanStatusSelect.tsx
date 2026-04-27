@@ -100,15 +100,23 @@ export function LoanStatusSelect({ loanId, currentStatus }: Props) {
       {open && (
         <div
           className="absolute z-40 mt-1 w-36 rounded-xl overflow-hidden shadow-xl"
-          style={{ background: '#161B27', border: '1px solid rgba(255,255,255,0.09)', right: 0 }}
+          style={{ background: '#ffffff', border: '1px solid rgba(0,0,0,0.10)', right: 0 }}
         >
           {STATUSES.map(s => (
             <button
               key={s.value}
               type="button"
               onClick={() => handleSelect(s.value)}
-              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-left transition-colors hover:bg-white/5"
-              style={{ color: s.color }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-left transition-colors"
+              style={{ color: '#000000' }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = '#3B82F6'
+                ;(e.currentTarget as HTMLElement).style.color      = '#ffffff'
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = 'transparent'
+                ;(e.currentTarget as HTMLElement).style.color      = '#000000'
+              }}
             >
               <span
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"

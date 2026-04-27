@@ -1702,7 +1702,18 @@ export type Database = {
       }
     }
     Enums: {
-      account_type: "savings" | "deposit" | "wallet"
+      account_type:
+        | "savings"
+        | "deposit"
+        | "wallet"
+        | "current"
+        | "checking"
+        | "business"
+        | "youth"
+        | "salary"
+        | "term_deposit"
+        | "shares"
+        | "loan_account"
       agent_role: "admin" | "manager" | "cashier"
       currency_code: "HTG" | "USD" | "CAD" | "DOP"
       document_entity_type: "member" | "loan" | "guarantor" | "cooperative"
@@ -2306,7 +2317,19 @@ export const Constants = {
   },
   public: {
     Enums: {
-      account_type: ["savings", "deposit", "wallet"],
+      account_type: [
+        "savings",
+        "deposit",
+        "wallet",
+        "current",
+        "checking",
+        "business",
+        "youth",
+        "salary",
+        "term_deposit",
+        "shares",
+        "loan_account",
+      ],
       agent_role: ["admin", "manager", "cashier"],
       currency_code: ["HTG", "USD", "CAD", "DOP"],
       document_entity_type: ["member", "loan", "guarantor", "cooperative"],

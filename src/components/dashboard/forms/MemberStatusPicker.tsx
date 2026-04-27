@@ -110,14 +110,14 @@ export function MemberStatusPicker({ memberId, current }: { memberId: string; cu
         <div
           ref={menuRef}
           role="menu"
-          className="fixed min-w-[180px] rounded-xl py-1"
+          className="fixed min-w-[180px] rounded-xl py-1 overflow-hidden"
           style={{
             top: coords.top,
             left: coords.left,
             zIndex: 9999,
-            background: '#111520',
-            border: '1px solid rgba(255,255,255,0.09)',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+            background: '#ffffff',
+            border: '1px solid rgba(0,0,0,0.10)',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.35)',
           }}
         >
           {ALL.map(s => {
@@ -130,9 +130,15 @@ export function MemberStatusPicker({ memberId, current }: { memberId: string; cu
                 role="menuitem"
                 onClick={() => pick(s)}
                 className="flex items-center justify-between w-full px-3 py-2 text-[12px] font-medium transition-colors"
-                style={{ color: m.color }}
-                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
-                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                style={{ color: '#000000' }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.background = '#3B82F6'
+                  ;(e.currentTarget as HTMLElement).style.color      = '#ffffff'
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.background = 'transparent'
+                  ;(e.currentTarget as HTMLElement).style.color      = '#000000'
+                }}
               >
                 <span className="flex items-center gap-2">
                   <span aria-hidden style={{ width: 6, height: 6, borderRadius: '50%', background: m.color }} />

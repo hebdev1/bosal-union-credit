@@ -145,6 +145,26 @@
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }
   :focus-visible { outline: 2px solid #C41E3A; outline-offset: 2px; }
   :focus:not(:focus-visible) { outline: none; }
+
+  /* ─── Native <select> dropdown options ────────────────────────────────
+     User request : « les textes dans tous les champs déroulants doivent
+     être noir et hover bleu ». Le panneau ouvert est rendu par l'OS,
+     mais on peut peindre les <option> en noir sur blanc, avec un état
+     surligné bleu (Chrome / Firefox / Edge respectent ces règles). */
+  select option {
+    color: #000000;
+    background-color: #ffffff;
+  }
+  select option:hover,
+  select option:focus,
+  select option:checked,
+  select option:active,
+  select option[selected] {
+    color: #ffffff;
+    background-color: #3B82F6;
+    /* Forces highlight in WebKit which otherwise reuses OS theme */
+    box-shadow: 0 0 10px 100px #3B82F6 inset;
+  }
 }
 
 @layer components {
