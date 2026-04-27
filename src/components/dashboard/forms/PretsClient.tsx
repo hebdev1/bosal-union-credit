@@ -167,8 +167,8 @@ export function PretsClient({ loans, repayments, lateCount, reportConfig }: Prop
                     <TD>
                       {member ? (
                         <Link
-                          href={`/tableau-de-bord/membres/${member.id}`}
-                          title="Voir le profil emprunteur"
+                          href={`/tableau-de-bord/emprunteurs/${member.id}`}
+                          title="Voir le profil emprunteur (historique, ajustement, versements)"
                           className="group inline-flex items-center gap-2 transition-opacity hover:opacity-90"
                         >
                           <span aria-hidden

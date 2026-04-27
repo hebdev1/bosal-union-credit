@@ -15,7 +15,7 @@ export default async function PretsPage() {
   const [loansRes, repaymentsRes, membersRes, accountsRes, pdfRes] = await Promise.all([
     supabase
       .from('loans')
-      .select('id, loan_number, principal_amount, interest_rate, duration_months, monthly_payment, total_amount_due, amount_paid, status, purpose, created_at, disbursed_at, due_date, members(first_name, last_name, member_number)')
+      .select('id, loan_number, principal_amount, interest_rate, duration_months, monthly_payment, total_amount_due, amount_paid, status, purpose, created_at, disbursed_at, due_date, members(id, first_name, last_name, member_number)')
       .order('created_at', { ascending: false }),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any)

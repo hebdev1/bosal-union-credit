@@ -102,8 +102,8 @@ export default async function LoanDetailPage({ params }: { params: Promise<{ id:
                 <StatusBadge value={loan.status ?? 'pending'} />
                 {member && (
                   <Link
-                    href={`/tableau-de-bord/membres/${member.id}`}
-                    title="Voir le profil de l'emprunteur"
+                    href={`/tableau-de-bord/emprunteurs/${member.id}`}
+                    title="Ouvrir le profil emprunteur (historique de prêt, ajustement, versements)"
                     className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold transition-all hover:brightness-125"
                     style={{
                       background: 'rgba(196,30,58,0.12)',
@@ -120,7 +120,7 @@ export default async function LoanDetailPage({ params }: { params: Promise<{ id:
               {member && (
                 <p className="text-sm mt-1.5" style={{ color: 'rgba(255,255,255,0.55)' }}>
                   <Link
-                    href={`/tableau-de-bord/membres/${member.id}`}
+                    href={`/tableau-de-bord/emprunteurs/${member.id}`}
                     className="font-medium hover:underline"
                     style={{ color: 'rgba(255,255,255,0.85)' }}
                   >

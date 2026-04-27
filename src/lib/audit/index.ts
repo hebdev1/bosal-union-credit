@@ -17,6 +17,7 @@ export type AuditAction =
   | 'loan.restructure'
   | 'loan.writeoff'
   | 'loan.repayment'
+  | 'loan.adjust'
   | 'account.open'
   | 'account.close'
   | 'account.freeze'

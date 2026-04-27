@@ -247,6 +247,104 @@ export async function recordLoanRepayment(input: {
   return { ok: true, totalPaid, closed: fullyClosed }
 }
 
+/* ─── Adjust loan terms (pending loans only, before any repayment) ────────── */
+/**
+ * Edit principal / rate / duration / purpose on a `pending` loan that has
+ * no repayments yet. Recomputes monthly_payment, total_amount_due, due_date.
+ * Refuses any change once the loan is approved/active or has activity.
+ */
+export async function adjustLoan(input: {
+  loanId: string
+  principal: number
+  interestRate: number
+  durationMonths: number
+  purpose?: string | null
+}): Promise<{ error: string } | { ok: true }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agent } = await (supabase as any)
+    .from('agents').select('cooperative_id, id').eq('id', user.id).single()
+  if (!agent) return { error: 'Agent introuvable' }
+
+  if (!input.loanId) return { error: 'Prêt manquant.' }
+  if (!Number.isFinite(input.principal)     || input.principal     <= 0)  return { error: 'Capital invalide.' }
+  if (!Number.isFinite(input.interestRate)  || input.interestRate  <  0)  return { error: 'Taux invalide.' }
+  if (!Number.isFinite(input.durationMonths)|| input.durationMonths <= 0) return { error: 'Durée invalide.' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: loan } = await (supabase as any)
+    .from('loans')
+    .select('id, loan_number, status, created_at')
+    .eq('id', input.loanId)
+    .eq('cooperative_id', agent.cooperative_id)
+    .single()
+  if (!loan) return { error: 'Prêt introuvable.' }
+
+  if (loan.status !== 'pending') {
+    return { error: `Seuls les prêts en attente peuvent être ajustés (statut actuel : ${loan.status}).` }
+  }
+
+  // Block if any repayment has already been recorded.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { count } = await (supabase as any)
+    .from('loan_repayments')
+    .select('id', { count: 'exact', head: true })
+    .eq('loan_id', input.loanId)
+  if ((count ?? 0) > 0) {
+    return { error: 'Versements déjà enregistrés : ajustement interdit.' }
+  }
+
+  // Flat-rate calc, identical to createLoan, to keep stored fields consistent.
+  const totalInterest   = input.principal * (input.interestRate / 100) * (input.durationMonths / 12)
+  const totalAmountDue  = input.principal + totalInterest
+  const monthlyPayment  = totalAmountDue / input.durationMonths
+
+  // Due date = created_at (or today) + duration months
+  const base = loan.created_at ? new Date(loan.created_at) : new Date()
+  const due  = new Date(base)
+  due.setMonth(due.getMonth() + input.durationMonths)
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any)
+    .from('loans')
+    .update({
+      principal_amount: input.principal,
+      interest_rate:    input.interestRate,
+      duration_months:  input.durationMonths,
+      monthly_payment:  Math.round(monthlyPayment * 100) / 100,
+      total_amount_due: Math.round(totalAmountDue * 100) / 100,
+      due_date:         due.toISOString().split('T')[0],
+      purpose:          input.purpose ?? null,
+    })
+    .eq('id', input.loanId)
+    .eq('cooperative_id', agent.cooperative_id)
+  if (error) return { error: error.message }
+
+  await logAudit({
+    action: 'loan.adjust',
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'loans',
+    targetId: input.loanId,
+    metadata: {
+      loan_number: loan.loan_number,
+      principal: input.principal,
+      interest_rate: input.interestRate,
+      duration_months: input.durationMonths,
+      monthly_payment: Math.round(monthlyPayment * 100) / 100,
+      total_amount_due: Math.round(totalAmountDue * 100) / 100,
+    },
+  })
+
+  revalidatePath('/tableau-de-bord/prets')
+  revalidatePath(`/tableau-de-bord/prets/${input.loanId}`)
+  revalidatePath(`/tableau-de-bord/emprunteurs`, 'layout')
+  return { ok: true }
+}
+
 /* ─── Create loan ─────────────────────────────────────────────────────────── */
 export async function createLoan(formData: FormData): Promise<{ error: string } | null> {
   const supabase = await createClient()
