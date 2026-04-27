@@ -7,6 +7,7 @@ import { Header } from '@/components/dashboard/Header'
 import { StatusBadge } from '@/components/dashboard/ui/DataTable'
 import { formatHTG, formatDate } from '@/lib/formatters'
 import { amortizationSchedule } from '@/lib/finance/interest'
+import { LoanScheduleClient, type RepaymentRecord } from '@/components/dashboard/forms/LoanScheduleClient'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -44,10 +45,28 @@ export default async function LoanDetailPage({ params }: { params: Promise<{ id:
     (p) => (p.motif ?? '').toLowerCase().includes('prêt') || (p.motif ?? '').toLowerCase().includes('pret'),
   )
 
-  // Generate amortization schedule from loan terms
+  // Fetch existing monthly repayments (one row per installment_no)
+  const { data: repaymentsRaw } = await supabase
+    .from('loan_repayments')
+    .select('installment_no, amount_paid, amount_due, due_date, paid_at, status')
+    .eq('loan_id', loan.id)
+    .order('installment_no', { ascending: true })
+  const repayments: RepaymentRecord[] = (repaymentsRaw ?? []).map((r) => ({
+    installment_no: r.installment_no as number,
+    amount_paid: r.amount_paid != null ? Number(r.amount_paid) : null,
+    amount_due:  r.amount_due  != null ? Number(r.amount_due)  : null,
+    due_date:    (r.due_date as string | null) ?? null,
+    paid_at:     (r.paid_at as string | null) ?? null,
+    status:      (r.status as string | null) ?? null,
+  }))
+
+  // Generate amortization schedule from loan terms — interest rate is already in %
   const principal = Number(loan.principal_amount)
-  const annualRate = Number(loan.interest_rate) / 100
+  const annualRate = Number(loan.interest_rate)
   const schedule = amortizationSchedule(principal, annualRate, loan.duration_months)
+
+  // Base date for due-date computation: disbursed_at if available, else created_at
+  const baseDate = (loan.disbursed_at as string | null) ?? (loan.created_at as string | null) ?? new Date().toISOString()
 
   const amountPaid = Number(loan.amount_paid ?? 0)
   const totalDue = Number(loan.total_amount_due)
@@ -183,30 +202,23 @@ export default async function LoanDetailPage({ params }: { params: Promise<{ id:
           )}
         </div>
 
-        {/* Amortization schedule */}
+        {/* Amortization schedule with editable monthly payments */}
         <section>
-          <h2 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>
-            Échéancier ({schedule.length} versements)
-          </h2>
-          <div className="rounded-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
-            <div className="grid grid-cols-5 gap-4 px-5 py-3"
-              style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.04)' }}>
-              {['#', 'Versement', 'Intérêts', 'Principal', 'Solde restant'].map((h) => (
-                <p key={h} className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>{h}</p>
-              ))}
-            </div>
-            {schedule.map((row, idx) => (
-              <div key={row.period}
-                className="grid grid-cols-5 gap-4 px-5 py-3 items-center"
-                style={{ borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
-                <p className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.50)' }}>{row.period}</p>
-                <p className="text-sm font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.85)' }}>{formatHTG(row.payment)}</p>
-                <p className="text-sm kpi-value" style={{ color: 'rgba(252,211,77,0.85)' }}>{formatHTG(row.interest)}</p>
-                <p className="text-sm kpi-value" style={{ color: 'rgba(74,222,128,0.85)' }}>{formatHTG(row.principal)}</p>
-                <p className="text-sm kpi-value" style={{ color: 'rgba(255,255,255,0.60)' }}>{formatHTG(row.balance)}</p>
-              </div>
-            ))}
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>
+              Échéancier ({schedule.length} versements)
+            </h2>
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              Saisissez le montant versé à chaque mois — Entrée ou ✓ pour enregistrer
+            </p>
           </div>
+          <LoanScheduleClient
+            loanId={loan.id}
+            schedule={schedule}
+            repayments={repayments}
+            baseDate={baseDate}
+            loanStatus={loan.status ?? null}
+          />
         </section>
 
         {/* Payments recorded */}

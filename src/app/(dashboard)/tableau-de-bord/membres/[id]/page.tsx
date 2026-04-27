@@ -1,12 +1,13 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, FileCheck, FileX, Upload } from 'lucide-react'
+import { ArrowLeft, FileCheck, FileX, Upload, Lock } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { MemberStatusPicker } from '@/components/dashboard/forms/MemberStatusPicker'
 import { formatHTG, formatDate } from '@/lib/formatters'
+import { isFinalLoanStatus } from '@/lib/loans/finality'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params
@@ -48,7 +49,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
       .eq('member_id', id)
       .order('created_at', { ascending: false }),
     supabase.from('loans')
-      .select('id, loan_number, principal_amount, monthly_payment, status, due_date, amount_paid, total_amount_due')
+      .select('id, loan_number, principal_amount, monthly_payment, status, due_date, disbursed_at, created_at, amount_paid, total_amount_due, duration_months, interest_rate')
       .eq('member_id', id)
       .order('created_at', { ascending: false }),
     supabase.from('documents')
@@ -252,27 +253,110 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
           )}
         </section>
 
-        {/* Loans */}
-        {loans.length > 0 && (
-          <section>
-            <h2 className="text-sm font-semibold mb-3" style={{ color: 'rgba(255,255,255,0.80)' }}>
-              Prêts ({loans.length})
+        {/* Loan profile — full borrower history */}
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold" style={{ color: 'rgba(255,255,255,0.80)' }}>
+              Profil de prêt ({loans.length})
             </h2>
-            <div className="rounded-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
-              {loans.map((l, idx) => (
-                <Link key={l.id} href={`/tableau-de-bord/prets/${l.id}`}
-                  className="grid grid-cols-5 gap-4 px-5 py-3.5 items-center transition-colors hover:bg-white/[0.02]"
-                  style={{ borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
-                  <p className="font-mono text-xs" style={{ color: 'rgba(255,255,255,0.70)' }}>{l.loan_number}</p>
-                  <p className="text-sm font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.85)' }}>{formatHTG(Number(l.principal_amount))}</p>
-                  <p className="text-sm kpi-value" style={{ color: 'rgba(255,255,255,0.60)' }}>{formatHTG(Number(l.monthly_payment))}</p>
-                  <StatusBadge value={l.status ?? 'pending'} />
-                  <p className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>Échéance {formatDate(l.due_date)}</p>
-                </Link>
-              ))}
+            <p className="text-[11px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              Historique complet de l&apos;emprunteur
+            </p>
+          </div>
+
+          {loans.length === 0 ? (
+            <div className="rounded-xl" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
+              <EmptyState title="Aucun prêt" description="Ce membre n'a contracté aucun prêt à ce jour." />
             </div>
-          </section>
-        )}
+          ) : (
+            <>
+              {/* Loan KPIs */}
+              {(() => {
+                const totalBorrowed   = loans.reduce((s, l) => s + Number(l.principal_amount ?? 0), 0)
+                const totalRepaid     = loans.reduce((s, l) => s + Number(l.amount_paid ?? 0), 0)
+                const activeCount     = loans.filter(l => !isFinalLoanStatus(l.status ?? null) && l.status !== 'pending').length
+                const pendingCount    = loans.filter(l => l.status === 'pending').length
+                const sealedCount     = loans.filter(l => isFinalLoanStatus(l.status ?? null)).length
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-3">
+                    {[
+                      { label: 'Total emprunté', value: formatHTG(totalBorrowed),  color: '#C41E3A' },
+                      { label: 'Total remboursé', value: formatHTG(totalRepaid),    color: '#4ADE80' },
+                      { label: 'Prêts actifs',    value: `${activeCount}${pendingCount > 0 ? ` + ${pendingCount} en attente` : ''}`, color: activeCount > 0 ? '#FCD34D' : 'rgba(255,255,255,0.60)' },
+                      { label: 'Prêts soldés',    value: String(sealedCount),       color: 'rgba(255,255,255,0.70)' },
+                    ].map(k => (
+                      <div key={k.label} className="rounded-xl px-4 py-3"
+                        style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
+                        <p className="text-base font-bold kpi-value" style={{ color: k.color }}>{k.value}</p>
+                        <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.40)' }}>{k.label}</p>
+                      </div>
+                    ))}
+                  </div>
+                )
+              })()}
+
+              {/* Header */}
+              <div className="rounded-t-xl grid grid-cols-12 gap-3 px-5 py-3"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.09)', borderBottom: 'none' }}>
+                <p className="col-span-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>N° Prêt</p>
+                <p className="col-span-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Capital</p>
+                <p className="col-span-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Mensualité</p>
+                <p className="col-span-3 text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Progression</p>
+                <p className="col-span-2 text-[10px] font-semibold uppercase tracking-wide" style={{ color: 'rgba(255,255,255,0.35)' }}>Échéance</p>
+                <p className="col-span-1 text-[10px] font-semibold uppercase tracking-wide text-right" style={{ color: 'rgba(255,255,255,0.35)' }}>Statut</p>
+              </div>
+
+              {/* Rows */}
+              <div className="rounded-b-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)', borderTop: 'none' }}>
+                {/* Sort: active first, pending next, sealed last */}
+                {[...loans].sort((a, b) => {
+                  const score = (s: string | null) =>
+                    isFinalLoanStatus(s) ? 2 : s === 'pending' ? 1 : 0
+                  return score(a.status ?? null) - score(b.status ?? null)
+                }).map((l, idx) => {
+                  const totalDue   = Number(l.total_amount_due ?? 0)
+                  const paid       = Number(l.amount_paid ?? 0)
+                  const pct        = totalDue > 0 ? Math.min(100, Math.round((paid / totalDue) * 100)) : 0
+                  const sealed     = isFinalLoanStatus(l.status ?? null)
+                  const barColor   = pct >= 100 ? '#4ADE80' : pct >= 50 ? '#FCD34D' : '#C41E3A'
+                  return (
+                    <Link key={l.id} href={`/tableau-de-bord/prets/${l.id}`}
+                      className="grid grid-cols-12 gap-3 px-5 py-3.5 items-center transition-colors hover:bg-white/[0.02]"
+                      style={{ borderTop: idx === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)' }}>
+                      <p className="col-span-2 font-mono text-xs flex items-center gap-1.5" style={{ color: 'rgba(255,255,255,0.70)' }}>
+                        {sealed && <Lock size={9} aria-hidden style={{ opacity: 0.6 }} />}
+                        {l.loan_number}
+                      </p>
+                      <p className="col-span-2 text-sm font-semibold kpi-value" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                        {formatHTG(Number(l.principal_amount))}
+                      </p>
+                      <p className="col-span-2 text-sm kpi-value" style={{ color: 'rgba(255,255,255,0.60)' }}>
+                        {formatHTG(Number(l.monthly_payment))}
+                      </p>
+                      <div className="col-span-3 flex flex-col gap-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[11px] kpi-value" style={{ color: 'rgba(255,255,255,0.55)' }}>
+                            {formatHTG(paid)} <span style={{ color: 'rgba(255,255,255,0.30)' }}>/ {formatHTG(totalDue)}</span>
+                          </span>
+                          <span className="text-[11px] kpi-value font-semibold" style={{ color: barColor }}>{pct}%</span>
+                        </div>
+                        <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+                          <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, background: barColor }} />
+                        </div>
+                      </div>
+                      <p className="col-span-2 text-[11px]" style={{ color: 'rgba(255,255,255,0.40)' }}>
+                        {formatDate(l.due_date)}
+                      </p>
+                      <div className="col-span-1 flex justify-end">
+                        <StatusBadge value={l.status ?? 'pending'} />
+                      </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            </>
+          )}
+        </section>
       </div>
     </>
   )

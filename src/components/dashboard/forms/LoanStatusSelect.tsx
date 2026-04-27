@@ -1,7 +1,8 @@
 'use client'
 import * as React from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Lock } from 'lucide-react'
 import { updateLoanStatus } from '@/app/(dashboard)/tableau-de-bord/prets/actions'
+import { isFinalLoanStatus, finalLoanStatusLabel } from '@/lib/loans/finality'
 
 const STATUSES = [
   { value: 'pending',   label: 'En attente', color: '#FCD34D', bg: 'rgba(234,179,8,0.12)'   },
@@ -46,6 +47,30 @@ export function LoanStatusSelect({ loanId, currentStatus }: Props) {
 
   const current = STATUSES.find(s => s.value === status)
     ?? { value: status, label: status, color: 'rgba(255,255,255,0.45)', bg: 'rgba(255,255,255,0.06)' }
+
+  const locked = isFinalLoanStatus(status)
+
+  // Sealed loan: show a non-interactive locked badge instead of a dropdown.
+  if (locked) {
+    return (
+      <span
+        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+        title={`Statut « ${finalLoanStatusLabel(status)} » irréversible — aucune transition possible`}
+        style={{
+          background: current.bg,
+          color: current.color,
+          border: `1px solid ${current.color}40`,
+          minWidth: 90,
+          justifyContent: 'space-between',
+          cursor: 'not-allowed',
+        }}
+      >
+        <Lock size={9} aria-hidden style={{ opacity: 0.85 }} />
+        <span>{current.label}</span>
+        <span aria-hidden style={{ opacity: 0.5, fontSize: 9 }}>verrouillé</span>
+      </span>
+    )
+  }
 
   return (
     <div className="relative" ref={ref}>

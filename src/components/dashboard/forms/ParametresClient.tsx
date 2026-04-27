@@ -1,6 +1,6 @@
 'use client'
 import * as React from 'react'
-import { Check, Pencil, X, Loader2, ChevronDown, Upload, Palette, Mail, Layout, FileText, Settings, Save, RotateCcw, UserMinus, Play } from 'lucide-react'
+import { Check, Pencil, X, Loader2, ChevronDown, Upload, Palette, Mail, Layout, FileText, Settings, Save, RotateCcw, UserMinus, Play, CalendarClock } from 'lucide-react'
 import { toast } from 'sonner'
 import { updateSetting, updateCooperative, updateAgentStatus, runInactivityDeactivation } from '@/app/(dashboard)/tableau-de-bord/parametres/actions'
 import { createClient } from '@/lib/supabase/client'
@@ -699,11 +699,18 @@ function InactivitySection({ setting, value, onChange }: {
         </div>
 
         <div className="rounded-lg p-3 text-[11px] flex items-start gap-2"
-          style={{ background: 'rgba(252,211,77,0.06)', border: '1px solid rgba(252,211,77,0.18)', color: 'rgba(255,255,255,0.65)' }}>
-          <span style={{ color: '#FCD34D', fontWeight: 700 }}>!</span>
-          <span>
-            L&apos;exécution manuelle suspend immédiatement les membres concernés.
-            Pour une exécution périodique, planifiez l&apos;appel RPC <code style={{ background: 'rgba(0,0,0,0.30)', padding: '0 4px', borderRadius: 3 }}>deactivate_inactive_members</code> côté serveur (cron / edge function).
+          style={{ background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.22)', color: 'rgba(255,255,255,0.72)' }}>
+          <CalendarClock size={13} style={{ color: '#4ADE80', flexShrink: 0, marginTop: 1 }} aria-hidden />
+          <span className="flex-1">
+            <span style={{ color: '#4ADE80', fontWeight: 600 }}>Exécution automatique active</span>
+            {' · '}
+            la règle s&apos;applique chaque jour à <span style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 600 }}>03:00 UTC</span>
+            {' '}sur l&apos;ensemble des coopératives. Le bouton « Exécuter maintenant » force un déclenchement immédiat.
+          </span>
+          <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+            style={{ background: 'rgba(74,222,128,0.14)', color: '#4ADE80', border: '1px solid rgba(74,222,128,0.30)' }}>
+            <span aria-hidden style={{ width: 5, height: 5, borderRadius: '50%', background: '#4ADE80' }} />
+            Planifié
           </span>
         </div>
       </div>
