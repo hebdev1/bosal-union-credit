@@ -166,3 +166,42 @@ export async function createMember(formData: FormData): Promise<{ error: string 
   revalidatePath('/tableau-de-bord/membres')
   return null
 }
+
+/* ─── Manually recompute a member's credit score ─────────────────────────── */
+/**
+ * Wraps the SQL `refresh_member_credit_score(uuid)` function so the dashboard
+ * can offer a "Recalculer" button. Triggers keep the score live automatically;
+ * this is for the rare case where the operator wants to force-refresh.
+ */
+export async function recalcMemberCreditScore(
+  memberId: string,
+): Promise<{ error: string } | { ok: true }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agent } = await (supabase as any)
+    .from('agents').select('cooperative_id').eq('id', user.id).single()
+  if (!agent) return { error: 'Agent introuvable' }
+
+  // Verify the member belongs to the agent's cooperative
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: member } = await (supabase as any)
+    .from('members')
+    .select('id')
+    .eq('id', memberId)
+    .eq('cooperative_id', agent.cooperative_id)
+    .maybeSingle()
+  if (!member) return { error: 'Membre introuvable' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (supabase as any).rpc('refresh_member_credit_score', {
+    p_member_id: memberId,
+  })
+  if (error) return { error: error.message }
+
+  revalidatePath(`/tableau-de-bord/membres/${memberId}`)
+  revalidatePath(`/tableau-de-bord/emprunteurs/${memberId}`)
+  return { ok: true }
+}

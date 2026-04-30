@@ -6,6 +6,8 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { MemberStatusPicker } from '@/components/dashboard/forms/MemberStatusPicker'
+import { CreditScoreCard } from '@/components/dashboard/credit/CreditScoreCard'
+import type { CreditScoreRow } from '@/lib/credit/types'
 import { formatHTG, formatDate } from '@/lib/formatters'
 import { isFinalLoanStatus } from '@/lib/loans/finality'
 
@@ -43,7 +45,7 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
 
   if (!member) notFound()
 
-  const [accountsRes, loansRes, docsRes] = await Promise.all([
+  const [accountsRes, loansRes, docsRes, scoreRes] = await Promise.all([
     supabase.from('accounts')
       .select('id, account_number, account_type, balance, currency, status')
       .eq('member_id', id)
@@ -57,11 +59,14 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
       .eq('entity_type', 'member')
       .eq('entity_id', id)
       .order('created_at', { ascending: false }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('credit_scores').select('*').eq('member_id', id).maybeSingle(),
   ])
 
   const accounts = accountsRes.data ?? []
   const loans = loansRes.data ?? []
   const documents = docsRes.data ?? []
+  const creditScore = (scoreRes.data ?? null) as CreditScoreRow | null
 
   const totalBalance = accounts.reduce((s, a) => s + Number(a.balance ?? 0), 0)
   const totalLoans = loans
@@ -138,6 +143,9 @@ export default async function MemberProfilePage({ params }: { params: Promise<{ 
             ))}
           </div>
         </div>
+
+        {/* Credit score */}
+        <CreditScoreCard memberId={member.id} score={creditScore} />
 
         {/* Identity + Emergency contact */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

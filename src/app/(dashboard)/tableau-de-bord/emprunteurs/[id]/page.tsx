@@ -9,6 +9,8 @@ import { CreateLoanModal } from '@/components/dashboard/forms/CreateLoanModal'
 import { LoanStatusSelect } from '@/components/dashboard/forms/LoanStatusSelect'
 import { LoanScheduleClient, type RepaymentRecord } from '@/components/dashboard/forms/LoanScheduleClient'
 import { AdjustLoanForm } from '@/components/dashboard/forms/AdjustLoanForm'
+import { CreditScoreCard } from '@/components/dashboard/credit/CreditScoreCard'
+import type { CreditScoreRow } from '@/lib/credit/types'
 import { formatHTG, formatDate } from '@/lib/formatters'
 import { amortizationSchedule } from '@/lib/finance/interest'
 import { isFinalLoanStatus, finalLoanStatusLabel } from '@/lib/loans/finality'
@@ -36,8 +38,8 @@ export default async function BorrowerProfilePage({ params }: { params: Promise<
 
   if (!member) notFound()
 
-  /* ── Loans + accounts in parallel ─────────────────────────────────────── */
-  const [loansRes, accountsRes, allActiveAccountsRes, activeMembersRes] = await Promise.all([
+  /* ── Loans + accounts + credit score in parallel ──────────────────────── */
+  const [loansRes, accountsRes, allActiveAccountsRes, activeMembersRes, scoreRes] = await Promise.all([
     supabase
       .from('loans')
       .select(`
@@ -68,6 +70,10 @@ export default async function BorrowerProfilePage({ params }: { params: Promise<
       .select('id, first_name, last_name, member_number')
       .eq('status', 'active')
       .order('last_name', { ascending: true }),
+
+    // Cached credit score (1:1 with member)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from('credit_scores').select('*').eq('member_id', id).maybeSingle(),
   ])
 
   const loans          = loansRes.data ?? []
@@ -78,6 +84,7 @@ export default async function BorrowerProfilePage({ params }: { params: Promise<
   const activeMembers  = (activeMembersRes.data ?? []) as Array<{
     id: string; first_name: string; last_name: string; member_number: string
   }>
+  const creditScore    = (scoreRes.data ?? null) as CreditScoreRow | null
 
   /* ── Fetch all repayments for this member's loans in one round-trip ───── */
   const loanIds = loans.map(l => l.id)
@@ -224,6 +231,9 @@ export default async function BorrowerProfilePage({ params }: { params: Promise<
             ))}
           </div>
         </div>
+
+        {/* Credit score */}
+        <CreditScoreCard memberId={member.id} score={creditScore} />
 
         {/* Accounts strip */}
         {accounts.length > 0 && (
