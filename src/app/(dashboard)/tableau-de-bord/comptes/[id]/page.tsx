@@ -6,6 +6,8 @@ import { Header } from '@/components/dashboard/Header'
 import { StatusBadge, EmptyState } from '@/components/dashboard/ui/DataTable'
 import { AccountProfileClient } from '@/components/dashboard/account/AccountProfileClient'
 import { EditMemberModal } from '@/components/dashboard/account/EditMemberModal'
+import { RecordTransactionModal } from '@/components/dashboard/forms/RecordTransactionModal'
+import { buildTicketConfig } from '@/lib/pdfConfig'
 import { formatHTG, formatUSD, formatDate, formatCurrency } from '@/lib/formatters'
 import { ArrowLeft } from 'lucide-react'
 
@@ -39,15 +41,40 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
   const member = account.members
   const plan   = account.savings_products
 
-  // ── Transactions for this account ─────────────────────────────────────────
-  const { data: txRaw } = await supabase
-    .from('transactions')
-    .select('id, transaction_type, amount, motif, reference, status, created_at')
-    .eq('account_id', id)
-    .order('created_at', { ascending: false })
-    .limit(200)
+  // ── Transactions + ticket branding + current agent/coop info ─────────────
+  const { data: { user } } = await supabase.auth.getUser()
+  const agentRowRes = user
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ? await (supabase as any).from('agents').select('cooperative_id, name').eq('id', user.id).single()
+    : { data: null }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const agentRow: any = agentRowRes.data
 
-  const txs = (txRaw ?? []) as any[]
+  const [txRes, ticketCfgRes, coopRes] = await Promise.all([
+    supabase
+      .from('transactions')
+      .select('id, transaction_type, amount, motif, reference, status, created_at')
+      .eq('account_id', id)
+      .order('created_at', { ascending: false })
+      .limit(200),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any)
+      .from('app_settings')
+      .select('key, value')
+      .in('category', ['ticket', 'pdf']),
+    agentRow?.cooperative_id
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (supabase as any).from('cooperatives').select('name').eq('id', agentRow.cooperative_id).single()
+      : Promise.resolve({ data: null }),
+  ])
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const txs = (txRes.data ?? []) as any[]
+  const ticketCfgRaw = (ticketCfgRes.data ?? []) as { key: string; value: unknown }[]
+  const ticketCfg    = buildTicketConfig(ticketCfgRaw)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const coopName     = ((coopRes as any)?.data?.name as string | undefined) ?? 'Bosal Credit Union'
+  const agentName    = (agentRow?.name as string | undefined) ?? '—'
 
   // ── Loans for this member ──────────────────────────────────────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,7 +162,7 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
               </div>
             </div>
 
-            {/* Right side: balance + edit button */}
+            {/* Right side: balance + actions */}
             <div className="flex flex-col items-end gap-3">
               <div className="text-right">
                 <p className="text-2xl font-bold kpi-value" style={{ color: account.status === 'active' ? '#4ADE80' : 'rgba(255,255,255,0.50)' }}>
@@ -143,6 +170,29 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
                 </p>
                 <p className="text-xs mt-1" style={{ color: 'rgba(255,255,255,0.30)' }}>Solde actuel · {account.currency}</p>
               </div>
+
+              {/* Deposit + Withdrawal — visible only on active accounts */}
+              {account.status === 'active' && (
+                <div className="flex items-center gap-2">
+                  <RecordTransactionModal
+                    accountId={account.id}
+                    accountNumber={account.account_number}
+                    currency={account.currency ?? 'HTG'}
+                    currentBalance={Number(account.balance ?? 0)}
+                    defaultKind="deposit"
+                    ticketConfig={ticketCfg}
+                  />
+                  <RecordTransactionModal
+                    accountId={account.id}
+                    accountNumber={account.account_number}
+                    currency={account.currency ?? 'HTG'}
+                    currentBalance={Number(account.balance ?? 0)}
+                    defaultKind="withdrawal"
+                    ticketConfig={ticketCfg}
+                  />
+                </div>
+              )}
+
               {member && (
                 <EditMemberModal member={{
                   id:            member.id,
@@ -333,6 +383,19 @@ export default async function AccountProfilePage({ params }: { params: Promise<{
             <AccountProfileClient
               transactions={txs}
               currency={account.currency}
+              ticketConfig={ticketCfg}
+              account={{
+                account_number: account.account_number,
+                account_type:   account.account_type,
+                balance:        Number(account.balance ?? 0),
+              }}
+              member={member ? {
+                first_name:    member.first_name,
+                last_name:     member.last_name,
+                member_number: member.member_number,
+              } : undefined}
+              agentName={agentName}
+              coopName={coopName}
             />
           )}
         </section>

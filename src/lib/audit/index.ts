@@ -22,6 +22,8 @@ export type AuditAction =
   | 'account.close'
   | 'account.freeze'
   | 'account.unfreeze'
+  | 'transaction.deposit'
+  | 'transaction.withdrawal'
   | 'exchange.create'
   | 'exchange.cancel'
   | 'cash.closure.open'

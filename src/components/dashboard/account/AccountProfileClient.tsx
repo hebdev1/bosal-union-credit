@@ -1,6 +1,13 @@
 'use client'
 import * as React from 'react'
-import { FileDown, Loader2, Search } from 'lucide-react'
+import { FileDown, Loader2, Search, Printer } from 'lucide-react'
+import { toast } from 'sonner'
+import {
+  generateTransactionTicketPDF,
+  DEFAULT_TX_TICKET_CONFIG,
+  type TicketConfig as TicketCfg,
+  type TicketData,
+} from '@/components/dashboard/forms/TransactionTicketPDF'
 
 /* ── Types ────────────────────────────────────────────────────────────────── */
 interface Tx {
@@ -16,6 +23,21 @@ interface Tx {
 interface Props {
   transactions: Tx[]
   currency: string
+  /** Branded ticket config — falls back to brand defaults */
+  ticketConfig?: TicketCfg
+  /** Account context — needed to rebuild a ticket from a stored row */
+  account?: {
+    account_number: string
+    account_type: string
+    balance: number
+  }
+  member?: {
+    first_name:    string
+    last_name:     string
+    member_number: string
+  }
+  agentName?: string
+  coopName?:  string
 }
 
 /* ── Inline formatters ────────────────────────────────────────────────────── */
@@ -148,10 +170,61 @@ async function exportAccountPDF(txs: Tx[], currency: string, accountRef: string)
 }
 
 /* ── Component ────────────────────────────────────────────────────────────── */
-export function AccountProfileClient({ transactions, currency }: Props) {
+export function AccountProfileClient({
+  transactions,
+  currency,
+  ticketConfig = DEFAULT_TX_TICKET_CONFIG,
+  account,
+  member,
+  agentName = '—',
+  coopName  = 'Bosal Credit Union',
+}: Props) {
   const [activeTab, setActiveTab]     = React.useState('all')
   const [search, setSearch]           = React.useState('')
   const [exporting, setExporting]     = React.useState(false)
+  const [reprintingId, setReprinting] = React.useState<string | null>(null)
+
+  /** Reprint a ticket from a stored transaction row.
+   *  Note: balances aren't stored on the row, so we display 0 / current balance
+   *  as best-effort placeholders — main fields (member, account, amount, ref)
+   *  are always accurate. */
+  async function reprint(tx: Tx) {
+    if (!account || !member) {
+      toast.error('Contexte insuffisant pour réimprimer.')
+      return
+    }
+    if (tx.transaction_type !== 'deposit' && tx.transaction_type !== 'withdrawal') {
+      toast.error('Type non imprimable (uniquement dépôt / retrait).')
+      return
+    }
+    setReprinting(tx.id)
+    const data: TicketData = {
+      reference:        tx.reference ?? tx.id.slice(0, 12).toUpperCase(),
+      transaction_type: tx.transaction_type as 'deposit' | 'withdrawal',
+      amount:           Number(tx.amount),
+      motif:            tx.motif,
+      created_at:       tx.created_at,
+      account_number:   account.account_number,
+      account_type:     account.account_type,
+      currency,
+      // Best-effort reconstruction (current balance shown as "after")
+      balance_before:   Number(account.balance),
+      balance_after:    Number(account.balance),
+      member_first_name: member.first_name,
+      member_last_name:  member.last_name,
+      member_number:     member.member_number,
+      agent_name:        agentName,
+      coop_name:         coopName,
+    }
+    try {
+      await generateTransactionTicketPDF(data, ticketConfig)
+      toast.success('Reçu téléchargé')
+    } catch {
+      toast.error('Impossible de générer le reçu')
+    } finally {
+      setReprinting(null)
+    }
+  }
 
   const filtered = React.useMemo(() => {
     let rows = transactions
@@ -259,10 +332,10 @@ export function AccountProfileClient({ transactions, currency }: Props) {
         ) : (
           <>
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_110px_130px_2fr_90px_160px] gap-4 px-5 py-3"
+            <div className="grid grid-cols-[1fr_110px_130px_2fr_90px_160px_36px] gap-4 px-5 py-3"
               style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.04)' }}>
-              {['Référence', 'Type', 'Montant', 'Motif', 'Statut', 'Date'].map(h => (
-                <p key={h} className="text-[11px] font-semibold uppercase tracking-wide"
+              {['Référence', 'Type', 'Montant', 'Motif', 'Statut', 'Date', ''].map((h, i) => (
+                <p key={`${h}-${i}`} className="text-[11px] font-semibold uppercase tracking-wide"
                   style={{ color: 'rgba(255,255,255,0.30)' }}>{h}</p>
               ))}
             </div>
@@ -271,10 +344,11 @@ export function AccountProfileClient({ transactions, currency }: Props) {
             {filtered.map((t, idx) => {
               const cfg = TYPE_CFG[t.transaction_type] ?? { color: 'rgba(255,255,255,0.50)', bg: 'rgba(255,255,255,0.05)' }
               const isCredit = t.transaction_type === 'deposit'
+              const printable = t.transaction_type === 'deposit' || t.transaction_type === 'withdrawal'
               return (
                 <div
                   key={t.id}
-                  className="grid grid-cols-[1fr_110px_130px_2fr_90px_160px] gap-4 px-5 py-3.5 items-center"
+                  className="grid grid-cols-[1fr_110px_130px_2fr_90px_160px_36px] gap-4 px-5 py-3.5 items-center"
                   style={{ borderTop: idx === 0 ? 'none' : '1px solid #0e1118' }}
                 >
                   {/* Référence */}
@@ -313,6 +387,26 @@ export function AccountProfileClient({ transactions, currency }: Props) {
                   <p className="text-xs" style={{ color: 'rgba(255,255,255,0.38)' }}>
                     {fDate(t.created_at)}
                   </p>
+
+                  {/* Reprint ticket */}
+                  {printable && account && member ? (
+                    <button
+                      type="button"
+                      onClick={() => reprint(t)}
+                      disabled={reprintingId === t.id}
+                      title="Réimprimer le reçu"
+                      className="inline-flex items-center justify-center rounded-lg transition-colors hover:bg-white/5"
+                      style={{
+                        width: 28, height: 28,
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        color: 'rgba(255,255,255,0.55)',
+                      }}>
+                      {reprintingId === t.id
+                        ? <Loader2 size={12} className="animate-spin" />
+                        : <Printer size={12} />}
+                    </button>
+                  ) : <span aria-hidden />}
                 </div>
               )
             })}

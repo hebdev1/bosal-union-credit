@@ -4,6 +4,28 @@ import { createClient } from '@/lib/supabase/server'
 import { logAudit } from '@/lib/audit'
 import { runFraudCheck } from '@/lib/fraud/check'
 
+/* ─── Shared ticket data shape (used by recordTransaction) ────────────────── */
+export interface TransactionTicketData {
+  reference:        string
+  transaction_type: 'deposit' | 'withdrawal'
+  amount:           number
+  motif:            string | null
+  created_at:       string
+  // Account
+  account_number:   string
+  account_type:     string
+  currency:         string
+  balance_before:   number
+  balance_after:    number
+  // Member
+  member_first_name: string
+  member_last_name:  string
+  member_number:     string
+  // Cooperative + agent
+  agent_name:        string
+  coop_name:         string
+}
+
 export async function createAccount(
   formData: FormData,
 ): Promise<{ error: string } | null> {
@@ -134,4 +156,177 @@ export async function closeAccount(
   revalidatePath('/tableau-de-bord/comptes')
   revalidatePath('/tableau-de-bord/transactions')
   return null
+}
+
+/* ─── Record a deposit / withdrawal + emit ticket ─────────────────────────── */
+/**
+ * Records a single deposit or withdrawal on an active account, updates the
+ * account balance + cash vault atomically (best-effort 2-step), logs audit,
+ * runs fraud check, and returns the data needed to print a paper ticket.
+ *
+ * Refuses any operation on a closed/suspended account, or a withdrawal that
+ * would overdraft the balance.
+ */
+export async function recordTransaction(input: {
+  accountId: string
+  type: 'deposit' | 'withdrawal'
+  amount: number
+  motif?: string | null
+}): Promise<{ error: string } | { ticket: TransactionTicketData }> {
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: agent } = await (supabase as any)
+    .from('agents').select('cooperative_id, id, name').eq('id', user.id).single()
+  if (!agent) return { error: 'Agent introuvable' }
+
+  if (input.type !== 'deposit' && input.type !== 'withdrawal') {
+    return { error: 'Type de transaction invalide.' }
+  }
+  if (!input.accountId) return { error: 'Compte manquant.' }
+  const amount = Number(input.amount)
+  if (!Number.isFinite(amount) || amount <= 0) return { error: 'Montant invalide.' }
+
+  // Round to 2 decimals to keep stored balance clean
+  const amt = Math.round(amount * 100) / 100
+
+  // ── Load account + member ──────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: account } = await (supabase as any)
+    .from('accounts')
+    .select(`
+      id, account_number, account_type, balance, currency, status, member_id,
+      members(first_name, last_name, member_number)
+    `)
+    .eq('id', input.accountId)
+    .eq('cooperative_id', agent.cooperative_id)
+    .single()
+  if (!account) return { error: 'Compte introuvable.' }
+  if (account.status !== 'active') {
+    return { error: `Le compte est ${account.status} : opération refusée.` }
+  }
+
+  const balanceBefore = Number(account.balance ?? 0)
+  const balanceAfter  = input.type === 'deposit'
+    ? balanceBefore + amt
+    : balanceBefore - amt
+
+  if (input.type === 'withdrawal' && balanceAfter < 0) {
+    return { error: `Solde insuffisant (${balanceBefore.toFixed(2)} ${account.currency}).` }
+  }
+
+  // ── Generate reference ────────────────────────────────────────────────
+  const now       = new Date()
+  const datePart  = now.toISOString().slice(0, 10).replace(/-/g, '')
+  const randPart  = Math.floor(1000 + Math.random() * 9000)
+  const reference = `TX-${datePart}-${randPart}`
+  const createdAt = now.toISOString()
+
+  // ── Insert transaction ────────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: tx, error: txErr } = await (supabase as any).from('transactions').insert({
+    cooperative_id:   agent.cooperative_id,
+    account_id:       account.id,
+    agent_id:         agent.id,
+    transaction_type: input.type,
+    amount:           amt,
+    motif:            (input.motif ?? '').trim() || null,
+    reference,
+    status:           'completed',
+  }).select('id').single()
+  if (txErr) return { error: txErr.message }
+
+  // ── Update account balance ────────────────────────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: balErr } = await (supabase as any)
+    .from('accounts')
+    .update({ balance: Math.round(balanceAfter * 100) / 100 })
+    .eq('id', account.id)
+    .eq('cooperative_id', agent.cooperative_id)
+  if (balErr) {
+    // Best-effort rollback : delete the transaction row so the books match.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('transactions').delete().eq('id', tx?.id)
+    return { error: balErr.message }
+  }
+
+  // ── Update cash vault (deposit → +, withdrawal → −) ───────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: vault } = await (supabase as any)
+    .from('cash_vault')
+    .select('id, current_balance')
+    .eq('cooperative_id', agent.cooperative_id)
+    .limit(1)
+    .maybeSingle()
+  if (vault?.id) {
+    const newVault = input.type === 'deposit'
+      ? Number(vault.current_balance ?? 0) + amt
+      : Number(vault.current_balance ?? 0) - amt
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
+      .from('cash_vault')
+      .update({ current_balance: Math.round(newVault * 100) / 100, last_updated: createdAt })
+      .eq('id', vault.id)
+  }
+
+  // ── Audit + fraud check (best-effort, never blocking) ─────────────────
+  await logAudit({
+    action: input.type === 'deposit' ? 'transaction.deposit' : 'transaction.withdrawal',
+    cooperativeId: agent.cooperative_id,
+    userId: agent.id,
+    targetTable: 'transactions',
+    targetId: tx?.id,
+    metadata: {
+      reference,
+      account_number: account.account_number,
+      amount: amt,
+      currency: account.currency,
+      balance_before: balanceBefore,
+      balance_after:  balanceAfter,
+    },
+  })
+
+  if (account.member_id) {
+    await runFraudCheck({
+      cooperativeId: agent.cooperative_id,
+      memberId:      account.member_id,
+      transactionId: tx?.id,
+      amount:        amt,
+      currency:      account.currency ?? 'HTG',
+    })
+  }
+
+  // ── Fetch coop name (for the ticket header) ───────────────────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: coop } = await (supabase as any)
+    .from('cooperatives').select('name').eq('id', agent.cooperative_id).single()
+
+  revalidatePath('/tableau-de-bord/comptes')
+  revalidatePath(`/tableau-de-bord/comptes/${account.id}`)
+  revalidatePath('/tableau-de-bord/transactions')
+  revalidatePath('/tableau-de-bord/caisse')
+
+  const member = account.members
+  return {
+    ticket: {
+      reference,
+      transaction_type: input.type,
+      amount:           amt,
+      motif:            (input.motif ?? '').trim() || null,
+      created_at:       createdAt,
+      account_number:   account.account_number,
+      account_type:     account.account_type,
+      currency:         account.currency ?? 'HTG',
+      balance_before:   balanceBefore,
+      balance_after:    Math.round(balanceAfter * 100) / 100,
+      member_first_name: member?.first_name ?? '—',
+      member_last_name:  member?.last_name  ?? '—',
+      member_number:     member?.member_number ?? '—',
+      agent_name:        agent.name ?? '—',
+      coop_name:         coop?.name  ?? 'Bosal Credit Union',
+    },
+  }
 }
