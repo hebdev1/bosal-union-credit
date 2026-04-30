@@ -7,13 +7,17 @@
 --
 -- KEPT (configuration / master data) :
 --   cooperatives, agents, branches, app_settings, system_settings,
---   cash_vault, loan_products, savings_products, fees, exchange_rates
+--   loan_products, savings_products, fees
 --
--- WIPED (member-scoped / transactional data) :
+-- WIPED (member-scoped / transactional + bureau de change) :
 --   members, accounts, payments, loans, loan_repayments, transactions,
 --   credit_scores, fraud_flags, notifications, shares, dividends,
---   exchange_transactions, audit_logs, documents, internal_messages,
---   ledger_entries, settings_logs, daily_closings, customers, guarantors
+--   exchange_transactions, exchange_rates, audit_logs, documents,
+--   internal_messages, ledger_entries, settings_logs, daily_closings,
+--   customers, guarantors
+--
+-- RESET (preserved row, zeroed values) :
+--   cash_vault
 --
 -- USAGE:
 --   - Run as a single statement block (Supabase SQL Editor or psql).
@@ -52,25 +56,29 @@ DECLARE
   make_backup boolean := true;
 BEGIN
   IF make_backup THEN
-    DROP TABLE IF EXISTS public.backup_members          CASCADE;
-    DROP TABLE IF EXISTS public.backup_payments         CASCADE;
-    DROP TABLE IF EXISTS public.backup_loans            CASCADE;
-    DROP TABLE IF EXISTS public.backup_loan_repayments  CASCADE;
-    DROP TABLE IF EXISTS public.backup_transactions     CASCADE;
-    DROP TABLE IF EXISTS public.backup_credit_scores    CASCADE;
-    DROP TABLE IF EXISTS public.backup_accounts         CASCADE;
+    DROP TABLE IF EXISTS public.backup_members               CASCADE;
+    DROP TABLE IF EXISTS public.backup_payments              CASCADE;
+    DROP TABLE IF EXISTS public.backup_loans                 CASCADE;
+    DROP TABLE IF EXISTS public.backup_loan_repayments       CASCADE;
+    DROP TABLE IF EXISTS public.backup_transactions          CASCADE;
+    DROP TABLE IF EXISTS public.backup_credit_scores         CASCADE;
+    DROP TABLE IF EXISTS public.backup_accounts              CASCADE;
+    DROP TABLE IF EXISTS public.backup_exchange_rates        CASCADE;
+    DROP TABLE IF EXISTS public.backup_exchange_transactions CASCADE;
 
     -- CREATE TABLE … AS TABLE copies data + column types but NOT
     -- constraints / indexes / defaults — exactly what a backup needs.
-    CREATE TABLE public.backup_members         AS TABLE public.members;
-    CREATE TABLE public.backup_accounts        AS TABLE public.accounts;
-    CREATE TABLE public.backup_payments        AS TABLE public.payments;
-    CREATE TABLE public.backup_loans           AS TABLE public.loans;
-    CREATE TABLE public.backup_loan_repayments AS TABLE public.loan_repayments;
-    CREATE TABLE public.backup_transactions    AS TABLE public.transactions;
-    CREATE TABLE public.backup_credit_scores   AS TABLE public.credit_scores;
+    CREATE TABLE public.backup_members               AS TABLE public.members;
+    CREATE TABLE public.backup_accounts              AS TABLE public.accounts;
+    CREATE TABLE public.backup_payments              AS TABLE public.payments;
+    CREATE TABLE public.backup_loans                 AS TABLE public.loans;
+    CREATE TABLE public.backup_loan_repayments       AS TABLE public.loan_repayments;
+    CREATE TABLE public.backup_transactions          AS TABLE public.transactions;
+    CREATE TABLE public.backup_credit_scores         AS TABLE public.credit_scores;
+    CREATE TABLE public.backup_exchange_rates        AS TABLE public.exchange_rates;
+    CREATE TABLE public.backup_exchange_transactions AS TABLE public.exchange_transactions;
 
-    RAISE NOTICE 'Backup tables created (backup_members, backup_accounts, backup_payments, backup_loans, backup_loan_repayments, backup_transactions, backup_credit_scores)';
+    RAISE NOTICE 'Backup tables created (members, accounts, payments, loans, loan_repayments, transactions, credit_scores, exchange_rates, exchange_transactions)';
   ELSE
     RAISE NOTICE 'Skipping backup (make_backup = false)';
   END IF;
@@ -104,6 +112,7 @@ TRUNCATE TABLE
   public.customers,
   public.guarantors,
   public.exchange_transactions,
+  public.exchange_rates,
   public.credit_scores,
   -- Children of members
   public.payments,
@@ -143,6 +152,7 @@ SELECT 'customers',                           count(*)         FROM public.custo
 SELECT 'daily_closings',                      count(*)         FROM public.daily_closings        UNION ALL
 SELECT 'dividends',                           count(*)         FROM public.dividends             UNION ALL
 SELECT 'documents',                           count(*)         FROM public.documents             UNION ALL
+SELECT 'exchange_rates',                      count(*)         FROM public.exchange_rates        UNION ALL
 SELECT 'exchange_transactions',               count(*)         FROM public.exchange_transactions UNION ALL
 SELECT 'fraud_flags',                         count(*)         FROM public.fraud_flags           UNION ALL
 SELECT 'guarantors',                          count(*)         FROM public.guarantors            UNION ALL
@@ -177,6 +187,7 @@ SELECT
 --   DROP TABLE IF EXISTS
 --     public.backup_members, public.backup_accounts, public.backup_payments,
 --     public.backup_loans, public.backup_loan_repayments,
---     public.backup_transactions, public.backup_credit_scores
+--     public.backup_transactions, public.backup_credit_scores,
+--     public.backup_exchange_rates, public.backup_exchange_transactions
 --   CASCADE;
 -- ════════════════════════════════════════════════════════════════════════
