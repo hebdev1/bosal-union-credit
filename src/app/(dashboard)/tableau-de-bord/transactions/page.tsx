@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { PageShell } from '@/components/dashboard/ui/DataTable'
 import { TransactionsClient } from '@/components/dashboard/ui/TransactionsClient'
+import { AddTransactionForm } from '@/components/dashboard/forms/AddTransactionForm'
 import { buildPdfConfig } from '@/lib/pdfConfig'
 import { formatHTG } from '@/lib/formatters'
 
@@ -11,14 +12,24 @@ export const metadata: Metadata = { title: 'Transactions' }
 export default async function TransactionsPage() {
   const supabase = await createClient()
 
-  const [{ data: transactions }, { data: pdfSettings }] = await Promise.all([
+  const [{ data: transactions }, { data: pdfSettings }, { data: members }, { data: accounts }] = await Promise.all([
     supabase
       .from('transactions')
-      .select('id, transaction_type, amount, motif, reference, status, created_at, accounts(account_number, currency, members(first_name, last_name))')
-      .order('created_at', { ascending: false })
+      .select('id, transaction_type, amount, motif, reference, status, created_at, transaction_date, accounts(account_number, currency, members(first_name, last_name))')
+      .order('transaction_date', { ascending: false })
       .limit(500),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (supabase as any).from('app_settings').select('key, value').eq('category', 'pdf'),
+    supabase
+      .from('members')
+      .select('id, first_name, last_name, member_number')
+      .eq('status', 'active')
+      .order('last_name', { ascending: true }),
+    supabase
+      .from('accounts')
+      .select('id, account_number, currency, account_type, member_id')
+      .eq('status', 'active')
+      .order('account_number', { ascending: true }),
   ])
 
   const reportConfig = buildPdfConfig((pdfSettings ?? []) as { key: string; value: unknown }[])
@@ -33,8 +44,13 @@ export default async function TransactionsPage() {
       <Header title="Transactions" />
       <PageShell
         title="Historique des transactions"
-        description={`${rows.length} transaction${rows.length !== 1 ? 's' : ''} · filtrables par type`}
-
+        description={`${rows.length} transaction${rows.length !== 1 ? 's' : ''} · saisie actuelle ou historique`}
+        action={
+          <AddTransactionForm
+            members={(members ?? []) as { id: string; first_name: string; last_name: string; member_number: string }[]}
+            accounts={(accounts ?? []) as { id: string; account_number: string; currency: string; account_type: string; member_id: string }[]}
+          />
+        }
       >
         {/* KPIs */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
