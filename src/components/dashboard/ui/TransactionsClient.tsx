@@ -63,86 +63,84 @@ function getDateBounds(preset: DatePreset, from: string, to: string): { start: D
 
 async function exportTransactionsPDF(rows: Tx[], cfg: PdfReportConfig = DEFAULT_PDF_CONFIG) {
   const { default: jsPDF } = await import('jspdf')
+  const {
+    drawHeader, drawFooter, drawSectionHeading, drawStatCards, drawTable,
+    statusToBadgeVariant,
+  } = await import('@/lib/pdf/shadcn-table')
+
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-  const W = 297; const L = 12; const R = W - 12
+  const W = 297; const H = 210; const L = 12; const R = W - 12
+  const TOTAL_W = R - L
 
-  const [hr, hg, hb] = hexToRgb(cfg.headerColor)
-  const [ar, ag, ab] = hexToRgb(cfg.accentColor)
-
-  doc.setFillColor(hr, hg, hb)
-  doc.rect(0, 0, W, 28, 'F')
-
+  let logoBase64: string | null = null
   if (cfg.logoEnabled && cfg.logoUrl) {
-    const logoData = await urlToBase64(cfg.logoUrl)
-    if (logoData) { try { doc.addImage(logoData, L, 5, 20, 16) } catch { /* ignore */ } }
+    logoBase64 = await urlToBase64(cfg.logoUrl)
   }
 
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
-  doc.setTextColor(ar, ag, ab)
-  doc.text('HISTORIQUE DES TRANSACTIONS', W / 2, 13, { align: 'center' })
-  doc.setFontSize(8)
-  doc.setTextColor(140, 140, 140)
-  doc.text(`Généré le ${new Date().toLocaleDateString('fr-HT')} · ${rows.length} transaction(s)`, W / 2, 21, { align: 'center' })
+  // ── Header (light, shadcn-style) ──
+  let y = drawHeader(doc, {
+    title: 'Historique des transactions',
+    subtitle: `Généré le ${new Date().toLocaleDateString('fr-HT')} · ${rows.length} transaction(s)`,
+    brand: hexToRgb(cfg.headerColor),
+    logoBase64,
+  }, W)
 
+  // ── KPI cards ──
   const deposits    = rows.filter(t => t.transaction_type === 'deposit').reduce((s, t) => s + Number(t.amount), 0)
   const withdrawals = rows.filter(t => t.transaction_type === 'withdrawal').reduce((s, t) => s + Number(t.amount), 0)
-  let y = 36
-  const sumItems = [
-    { label: 'Dépôts',          value: formatHTG(deposits),              color: [74,222,128]  as [number,number,number] },
-    { label: 'Retraits',        value: formatHTG(withdrawals),           color: [248,113,113] as [number,number,number] },
-    { label: 'Flux net',        value: formatHTG(deposits - withdrawals), color: deposits >= withdrawals ? [74,222,128] as [number,number,number] : [248,113,113] as [number,number,number] },
-    { label: 'Total opérations',value: String(rows.length),              color: [200,200,200] as [number,number,number] },
-  ]
-  sumItems.forEach((item, i) => {
-    const x = L + i * 68
-    doc.setFillColor(20, 20, 26)
-    doc.roundedRect(x, y - 5, 64, 14, 2, 2, 'F')
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9)
-    doc.setTextColor(...item.color)
-    doc.text(item.value, x + 32, y + 2, { align: 'center' })
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7)
-    doc.setTextColor(100, 100, 100)
-    doc.text(item.label, x + 32, y + 7, { align: 'center' })
+
+  y = drawStatCards(doc, L, y, TOTAL_W, [
+    { label: 'Dépôts',           value: formatHTG(deposits),                accent: [22, 101, 52] },
+    { label: 'Retraits',         value: formatHTG(withdrawals),             accent: [185, 28, 28] },
+    { label: 'Flux net',         value: formatHTG(deposits - withdrawals),  accent: deposits >= withdrawals ? [22, 101, 52] : [185, 28, 28] },
+    { label: 'Total opérations', value: String(rows.length) },
+  ], { perRow: 4 })
+  y += 4
+
+  // ── Table ──
+  y = drawSectionHeading(doc, L, y, 'Liste des opérations')
+  drawTable(doc, {
+    x: L, y, totalWidth: TOTAL_W,
+    pageBottomY: H - 16,
+    onNewPage: dd => { dd.addPage(); return 20 },
+    columns: [
+      { header: 'Référence', width: 28 },
+      { header: 'Type',      width: 22, align: 'center' },
+      { header: 'Membre',    width: 42 },
+      { header: 'Compte',    width: 28 },
+      { header: 'Montant',   width: 32, align: 'right' },
+      { header: 'Motif',     width: 48 },
+      { header: 'Statut',    width: 22, align: 'center' },
+      { header: 'Date',      width: 30 },
+    ],
+    rows: rows.map(t => {
+      const member   = t.accounts?.members
+      const isCredit = t.transaction_type === 'deposit'
+      const amount   = (isCredit ? '+' : '-') + (t.accounts?.currency === 'USD' ? formatUSD(Number(t.amount)) : formatHTG(Number(t.amount)))
+      return [
+        { kind: 'mono',  text: t.reference ?? t.id.slice(0, 8).toUpperCase() },
+        { kind: 'badge', label: TYPE_LABELS[t.transaction_type] ?? t.transaction_type, variant: statusToBadgeVariant(t.transaction_type) },
+        member ? `${member.first_name} ${member.last_name}` : '—',
+        { kind: 'mono',  text: t.accounts?.account_number ?? '—' },
+        { kind: 'strong', text: amount },
+        { kind: 'muted', text: (t.motif ?? '—').substring(0, 32) },
+        { kind: 'badge', label: t.status ?? 'completed', variant: statusToBadgeVariant(t.status ?? 'completed') },
+        { kind: 'muted', text: formatDate(t.created_at).substring(0, 20) },
+      ]
+    }),
+    footer: [
+      { kind: 'strong', text: 'Totaux' },
+      '',
+      '',
+      '',
+      { kind: 'strong', text: `+${formatHTG(deposits)} · -${formatHTG(withdrawals)}` },
+      '',
+      '',
+      '',
+    ],
   })
 
-  y = 58
-  const headers = ['Référence', 'Type', 'Membre', 'Compte', 'Montant', 'Motif', 'Statut', 'Date']
-  const colW    = [30, 22, 44, 28, 34, 54, 22, 38]
-  doc.setFillColor(18, 18, 24)
-  doc.rect(L, y - 4, R - L, 8, 'F')
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.setTextColor(100, 100, 100)
-  let cx = L + 2
-  headers.forEach((h, i) => { doc.text(h, cx, y); cx += colW[i] })
-  y += 6
-  rows.forEach((t, idx) => {
-    if (y > 192) { doc.addPage(); y = 15 }
-    if (idx % 2 === 0) { doc.setFillColor(14, 14, 18); doc.rect(L, y - 3.5, R - L, 7, 'F') }
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(7)
-    const member   = t.accounts?.members
-    const isCredit = t.transaction_type === 'deposit'
-    const amtColor: [number,number,number] = isCredit ? [74,222,128] : [248,113,113]
-    const vals = [
-      t.reference ?? t.id.slice(0, 8).toUpperCase(),
-      TYPE_LABELS[t.transaction_type] ?? t.transaction_type,
-      member ? `${member.first_name} ${member.last_name}` : '—',
-      t.accounts?.account_number ?? '—',
-      (isCredit ? '+' : '-') + (t.accounts?.currency === 'USD' ? formatUSD(Number(t.amount)) : formatHTG(Number(t.amount))),
-      (t.motif ?? '—').substring(0, 28),
-      t.status ?? 'completed',
-      formatDate(t.created_at).substring(0, 20),
-    ]
-    cx = L + 2
-    vals.forEach((v, i) => {
-      if (i === 4) doc.setTextColor(...amtColor)
-      else doc.setTextColor(180, 180, 180)
-      doc.text(String(v), cx, y); cx += colW[i]
-    })
-    y += 7
-  })
-
-  doc.setFontSize(7); doc.setTextColor(60, 60, 60)
-  doc.text(cfg.footerText, W / 2, 205, { align: 'center' })
+  drawFooter(doc, cfg.footerText || 'Document confidentiel', W, H)
   doc.save(`transactions-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 

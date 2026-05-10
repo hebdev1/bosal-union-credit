@@ -2,6 +2,9 @@
 import * as React from 'react'
 import { Download, Loader2 } from 'lucide-react'
 import { type PdfReportConfig, DEFAULT_PDF_CONFIG, hexToRgb, urlToBase64 } from '@/lib/pdfConfig'
+import {
+  SHADCN, drawHeader, drawFooter, drawSectionHeading, drawStatCards,
+} from '@/lib/pdf/shadcn-table'
 
 export interface ReportRow {
   label:    string
@@ -46,55 +49,36 @@ async function generateReportPDF(
 ) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
-  const W = 210; const L = 13; const R = W - 13; const PAGE_H = 297
+  const W = 210; const H = 297; const L = 13; const R = W - 13
+  const TOTAL_W = R - L
 
-  const [hr, hg, hb] = hexToRgb(cfg.headerColor)
-  const [ar, ag, ab] = hexToRgb(cfg.accentColor)
-  const [tr, tg, tb] = hexToRgb(cfg.textColor)
-
-  // ── Header band ──
-  doc.setFillColor(hr, hg, hb)
-  doc.rect(0, 0, W, 30, 'F')
-
+  // Optional logo
+  let logoBase64: string | null = null
   if (cfg.logoEnabled && cfg.logoUrl) {
-    const logoData = await urlToBase64(cfg.logoUrl)
-    if (logoData) { try { doc.addImage(logoData, L, 6, 18, 18) } catch { /* ignore */ } }
+    logoBase64 = await urlToBase64(cfg.logoUrl)
   }
 
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(14)
-  doc.setTextColor(ar, ag, ab)
-  doc.text(title.toUpperCase(), W / 2, 14, { align: 'center' })
-  doc.setFont('helvetica', 'normal')
-  doc.setFontSize(8)
-  doc.setTextColor(160, 160, 160)
-  doc.text(subtitle ?? `Généré le ${new Date().toLocaleDateString('fr-HT')}`, W / 2, 21, { align: 'center' })
+  // ── Header (shadcn-style: white background + thin brand bar) ──
+  let y = drawHeader(doc, {
+    title,
+    subtitle: subtitle ?? `Généré le ${new Date().toLocaleDateString('fr-HT')}`,
+    brand: hexToRgb(cfg.headerColor),
+    logoBase64,
+  }, W)
 
-  let y = 40
-
-  // ── Badges (optional KPI strip) ──
+  // ── Optional KPI strip ──
   if (badges.length > 0) {
-    const cw = (R - L) / badges.length
-    badges.forEach((b, i) => {
-      const x = L + i * cw
-      doc.setFillColor(245, 245, 247)
-      doc.roundedRect(x + 1, y - 4, cw - 2, 16, 2, 2, 'F')
-      const [br, bg, bb] = hexToRgb(b.color)
-      doc.setFont('helvetica', 'bold')
-      doc.setFontSize(10)
-      doc.setTextColor(br, bg, bb)
-      doc.text(b.value, x + cw / 2, y + 2, { align: 'center' })
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(7)
-      doc.setTextColor(100, 100, 100)
-      doc.text(b.label, x + cw / 2, y + 8, { align: 'center' })
-    })
-    y += 22
+    y = drawStatCards(doc, L, y, TOTAL_W, badges.map(b => ({
+      label: b.label,
+      value: b.value,
+      accent: hexToRgb(b.color),
+    })), { perRow: Math.min(badges.length, 4) })
+    y += 4
   }
 
-  // ── Sections ──
+  // ── Sections (label / value rows, like a financial statement) ──
   const ensureRoom = (needed: number) => {
-    if (y + needed > PAGE_H - 18) {
+    if (y + needed > H - 18) {
       doc.addPage()
       y = 20
     }
@@ -102,77 +86,73 @@ async function generateReportPDF(
 
   for (const section of sections) {
     ensureRoom(14)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(9)
-    doc.setTextColor(tr, tg, tb)
-    doc.text(section.heading, L, y)
-    doc.setDrawColor(ar, ag, ab)
-    doc.setLineWidth(0.4)
-    doc.line(L, y + 1.5, R, y + 1.5)
-    y += 7
+    y = drawSectionHeading(doc, L, y + 3, section.heading)
 
     for (const row of section.rows) {
       ensureRoom(7)
+      // Label (slate-500, indent for sub-items)
       doc.setFont('helvetica', row.bold ? 'bold' : 'normal')
-      doc.setFontSize(8)
-      doc.setTextColor(110, 110, 110)
+      doc.setFontSize(8.5)
+      doc.setTextColor(...(row.bold ? SHADCN.foreground : SHADCN.mutedForeground))
       doc.text(row.label, L + (row.indent ? 4 : 0), y)
+
+      // Value (right-aligned, optional accent color)
+      doc.setFont('helvetica', row.bold ? 'bold' : 'normal')
       if (row.color) {
         const [rr, rg, rb] = hexToRgb(row.color)
         doc.setTextColor(rr, rg, rb)
       } else {
-        doc.setTextColor(tr, tg, tb)
+        doc.setTextColor(...SHADCN.foreground)
       }
-      doc.setFont('helvetica', row.bold ? 'bold' : 'normal')
       doc.text(row.value, R, y, { align: 'right' })
-      doc.setDrawColor(230, 230, 233)
-      doc.setLineWidth(0.1)
-      doc.line(L, y + 1.3, R, y + 1.3)
-      y += 5.5
+
+      // Light bottom border (shadcn slate-200)
+      doc.setDrawColor(...SHADCN.border)
+      doc.setLineWidth(0.12)
+      doc.line(L, y + 1.5, R, y + 1.5)
+      y += 6
     }
 
     if (section.total) {
       ensureRoom(9)
-      y += 1.5
       const t = section.total
+      // Top separator (slate-300)
+      doc.setDrawColor(...SHADCN.borderStrong)
+      doc.setLineWidth(0.3)
+      doc.line(L, y, R, y)
+      // Muted background row
+      doc.setFillColor(...SHADCN.muted)
+      doc.rect(L, y, TOTAL_W, 7, 'F')
+      y += 5
+      // Bold totals
       doc.setFont('helvetica', 'bold')
       doc.setFontSize(9)
-      doc.setTextColor(tr, tg, tb)
-      doc.text(t.label, L, y)
+      doc.setTextColor(...SHADCN.foreground)
+      doc.text(t.label, L + 2, y)
       if (t.color) {
         const [rr, rg, rb] = hexToRgb(t.color)
         doc.setTextColor(rr, rg, rb)
       }
-      doc.text(t.value, R, y, { align: 'right' })
-      doc.setDrawColor(ar, ag, ab)
-      doc.setLineWidth(0.6)
-      doc.line(L, y + 1.5, R, y + 1.5)
-      y += 8
+      doc.text(t.value, R - 2, y, { align: 'right' })
+      y += 7
     } else {
       y += 4
     }
   }
 
+  // ── Notes ──
   if (notes) {
-    ensureRoom(12)
-    y += 2
+    ensureRoom(14)
+    y += 4
     doc.setFont('helvetica', 'italic')
-    doc.setFontSize(7)
-    doc.setTextColor(140, 140, 140)
-    const wrapped = doc.splitTextToSize(notes, R - L)
+    doc.setFontSize(7.5)
+    doc.setTextColor(...SHADCN.mutedForeground)
+    const wrapped = doc.splitTextToSize(notes, TOTAL_W)
     doc.text(wrapped, L, y)
   }
 
-  // ── Footer on every page ──
-  const pages = doc.getNumberOfPages()
-  for (let p = 1; p <= pages; p++) {
-    doc.setPage(p)
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(7)
-    doc.setTextColor(110, 110, 110)
-    doc.text(cfg.footerText || 'Document confidentiel', L, PAGE_H - 8)
-    doc.text(`Page ${p}/${pages}`, R, PAGE_H - 8, { align: 'right' })
-  }
+  // ── Footer (every page) ──
+  drawFooter(doc, cfg.footerText || 'Document confidentiel', W, H)
 
   doc.save(filename)
 }

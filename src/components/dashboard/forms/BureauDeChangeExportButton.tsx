@@ -2,6 +2,10 @@
 import * as React from 'react'
 import { FileDown, Loader2 } from 'lucide-react'
 import { type PdfReportConfig, DEFAULT_PDF_CONFIG, hexToRgb, urlToBase64 } from '@/lib/pdfConfig'
+import {
+  drawHeader, drawFooter, drawSectionHeading, drawStatCards, drawTable,
+  type Cell,
+} from '@/lib/pdf/shadcn-table'
 
 function fHTG(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'HTG', minimumFractionDigits: 2 }).format(n)
@@ -50,35 +54,23 @@ interface Props {
 async function generateBureauPDF(txs: ExchangeTx[], rates: ExchangeRate[], cfg: PdfReportConfig = DEFAULT_PDF_CONFIG) {
   const { default: jsPDF } = await import('jspdf')
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-  const W = 297; const L = 12; const R = W - 12
-  let y = 18
+  const W = 297; const H = 210; const L = 12; const R = W - 12
+  const TOTAL_W = R - L
 
-  const [hr, hg, hb] = hexToRgb(cfg.headerColor)
-  const [ar, ag, ab] = hexToRgb(cfg.accentColor)
-
-  // Header
-  doc.setFillColor(hr, hg, hb)
-  doc.rect(0, 0, W, 30, 'F')
-
-  // Logo
+  let logoBase64: string | null = null
   if (cfg.logoEnabled && cfg.logoUrl) {
-    const logoData = await urlToBase64(cfg.logoUrl)
-    if (logoData) {
-      try { doc.addImage(logoData, L, 5, 20, 18) } catch { /* ignore */ }
-    }
+    logoBase64 = await urlToBase64(cfg.logoUrl)
   }
 
-  doc.setFont('helvetica', 'bold')
-  doc.setFontSize(13)
-  doc.setTextColor(ar, ag, ab)
-  doc.text('RAPPORT BUREAU DE CHANGE', W / 2, y, { align: 'center' })
-  y += 7
-  doc.setFontSize(8)
-  doc.setTextColor(140, 140, 140)
-  doc.text(`Généré le ${new Date().toLocaleDateString('fr-HT')} · ${txs.length} opération(s)`, W / 2, y, { align: 'center' })
-  y = 42
+  // ── Header ──
+  let y = drawHeader(doc, {
+    title: 'Rapport bureau de change',
+    subtitle: `Généré le ${new Date().toLocaleDateString('fr-HT')} · ${txs.length} opération(s)`,
+    brand: hexToRgb(cfg.headerColor),
+    logoBase64,
+  }, W)
 
-  // Summary KPIs
+  // ── KPI cards ──
   const totalGiven    = txs.reduce((s, t) => s + Number(t.amount_given), 0)
   const activeRates   = rates.filter(r => r.is_active)
   const inactiveRates = rates.filter(r => !r.is_active)
@@ -92,168 +84,108 @@ async function generateBureauPDF(txs: ExchangeTx[], rates: ExchangeRate[], cfg: 
   }
   const pairs = Array.from(pairMap.values())
 
-  const cards = [
-    { label: 'Taux actifs',          value: String(activeRates.length),   color: [74,222,128]  as [number,number,number] },
-    { label: 'Taux archivés',        value: String(inactiveRates.length), color: [180,180,180] as [number,number,number] },
-    { label: 'Total opérations',     value: String(txs.length),           color: [200,200,200] as [number,number,number] },
-    { label: 'Volume total échangé', value: fHTG(totalGiven),             color: [52,211,153]  as [number,number,number] },
-  ]
-  cards.forEach((item, i) => {
-    const x = L + i * 66
-    doc.setFillColor(20, 20, 26)
-    doc.roundedRect(x, y - 5, 63, 14, 2, 2, 'F')
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(9)
-    doc.setTextColor(...item.color)
-    doc.text(item.value, x + 31, y + 2, { align: 'center' })
-    doc.setFont('helvetica', 'normal')
-    doc.setFontSize(6.5)
-    doc.setTextColor(100, 100, 100)
-    doc.text(item.label, x + 31, y + 7, { align: 'center' })
-  })
-  y += 20
+  y = drawStatCards(doc, L, y, TOTAL_W, [
+    { label: 'Taux actifs',          value: String(activeRates.length),   accent: [22, 101, 52] },
+    { label: 'Taux archivés',        value: String(inactiveRates.length), accent: [100, 116, 139] },
+    { label: 'Total opérations',     value: String(txs.length) },
+    { label: 'Volume total échangé', value: fHTG(totalGiven),             accent: [22, 101, 52] },
+  ], { perRow: 4 })
+  y += 4
+
+  const onNewPage = (d: typeof doc): number => { d.addPage(); return 20 }
 
   // ── Taux actifs ──
   if (activeRates.length > 0) {
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(200, 200, 200)
-    doc.text('Taux de change actifs', L, y); y += 5
-
-    const rHeaders = ['De', 'Vers', 'Taux', 'Défini par', 'Date']
-    const rColW    = [18, 18, 40, 48, 40]
-    doc.setFillColor(18, 18, 24)
-    doc.rect(L, y - 4, R - L / 2, 8, 'F')
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7)
-    doc.setTextColor(100, 100, 100)
-    let cx = L + 2
-    rHeaders.forEach((h, i) => { doc.text(h, cx, y); cx += rColW[i] })
-    y += 6
-
-    activeRates.forEach((r, idx) => {
-      if (idx % 2 === 0) {
-        doc.setFillColor(14, 14, 18)
-        doc.rect(L, y - 3.5, R - L / 2, 7, 'F')
-      }
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(7)
-      cx = L + 2
-      const vals = [
-        r.from_currency, r.to_currency,
-        `1 ${r.from_currency} = ${Number(r.rate).toLocaleString('en-US', { minimumFractionDigits: 4 })} ${r.to_currency}`,
+    y = drawSectionHeading(doc, L, y + 2, 'Taux de change actifs')
+    y = drawTable(doc, {
+      x: L, y, totalWidth: TOTAL_W,
+      pageBottomY: H - 16,
+      onNewPage,
+      columns: [
+        { header: 'De',         width: 16, align: 'center' },
+        { header: 'Vers',       width: 16, align: 'center' },
+        { header: 'Taux',       width: 60 },
+        { header: 'Défini par', width: 50 },
+        { header: 'Date',       width: 30 },
+      ],
+      rows: activeRates.map(r => [
+        { kind: 'badge', label: r.from_currency, variant: 'info' } as Cell,
+        { kind: 'badge', label: r.to_currency,   variant: 'info' },
+        { kind: 'strong', text: `1 ${r.from_currency} = ${Number(r.rate).toLocaleString('en-US', { minimumFractionDigits: 4 })} ${r.to_currency}` },
         r.agents?.name ?? '—',
-        fDateShort(r.created_at),
-      ]
-      vals.forEach((v, i) => {
-        if (i < 2) doc.setTextColor(52, 211, 153)
-        else if (i === 2) doc.setTextColor(252, 211, 77)
-        else doc.setTextColor(180, 180, 180)
-        doc.text(String(v), cx, y)
-        cx += rColW[i]
-      })
-      y += 7
+        { kind: 'muted', text: fDateShort(r.created_at) },
+      ]),
     })
     y += 6
   }
 
-  // ── Pair stats ──
+  // ── Pair statistics ──
   if (pairs.length > 0) {
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(200, 200, 200)
-    doc.text('Statistiques par paire', L, y); y += 5
-
-    doc.setFillColor(18, 18, 24)
-    doc.rect(L, y - 4, R - L, 8, 'F')
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7)
-    doc.setTextColor(100, 100, 100)
-    doc.text('Paire', L + 2, y)
-    doc.text('Opérations', L + 35, y)
-    doc.text('Montant total donné', L + 80, y)
-    doc.text('Montant total reçu', L + 155, y)
-    y += 6
-
-    pairs.forEach((p, idx) => {
-      if (idx % 2 === 0) {
-        doc.setFillColor(14, 14, 18)
-        doc.rect(L, y - 3.5, R - L, 7, 'F')
-      }
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(7)
-      doc.setTextColor(52, 211, 153)
-      doc.text(`${p.from} → ${p.to}`, L + 2, y)
-      doc.setTextColor(180, 180, 180)
-      doc.text(String(p.count), L + 35, y)
-      doc.setTextColor(248, 113, 113)
-      doc.text(p.from === 'USD' ? fUSD(p.given) : fHTG(p.given), L + 80, y)
-      doc.setTextColor(74, 222, 128)
-      doc.text(p.to === 'USD' ? fUSD(p.received) : fHTG(p.received), L + 155, y)
-      y += 7
+    y = drawSectionHeading(doc, L, y, 'Statistiques par paire')
+    y = drawTable(doc, {
+      x: L, y, totalWidth: TOTAL_W,
+      pageBottomY: H - 16,
+      onNewPage,
+      columns: [
+        { header: 'Paire',        width: 30 },
+        { header: 'Opérations',   width: 24, align: 'right' },
+        { header: 'Total donné',  width: 50, align: 'right' },
+        { header: 'Total reçu',   width: 50, align: 'right' },
+      ],
+      rows: pairs.map(p => [
+        { kind: 'strong', text: `${p.from} → ${p.to}` } as Cell,
+        String(p.count),
+        p.from === 'USD' ? fUSD(p.given)    : fHTG(p.given),
+        p.to   === 'USD' ? fUSD(p.received) : fHTG(p.received),
+      ]),
+      footer: [
+        { kind: 'strong', text: 'Total' },
+        String(pairs.reduce((s, p) => s + p.count, 0)),
+        fHTG(pairs.filter(p => p.from !== 'USD').reduce((s, p) => s + p.given, 0))
+          + (pairs.some(p => p.from === 'USD') ? ' + ' + fUSD(pairs.filter(p => p.from === 'USD').reduce((s, p) => s + p.given, 0)) : ''),
+        fHTG(pairs.filter(p => p.to !== 'USD').reduce((s, p) => s + p.received, 0))
+          + (pairs.some(p => p.to === 'USD') ? ' + ' + fUSD(pairs.filter(p => p.to === 'USD').reduce((s, p) => s + p.received, 0)) : ''),
+      ],
     })
     y += 6
   }
 
-  // ── Transactions detail ──
+  // ── Detailed transactions ──
   if (txs.length > 0) {
-    if (y > 155) { doc.addPage(); y = 15 }
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(8.5)
-    doc.setTextColor(200, 200, 200)
-    doc.text('Historique détaillé des opérations', L, y); y += 5
-
-    const tHeaders = ['Ticket', 'Client', 'De', 'Vers', 'Montant donné', 'Taux appliqué', 'Montant reçu', 'Notes', 'Agent', 'Date']
-    const tColW    = [24, 38, 14, 14, 30, 26, 30, 28, 30, 28]
-    doc.setFillColor(18, 18, 24)
-    doc.rect(L, y - 4, R - L, 8, 'F')
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(7)
-    doc.setTextColor(100, 100, 100)
-    let cx2 = L + 2
-    tHeaders.forEach((h, i) => { doc.text(h, cx2, y); cx2 += tColW[i] })
-    y += 6
-
-    txs.forEach((t, idx) => {
-      if (y > 192) { doc.addPage(); y = 15 }
-      if (idx % 2 === 0) {
-        doc.setFillColor(14, 14, 18)
-        doc.rect(L, y - 3.5, R - L, 7, 'F')
-      }
-      doc.setFont('helvetica', 'normal')
-      doc.setFontSize(7)
-      const tVals = [
-        t.ticket_number ?? '—',
+    if (y > H - 40) { doc.addPage(); y = 20 }
+    y = drawSectionHeading(doc, L, y, 'Historique détaillé des opérations')
+    y = drawTable(doc, {
+      x: L, y, totalWidth: TOTAL_W,
+      pageBottomY: H - 16,
+      onNewPage,
+      columns: [
+        { header: 'Ticket',         width: 24 },
+        { header: 'Client',         width: 38 },
+        { header: 'De',             width: 14, align: 'center' },
+        { header: 'Vers',           width: 14, align: 'center' },
+        { header: 'Montant donné',  width: 28, align: 'right' },
+        { header: 'Taux',           width: 18, align: 'right' },
+        { header: 'Montant reçu',   width: 28, align: 'right' },
+        { header: 'Notes',          width: 28 },
+        { header: 'Agent',          width: 26 },
+        { header: 'Date',           width: 28 },
+      ],
+      rows: txs.map(t => [
+        { kind: 'mono', text: t.ticket_number ?? '—' } as Cell,
         `${t.client_first_name} ${t.client_last_name}`.substring(0, 20),
-        t.from_currency,
-        t.to_currency,
+        { kind: 'badge', label: t.from_currency, variant: 'info' },
+        { kind: 'badge', label: t.to_currency,   variant: 'info' },
         t.from_currency === 'USD' ? fUSD(Number(t.amount_given))    : fHTG(Number(t.amount_given)),
-        Number(t.rate_applied).toFixed(4),
-        t.to_currency   === 'USD' ? fUSD(Number(t.amount_received)) : fHTG(Number(t.amount_received)),
-        (t.notes ?? '—').substring(0, 14),
-        (t.agents?.name ?? '—').substring(0, 16),
-        fDate(t.created_at).substring(0, 16),
-      ]
-      cx2 = L + 2
-      tVals.forEach((v, i) => {
-        if (i === 4) doc.setTextColor(248, 113, 113)
-        else if (i === 6) doc.setTextColor(74, 222, 128)
-        else if (i < 4) doc.setTextColor(52, 211, 153)
-        else doc.setTextColor(180, 180, 180)
-        doc.text(String(v), cx2, y)
-        cx2 += tColW[i]
-      })
-      y += 7
+        { kind: 'muted', text: Number(t.rate_applied).toFixed(4) },
+        { kind: 'strong', text: t.to_currency === 'USD' ? fUSD(Number(t.amount_received)) : fHTG(Number(t.amount_received)) },
+        { kind: 'muted', text: (t.notes ?? '—').substring(0, 18) },
+        { kind: 'muted', text: (t.agents?.name ?? '—').substring(0, 18) },
+        { kind: 'muted', text: fDate(t.created_at).substring(0, 16) },
+      ]),
     })
   }
 
-  const pages = doc.getNumberOfPages()
-  for (let p = 1; p <= pages; p++) {
-    doc.setPage(p)
-    doc.setFontSize(7)
-    doc.setTextColor(60, 60, 60)
-    doc.text(`${cfg.footerText} · Page ${p}/${pages}`, W / 2, 205, { align: 'center' })
-  }
+  drawFooter(doc, cfg.footerText || 'Document confidentiel · Bosal Credit Union', W, H)
   doc.save(`bureau-de-change-${new Date().toISOString().slice(0, 10)}.pdf`)
 }
 
