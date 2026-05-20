@@ -239,19 +239,10 @@ export async function recordTransaction(input: {
   }).select('id').single()
   if (txErr) return { error: txErr.message }
 
-  // ── Update account balance ────────────────────────────────────────────
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error: balErr } = await (supabase as any)
-    .from('accounts')
-    .update({ balance: Math.round(balanceAfter * 100) / 100 })
-    .eq('id', account.id)
-    .eq('cooperative_id', agent.cooperative_id)
-  if (balErr) {
-    // Best-effort rollback : delete the transaction row so the books match.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (supabase as any).from('transactions').delete().eq('id', tx?.id)
-    return { error: balErr.message }
-  }
+  // accounts.balance is maintained by the trigger
+  // trg_account_balance_from_transaction (always equal to deposits − retraits).
+  // No client-side UPDATE needed — that would race with the trigger on
+  // concurrent inserts.
 
   // ── Update cash vault (deposit → +, withdrawal → −) ───────────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
