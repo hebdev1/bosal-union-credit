@@ -68,8 +68,10 @@ export function buildPdfConfig(
 export interface TicketConfigShape {
   accent_color:       string
   received_color:     string
+  withdrawal_color?:  string
   header_color?:      string
   header_text_color?: string
+  text_color?:        string   // body text color (defaults to print-friendly slate)
   footer_text?:       string
   logo_url?:          string
   logo_enabled?:      boolean
@@ -82,12 +84,14 @@ export function buildTicketConfig(
     String(settings.find(s => s.key === key)?.value ?? '').replace(/"/g, '').trim()
 
   return {
-    accent_color:       get('ticket_accent_color')      || '#C41E3A',
-    received_color:     get('ticket_received_color')    || '#22C55E',
-    header_color:       get('ticket_header_color')      || '#0E0E12',
-    header_text_color:  get('ticket_header_text_color') || '',
-    footer_text:        get('ticket_footer_text')       || 'Merci de votre confiance · Conservez ce reçu',
-    logo_url:           get('pdf_logo_url')             || '',
-    logo_enabled:       get('pdf_logo_enabled')         !== 'false',
+    accent_color:       get('ticket_accent_color')       || '#C41E3A',
+    received_color:     get('ticket_received_color')     || '#16A34A',
+    withdrawal_color:   get('ticket_withdrawal_color')   || '#DC2626',
+    header_color:       get('ticket_header_color')       || '#0E0E12',
+    header_text_color:  get('ticket_header_text_color')  || '',
+    text_color:         get('ticket_text_color')         || '#0F172A',
+    footer_text:        get('ticket_footer_text')        || 'Merci de votre confiance · Conservez ce reçu',
+    logo_url:           get('pdf_logo_url')              || '',
+    logo_enabled:       get('pdf_logo_enabled')          !== 'false',
   }
 }
