@@ -1,11 +1,9 @@
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
-import { PageShell, DataCard, Table, TR, TD, EmptyState } from '@/components/dashboard/ui/DataTable'
+import { PageShell } from '@/components/dashboard/ui/DataTable'
 import { CreateMemberModal } from '@/components/dashboard/forms/CreateMemberModal'
-import { MemberStatusPicker } from '@/components/dashboard/forms/MemberStatusPicker'
-import { formatDate } from '@/lib/formatters'
+import { MembresClient, type MemberRow } from '@/components/dashboard/forms/MembresClient'
 
 export const metadata: Metadata = { title: 'Membres' }
 
@@ -17,9 +15,10 @@ export default async function MembresPage() {
     .select('id, member_number, first_name, last_name, phone, email, profession, status, created_at, accounts(id, account_type, balance, currency, status)')
     .order('created_at', { ascending: false })
 
-  const rows = members ?? []
-  const total   = rows.length
-  const actifs  = rows.filter((m: any) => m.status === 'active').length
+  const rows = (members ?? []) as unknown as MemberRow[]
+  const total    = rows.length
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const actifs   = rows.filter((m: any) => m.status === 'active').length
   const inactifs = total - actifs
 
   return (
@@ -30,7 +29,7 @@ export default async function MembresPage() {
         description={`${total} membre${total !== 1 ? 's' : ''} · ${actifs} actif${actifs !== 1 ? 's' : ''} · ${inactifs} inactif${inactifs !== 1 ? 's' : ''}`}
         action={<CreateMemberModal />}
       >
-        {/* KPI strip */}
+        {/* KPI strip — based on full dataset, not filtered view */}
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: 'Total membres', value: total },
@@ -45,46 +44,8 @@ export default async function MembresPage() {
           ))}
         </div>
 
-        {/* Table */}
-        <DataCard>
-          {rows.length === 0 ? (
-            <EmptyState title="Aucun membre" description="Les membres apparaîtront ici une fois créés." />
-          ) : (
-            <Table headers={['N° Membre', 'Nom complet', 'Téléphone', 'Email', 'Profession', 'Comptes', 'Statut', 'Inscription']}>
-              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-              {rows.map((m: any) => (
-                <TR key={m.id}>
-                  <TD mono>
-                    <Link href={`/tableau-de-bord/membres/${m.id}`} className="hover:underline" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                      {m.member_number}
-                    </Link>
-                  </TD>
-                  <TD>
-                    <Link href={`/tableau-de-bord/membres/${m.id}`} className="font-medium hover:underline" style={{ color: 'rgba(255,255,255,0.90)' }}>
-                      {m.first_name} {m.last_name}
-                    </Link>
-                  </TD>
-                  <TD mono>{m.phone ?? '—'}</TD>
-                  <TD mono>{m.email ?? '—'}</TD>
-                  <TD>{m.profession ?? '—'}</TD>
-                  <TD>
-                    <span className="text-sm kpi-value" style={{ color: 'rgba(255,255,255,0.70)' }}>
-                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                      {(m.accounts as any[])?.length ?? 0}
-                    </span>
-                  </TD>
-                  <TD>
-                    <MemberStatusPicker
-                      memberId={m.id}
-                      current={(m.status ?? 'pending') as 'active' | 'suspended' | 'closed' | 'pending'}
-                    />
-                  </TD>
-                  <TD>{formatDate(m.created_at)}</TD>
-                </TR>
-              ))}
-            </Table>
-          )}
-        </DataCard>
+        {/* Searchable table */}
+        <MembresClient rows={rows} />
       </PageShell>
     </>
   )
