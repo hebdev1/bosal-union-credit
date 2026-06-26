@@ -36,36 +36,91 @@ export async function createAccount(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: agent, error: agentErr } = await (supabase as any)
-    .from('agents').select('cooperative_id').eq('id', user.id).single()
+    .from('agents').select('cooperative_id, id').eq('id', user.id).single()
   if (agentErr || !agent) return { error: 'Agent introuvable' }
 
-  const planId = formData.get('savings_product_id') as string | null
+  const planId         = formData.get('savings_product_id') as string | null
+  const accountNumber  = (formData.get('account_number') as string).trim()
+  const openingBalance = Math.max(0, Number(formData.get('balance') ?? 0))
 
+  // ── 1. Create the account row (balance starts at 0 — the trigger on
+  //       transactions will set it to the opening deposit below, then
+  //       every future dépôt/retrait keeps it in sync automatically).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (supabase as any).from('accounts').insert({
+  const { data: account, error } = await (supabase as any).from('accounts').insert({
     cooperative_id:     agent.cooperative_id,
     member_id:          formData.get('member_id') as string,
-    account_number:     (formData.get('account_number') as string).trim(),
+    account_number:     accountNumber,
     account_type:       formData.get('account_type') as string,
     currency:           formData.get('currency') as string,
-    balance:            Number(formData.get('balance') ?? 0),
+    balance:            0,
     status:             'active',
     savings_product_id: planId && planId !== '' ? planId : null,
-  })
+  }).select('id').single()
 
   if (error) {
     if (error.code === '23505') return { error: 'Ce numéro de compte est déjà utilisé.' }
     return { error: error.message }
   }
 
+  // ── 2. If the operator entered an opening amount, log it as a real
+  //       deposit transaction so it's counted by the balance trigger and
+  //       cumulates with every future dépôt. Also keeps the audit trail
+  //       and history complete.
+  if (account?.id && openingBalance > 0) {
+    const now       = new Date()
+    const datePart  = now.toISOString().slice(0, 10).replace(/-/g, '')
+    const randPart  = Math.floor(1000 + Math.random() * 9000)
+    const reference = `OPEN-${datePart}-${randPart}`
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: txErr } = await (supabase as any).from('transactions').insert({
+      cooperative_id:   agent.cooperative_id,
+      account_id:       account.id,
+      agent_id:         agent.id,
+      transaction_type: 'deposit',
+      amount:           Math.round(openingBalance * 100) / 100,
+      motif:            'Solde d’ouverture',
+      reference,
+      status:           'completed',
+      transaction_date: now.toISOString(),
+    })
+
+    // If the opening-deposit insert fails we don't roll back the account
+    // (it's still a valid empty account). We just surface a warning via
+    // audit so an admin can investigate.
+    if (txErr) {
+      await logAudit({
+        action: 'account.open',
+        cooperativeId: agent.cooperative_id,
+        userId: agent.id,
+        targetTable: 'accounts',
+        targetId: account.id,
+        metadata: {
+          account_number: accountNumber,
+          opening_balance: openingBalance,
+          opening_deposit_failed: txErr.message,
+        },
+      })
+    }
+  }
+
   await logAudit({
     action: 'account.open',
     cooperativeId: agent.cooperative_id,
+    userId: agent.id,
     targetTable: 'accounts',
-    metadata: { account_number: formData.get('account_number') as string },
+    targetId: account?.id,
+    metadata: {
+      account_number: accountNumber,
+      opening_balance: openingBalance,
+    },
   })
 
   revalidatePath('/tableau-de-bord/comptes')
+  if (account?.id) {
+    revalidatePath(`/tableau-de-bord/comptes/${account.id}`)
+  }
   return null
 }
 
