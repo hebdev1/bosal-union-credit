@@ -166,27 +166,40 @@ export async function closeAccount(
   if (account.status === 'closed') return { error: 'Ce compte est déjà fermé' }
 
   const CLOSING_FEE = 200 // HTG — frais fixes de fermeture
-  const newBalance = Math.max(0, Number(account.balance) - CLOSING_FEE)
+  const currentBalance = Number(account.balance)
+  // On ne prélève que ce que le compte peut supporter, pas de découvert involontaire.
+  const feeToCharge    = Math.min(CLOSING_FEE, Math.max(0, currentBalance))
+  const newBalance     = Math.max(0, currentBalance - feeToCharge)
 
+  // Étape 1 — frais de fermeture sous forme de RETRAIT (pas adjustment) pour
+  // que le trigger trg_account_balance_from_transaction l'enregistre dans
+  // accounts.balance via la formule cumulative. Si feeToCharge=0 on n'insère
+  // rien (compte vide ou solde négatif déjà).
+  let tx: { id?: string } | null = null
+  if (feeToCharge > 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: inserted, error: txErr } = await (supabase as any).from('transactions').insert({
+      cooperative_id:   agent.cooperative_id,
+      account_id:       accountId,
+      agent_id:         agent.id,
+      transaction_type: 'withdrawal',
+      amount:           feeToCharge,
+      motif:            `Frais de fermeture — compte ${account.account_number}`,
+      reference:        `CLOSE-${Date.now().toString(36).toUpperCase()}`,
+      status:           'completed',
+    }).select('id').single()
+    if (txErr) return { error: txErr.message }
+    tx = inserted
+  }
+
+  // Étape 2 — passe le compte en 'closed'. Le balance est déjà mis à jour
+  // par le trigger juste au-dessus (s'il y avait un retrait à enregistrer).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error: updateErr } = await (supabase as any)
     .from('accounts')
-    .update({ balance: newBalance, status: 'closed' })
+    .update({ status: 'closed' })
     .eq('id', accountId)
   if (updateErr) return { error: updateErr.message }
-
-  // Enregistrer les frais de fermeture comme transaction d'ajustement
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: tx } = await (supabase as any).from('transactions').insert({
-    cooperative_id:   agent.cooperative_id,
-    account_id:       accountId,
-    agent_id:         agent.id,
-    transaction_type: 'adjustment',
-    amount:           CLOSING_FEE,
-    motif:            `Frais de fermeture — compte ${account.account_number}`,
-    reference:        `CLOSE-${Date.now().toString(36).toUpperCase()}`,
-    status:           'completed',
-  }).select('id').single()
 
   await logAudit({
     action: 'account.close',
@@ -194,7 +207,11 @@ export async function closeAccount(
     userId: agent.id,
     targetTable: 'accounts',
     targetId: accountId,
-    metadata: { account_number: account.account_number, closing_fee: CLOSING_FEE, final_balance: newBalance },
+    metadata: {
+      account_number: account.account_number,
+      closing_fee:    feeToCharge,
+      final_balance:  newBalance,
+    },
   })
 
   // Fraud check sur la transaction de fermeture
@@ -203,7 +220,7 @@ export async function closeAccount(
       cooperativeId: agent.cooperative_id,
       memberId: account.member_id,
       transactionId: tx.id,
-      amount: CLOSING_FEE,
+      amount: feeToCharge,
       currency: account.currency,
     })
   }
