@@ -6,7 +6,9 @@
  * once a row's status is `paid`, the amount is frozen.
  */
 
-export const FINAL_LOAN_STATUSES = ['paid', 'closed', 'rejected', 'defaulted', 'completed'] as const
+// Values of the Postgres enum loan_status that end a loan's life. The enum
+// has no 'paid' or 'closed': a fully repaid loan is 'completed'.
+export const FINAL_LOAN_STATUSES = ['completed', 'rejected', 'defaulted'] as const
 export type FinalLoanStatus = (typeof FINAL_LOAN_STATUSES)[number]
 
 export function isFinalLoanStatus(s: string | null | undefined): boolean {

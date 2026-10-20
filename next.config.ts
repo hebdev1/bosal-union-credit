@@ -1,5 +1,11 @@
 import type { NextConfig } from 'next'
 
+// 'unsafe-eval' is only needed by the dev server (React Refresh / source maps).
+const isDev = process.env.NODE_ENV === 'development'
+const scriptSrc = isDev
+  ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+  : "script-src 'self' 'unsafe-inline'"
+
 const nextConfig: NextConfig = {
   /* ── Output ─────────────────────────────────────────────────────────── */
   // 'standalone' produit un dossier autonome — idéal pour Docker / Vercel
@@ -9,10 +15,11 @@ const nextConfig: NextConfig = {
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
-      // Avatars Supabase Storage
+      // Supabase Storage of this project only (a wildcard let the image
+      // optimizer fetch and resize files from any Supabase project).
       {
         protocol: 'https',
-        hostname: '*.supabase.co',
+        hostname: 'ebioqgjyzrhjxxlugzcz.supabase.co',
         pathname: '/storage/v1/object/public/**',
       },
     ],
@@ -39,7 +46,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // 'unsafe-eval' requis par Next.js dev
+              scriptSrc,
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               `connect-src 'self' https://*.supabase.co wss://*.supabase.co`,

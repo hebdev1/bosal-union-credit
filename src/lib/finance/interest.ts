@@ -87,6 +87,45 @@ export function amortizationSchedule(
 }
 
 /**
+ * Échéancier d'un prêt à taux fixe (« flat »), le modèle utilisé par
+ * createLoan / adjustLoan : intérêts = capital × taux × durée/12, répartis
+ * à parts égales. La somme des mensualités vaut exactement `totalDue`
+ * (le dernier versement absorbe les arrondis), ce qui permet de clôturer
+ * le prêt en payant l'échéancier affiché.
+ *
+ * @param principal  Capital emprunté
+ * @param totalDue   Total dû stocké sur le prêt (capital + intérêts)
+ * @param termMonths Durée en mois
+ */
+export function flatSchedule(
+  principal: number,
+  totalDue: number,
+  termMonths: number,
+): AmortizationRow[] {
+  if (termMonths <= 0) throw new Error('flatSchedule: durée doit être > 0')
+  if (principal < 0 || totalDue < 0) throw new Error('flatSchedule: valeurs négatives interdites')
+
+  const n = termMonths
+  const interestTotal = round2(totalDue - principal)
+  const pay  = round2(totalDue / n)
+  const intr = round2(interestTotal / n)
+  const prin = round2(principal / n)
+  const rows: AmortizationRow[] = []
+  let balance = round2(totalDue)
+
+  for (let period = 1; period <= n; period++) {
+    const last = period === n
+    const payment       = last ? round2(totalDue - pay * (n - 1)) : pay
+    const interest      = last ? round2(interestTotal - intr * (n - 1)) : intr
+    const principalPart = last ? round2(principal - prin * (n - 1)) : prin
+    balance = round2(balance - payment)
+    rows.push({ period, payment, principal: principalPart, interest, balance: Math.max(0, balance) })
+  }
+
+  return rows
+}
+
+/**
  * Pénalité de retard appliquée quotidiennement sur le capital restant dû.
  * @param outstanding   Capital restant dû
  * @param dailyRate     Taux de pénalité journalier en pourcentage (ex: 0.05 = 0,05 %/jour)

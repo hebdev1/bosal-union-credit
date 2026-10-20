@@ -8,8 +8,14 @@ export async function proxy(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-  // Clés non configurées → laisser passer (mode développement)
+  // Clés non configurées : on laisse passer en développement uniquement.
+  // En production, les routes protégées sont refusées plutôt que servies
+  // sans contrôle de session ; les pages publiques restent accessibles.
   if (!supabaseUrl || !supabaseKey) {
+    const isProtectedPath = PROTECTED_PATHS.some((p) => request.nextUrl.pathname.startsWith(p))
+    if (process.env.NODE_ENV === 'production' && isProtectedPath) {
+      return new NextResponse('Service non configuré.', { status: 503 })
+    }
     return NextResponse.next({ request })
   }
 

@@ -25,37 +25,54 @@ export function CreateExchangeModal({
   const [open, setOpen]             = React.useState(false)
   const [pending, setPending]       = React.useState(false)
   const [error, setError]           = React.useState<string | null>(null)
-  const [selectedRate, setSelectedRate] = React.useState<Rate | null>(rates[0] ?? null)
-  const [amountGiven, setAmountGiven]   = React.useState('')
+  // The selected rate is derived from the current `rates` prop on every
+  // render: if the list changes after mount (new rate set on another device,
+  // router refresh) the selection falls back to the first available rate
+  // instead of keeping a stale or empty one.
+  const [rateId, setRateId]           = React.useState<string>(rates[0]?.id ?? '')
+  const selectedRate                  = rates.find(r => r.id === rateId) ?? rates[0] ?? null
+  const [amountGiven, setAmountGiven] = React.useState('')
   // After success: show ticket confirmation
   const [lastTicket, setLastTicket] = React.useState<TicketData | null>(null)
   const formRef = React.useRef<HTMLFormElement>(null)
 
   const amountReceived = selectedRate && amountGiven
-    ? (Number(amountGiven) * Number(selectedRate.rate)).toFixed(2)
+    ? (Math.round(Number(amountGiven) * Number(selectedRate.rate) * 100) / 100).toFixed(2)
     : '—'
 
   function handleRateChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const r = rates.find(r => r.id === e.target.value) ?? null
-    setSelectedRate(r)
+    setRateId(e.target.value)
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setPending(true)
     setError(null)
-    const result = await createExchangeTransaction(new FormData(e.currentTarget))
+    let result: Awaited<ReturnType<typeof createExchangeTransaction>>
+    try {
+      result = await createExchangeTransaction(new FormData(e.currentTarget))
+    } catch {
+      // Network drop: the operation may have been recorded. Check the
+      // history before submitting again (no idempotency key on exchanges yet).
+      setPending(false)
+      setError('Connexion interrompue. Vérifiez l’historique avant de réessayer : l’opération a peut-être été enregistrée.')
+      return
+    }
     setPending(false)
     if ('error' in result) { setError(result.error); return }
 
-    // Auto-generate ticket PDF immediately
-    await generateExchangeTicketPDF(result.ticket, ticketConfig)
+    // Auto-generate ticket PDF immediately (non-blocking: reprint stays available)
+    try {
+      await generateExchangeTicketPDF(result.ticket, ticketConfig)
+    } catch {
+      // ignore — the success screen offers « Réimprimer »
+    }
 
     // Show success state with ticket data
     setLastTicket(result.ticket)
     formRef.current?.reset()
     setAmountGiven('')
-    setSelectedRate(rates[0] ?? null)
+    setRateId(rates[0]?.id ?? '')
   }
 
   function handleClose() {
@@ -165,7 +182,7 @@ export function CreateExchangeModal({
                   <label className={LABEL} style={LABEL_STYLE}>Taux de change *</label>
                   <select name="exchange_rate_id" required className={INPUT} style={INPUT_STYLE}
                     onChange={handleRateChange}
-                    defaultValue={rates[0]?.id ?? ''}>
+                    value={selectedRate?.id ?? ''}>
                     {rates.length === 0 && <option value="">Aucun taux disponible</option>}
                     {rates.map(r => (
                       <option key={r.id} value={r.id}>
@@ -173,12 +190,8 @@ export function CreateExchangeModal({
                       </option>
                     ))}
                   </select>
+                  {/* Currencies and rate are read server-side from this rate id. */}
                 </div>
-
-                {/* Hidden fields */}
-                <input type="hidden" name="from_currency" value={selectedRate?.from_currency ?? ''} />
-                <input type="hidden" name="to_currency" value={selectedRate?.to_currency ?? ''} />
-                <input type="hidden" name="rate_applied" value={selectedRate?.rate ?? ''} />
 
                 {/* Amount */}
                 <div>

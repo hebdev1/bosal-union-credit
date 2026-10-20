@@ -72,6 +72,10 @@ export function RecordTransactionModal({
   const [amount, setAmount]   = React.useState('')
   const [motif, setMotif]     = React.useState('')
   const [lastTicket, setLastTicket] = React.useState<TicketData | null>(null)
+  // One key per operation: retrying the exact same operation after an error
+  // reuses it, so a request that already reached the server is recorded
+  // only once. Any change to the operation, or a success, draws a new key.
+  const submissionKey = React.useRef<{ key: string; fingerprint: string } | null>(null)
 
   // Reset transient state when modal closes
   React.useEffect(() => {
@@ -80,6 +84,7 @@ export function RecordTransactionModal({
       setAmount('')
       setMotif('')
       setLastTicket(null)
+      submissionKey.current = null
     } else {
       setKind(defaultKind)
     }
@@ -102,15 +107,32 @@ export function RecordTransactionModal({
     setPending(true)
     setError(null)
 
-    const res = await recordTransaction({
-      accountId,
-      type:   kind,
-      amount: amountNum,
-      motif:  motif.trim() || null,
-    })
+    const fingerprint = [accountId, kind, amountNum, motif.trim()].join('|')
+    const key = submissionKey.current?.fingerprint === fingerprint
+      ? submissionKey.current.key
+      : crypto.randomUUID()
+    submissionKey.current = { key, fingerprint }
+
+    let res: Awaited<ReturnType<typeof recordTransaction>>
+    try {
+      res = await recordTransaction({
+        accountId,
+        type:   kind,
+        amount: amountNum,
+        motif:  motif.trim() || null,
+        idempotencyKey: key,
+      })
+    } catch {
+      // Network drop: the operation may or may not have reached the server.
+      // Retrying with the same key is safe — it cannot be recorded twice.
+      setPending(false)
+      setError('Connexion interrompue. Réessayez : l’opération ne sera pas enregistrée deux fois.')
+      return
+    }
 
     setPending(false)
     if ('error' in res) { setError(res.error); return }
+    submissionKey.current = null
 
     // Auto-trigger ticket PDF download
     try {

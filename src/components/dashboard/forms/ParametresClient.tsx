@@ -6,7 +6,8 @@ import { updateSetting, updateCooperative, updateAgentStatus, runInactivityDeact
 import { createClient } from '@/lib/supabase/client'
 
 /* ── Constants ──────────────────────────────────────────────────────────── */
-const SUPABASE_URL = 'https://ebioqgjyzrhjxxlugzcz.supabase.co'
+/** Logo MIME types accepted by the 'logos' bucket (SVG excluded: it can carry scripts). */
+const LOGO_TYPES: Record<string, string> = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/webp': 'webp' }
 const INPUT = 'w-full rounded-lg px-3 py-2 text-sm outline-none transition-colors'
 const IS = { background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.10)', color: 'rgba(255,255,255,0.90)' }
 const ROLE_LABELS: Record<string, string> = { admin: 'Admin', manager: 'Manager', cashier: 'Caissier' }
@@ -129,13 +130,18 @@ function LogoUpload({ settingKey, current }: { settingKey: string; current: stri
     if (file.size > 2 * 1024 * 1024) { setErr('Fichier trop grand (max 2 Mo)'); return }
     setUploading(true); setErr(null)
     try {
+      const ext = LOGO_TYPES[file.type]
+      if (!ext) throw new Error('Format non pris en charge (PNG, JPG ou WebP)')
       const supabase = createClient()
-      const ext  = file.name.split('.').pop()
-      const path = `logo-${Date.now()}.${ext}`
-      const { error: upErr } = await supabase.storage.from('logos').upload(path, file, { upsert: true })
+      // Storage policies only accept writes inside the cooperative's folder.
+      const { data: coopId, error: coopErr } = await supabase.rpc('get_my_cooperative')
+      if (coopErr || !coopId) throw new Error('Coopérative introuvable')
+      const path = `${coopId}/logo-${Date.now()}.${ext}`
+      const { error: upErr } = await supabase.storage.from('logos').upload(path, file, { upsert: true, contentType: file.type })
       if (upErr) throw upErr
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/logos/${path}`
-      await updateSetting(settingKey, publicUrl)
+      const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(path)
+      const res = await updateSetting(settingKey, publicUrl)
+      if (res?.error) throw new Error(res.error)
       setUrl(publicUrl)
     } catch (ex: any) {
       setErr(ex.message ?? 'Erreur upload')
@@ -156,7 +162,7 @@ function LogoUpload({ settingKey, current }: { settingKey: string; current: stri
         </div>
       )}
       <div>
-        <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp"
+        <input ref={inputRef} type="file" accept="image/png,image/jpeg,image/webp"
           onChange={handleFile} className="hidden" />
         <button type="button" onClick={() => inputRef.current?.click()} disabled={uploading}
           className="flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium"
@@ -171,7 +177,7 @@ function LogoUpload({ settingKey, current }: { settingKey: string; current: stri
           </button>
         )}
         {err && <p className="text-xs mt-1" style={{ color: '#F87171' }}>{err}</p>}
-        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>PNG, JPG, SVG · max 2 Mo</p>
+        <p className="text-xs mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>PNG, JPG, WebP · max 2 Mo</p>
       </div>
     </div>
   )
@@ -581,7 +587,7 @@ function AgentStatusSelect({ agentId, current }: { agentId: string; current: str
     const next = e.target.value; const prev = val; setVal(next); setSaving(true)
     const res = await updateAgentStatus(agentId, next)
     setSaving(false)
-    if (res?.error) setVal(prev)
+    if (res?.error) { setVal(prev); toast.error(res.error) }
   }
   return (
     <div className="relative flex items-center gap-1">

@@ -12,7 +12,7 @@ import { AdjustLoanForm } from '@/components/dashboard/forms/AdjustLoanForm'
 import { CreditScoreCard } from '@/components/dashboard/credit/CreditScoreCard'
 import type { CreditScoreRow } from '@/lib/credit/types'
 import { formatHTG, formatDate } from '@/lib/formatters'
-import { amortizationSchedule } from '@/lib/finance/interest'
+import { flatSchedule } from '@/lib/finance/interest'
 import { isFinalLoanStatus, finalLoanStatusLabel } from '@/lib/loans/finality'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -304,7 +304,9 @@ export default async function BorrowerProfilePage({ params }: { params: Promise<
                                     ?? new Date().toISOString()
                 const hasAnyRepayment = repayments.length > 0
                 const canAdjust       = isPending && !hasAnyRepayment
-                const schedule        = amortizationSchedule(principal, annualRate, durationMonths)
+                const schedule        = durationMonths > 0
+                  ? flatSchedule(principal, totalAmountDue, durationMonths)
+                  : []
 
                 return (
                   <article key={loan.id}

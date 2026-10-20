@@ -3,8 +3,32 @@ import {
   simpleInterest,
   monthlyPayment,
   amortizationSchedule,
+  flatSchedule,
   latePenalty,
 } from './interest'
+
+const sum = (xs: number[]) => Math.round(xs.reduce((a, b) => a + b, 0) * 100) / 100
+
+describe('flatSchedule', () => {
+  it('somme exactement au total dû stocké (10 000 à 12 % sur 12 mois = 11 200)', () => {
+    const rows = flatSchedule(10_000, 11_200, 12)
+    expect(rows).toHaveLength(12)
+    expect(sum(rows.map(r => r.payment))).toBe(11_200)
+    expect(sum(rows.map(r => r.principal))).toBe(10_000)
+    expect(sum(rows.map(r => r.interest))).toBe(1_200)
+    expect(rows[rows.length - 1].balance).toBe(0)
+  })
+
+  it('le dernier versement absorbe les arrondis', () => {
+    const rows = flatSchedule(1_000, 1_000, 3) // 333.33 + 333.33 + 333.34
+    expect(rows.map(r => r.payment)).toEqual([333.33, 333.33, 333.34])
+    expect(sum(rows.map(r => r.payment))).toBe(1_000)
+  })
+
+  it('refuse une durée nulle', () => {
+    expect(() => flatSchedule(1_000, 1_000, 0)).toThrow()
+  })
+})
 
 describe('simpleInterest', () => {
   it('calcule I = P × r × t', () => {

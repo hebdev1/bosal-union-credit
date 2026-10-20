@@ -62,6 +62,7 @@ export function AddTransactionForm({ members, accounts }: Props) {
   const [mode, setMode]           = React.useState<Mode>('current')
   const [date, setDate]           = React.useState<string>(isoDate())
   const [note, setNote]           = React.useState<string>('')
+  const submissionKey             = React.useRef<{ key: string; fingerprint: string } | null>(null)
 
   /* ── Searchable client picker ──────────────────────────────────────── */
   const [search, setSearch]               = React.useState('')
@@ -140,14 +141,32 @@ export function AddTransactionForm({ members, accounts }: Props) {
       return
     }
 
+    // One key per entry: a retry of the exact same entry after an error
+    // reuses it (so a request that reached the server is not recorded
+    // twice); any change to the entry, or a success, draws a new key.
+    const fingerprint = [accountId, type, amt, mode, date, note.trim()].join('|')
+    const key = submissionKey.current?.fingerprint === fingerprint
+      ? submissionKey.current.key
+      : crypto.randomUUID()
+    submissionKey.current = { key, fingerprint }
+
     setPending(true)
-    const res = await recordTransactionEntry({
-      accountId,
-      type,
-      amount: amt,
-      transactionDate: txDate.toISOString(),
-      note: note.trim() || null,
-    })
+    let res: Awaited<ReturnType<typeof recordTransactionEntry>>
+    try {
+      res = await recordTransactionEntry({
+        accountId,
+        type,
+        amount: amt,
+        transactionDate: txDate.toISOString(),
+        note: note.trim() || null,
+        idempotencyKey: key,
+      })
+    } catch {
+      // Network drop: retrying with the same key cannot record it twice.
+      setPending(false)
+      setError('Connexion interrompue. Réessayez : la transaction ne sera pas enregistrée deux fois.')
+      return
+    }
     setPending(false)
 
     if ('error' in res) {
@@ -155,6 +174,7 @@ export function AddTransactionForm({ members, accounts }: Props) {
       toast.error(res.error)
       return
     }
+    submissionKey.current = null
 
     toast.success(
       mode === 'historical'

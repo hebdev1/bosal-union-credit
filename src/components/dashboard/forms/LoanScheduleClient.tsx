@@ -248,7 +248,11 @@ export function LoanScheduleClient({
   loanStatus: string | null
 }) {
   const router = useRouter()
-  const loanLocked = isFinalLoanStatus(loanStatus)
+  const loanFinal  = isFinalLoanStatus(loanStatus)
+  // Repayments are only accepted on an approved (active) loan — the server
+  // action and the database refuse them otherwise.
+  const notApproved = !loanFinal && loanStatus !== 'active'
+  const loanLocked = loanFinal || notApproved
 
   const byInstallment = React.useMemo(() => {
     const m = new Map<number, RepaymentRecord>()
@@ -271,8 +275,20 @@ export function LoanScheduleClient({
 
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: '#0D1018', border: '1px solid rgba(255,255,255,0.09)' }}>
+      {/* Not yet approved: schedule shown read-only */}
+      {notApproved && (
+        <div className="px-5 py-2.5 flex items-center gap-2 text-[11px]"
+          style={{ background: 'rgba(234,179,8,0.06)', borderBottom: '1px solid rgba(234,179,8,0.18)', color: 'rgba(255,255,255,0.75)' }}>
+          <Lock size={12} style={{ color: '#FCD34D' }} aria-hidden />
+          <span>
+            <span style={{ color: '#FCD34D', fontWeight: 600 }}>Prêt non approuvé</span>
+            {' · '}les versements pourront être saisis une fois le prêt approuvé (statut « Actif »).
+          </span>
+        </div>
+      )}
+
       {/* Loan-level lock banner */}
-      {loanLocked && (
+      {loanFinal && (
         <div className="px-5 py-2.5 flex items-center gap-2 text-[11px]"
           style={{ background: 'rgba(74,222,128,0.06)', borderBottom: '1px solid rgba(74,222,128,0.18)', color: 'rgba(255,255,255,0.75)' }}>
           <Lock size={12} style={{ color: '#4ADE80' }} aria-hidden />

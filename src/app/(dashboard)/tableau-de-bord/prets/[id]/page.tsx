@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Header } from '@/components/dashboard/Header'
 import { StatusBadge } from '@/components/dashboard/ui/DataTable'
 import { formatHTG, formatDate } from '@/lib/formatters'
-import { amortizationSchedule } from '@/lib/finance/interest'
+import { flatSchedule } from '@/lib/finance/interest'
 import { LoanScheduleClient, type RepaymentRecord } from '@/components/dashboard/forms/LoanScheduleClient'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
@@ -60,10 +60,13 @@ export default async function LoanDetailPage({ params }: { params: Promise<{ id:
     status:      (r.status as string | null) ?? null,
   }))
 
-  // Generate amortization schedule from loan terms — interest rate is already in %
+  // Schedule from the stored flat-rate terms (same model as createLoan): the
+  // installments sum exactly to total_amount_due, so paying the schedule
+  // as displayed completes the loan.
   const principal = Number(loan.principal_amount)
-  const annualRate = Number(loan.interest_rate)
-  const schedule = amortizationSchedule(principal, annualRate, loan.duration_months)
+  const schedule = loan.duration_months > 0
+    ? flatSchedule(principal, Number(loan.total_amount_due), loan.duration_months)
+    : []
 
   // Base date for due-date computation: disbursed_at if available, else created_at
   const baseDate = (loan.disbursed_at as string | null) ?? (loan.created_at as string | null) ?? new Date().toISOString()

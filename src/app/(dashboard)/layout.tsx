@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { getCurrentAgent } from '@/lib/auth/agent'
 import { Sidebar } from '@/components/dashboard/Sidebar'
 import { BottomNav } from '@/components/dashboard/BottomNav'
 import { ThemeInjector } from '@/components/dashboard/ThemeInjector'
@@ -13,6 +14,12 @@ export default async function DashboardLayout({
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  // Only active agents get the dashboard. RLS already returns no data to
+  // other accounts (sign-ups without an agents row, suspended agents); this
+  // gives them an explicit page instead of an empty dashboard.
+  const agent = await getCurrentAgent(supabase, { throwOnError: true })
+  if (!agent) redirect('/acces-refuse')
 
   // Fetch theme settings
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

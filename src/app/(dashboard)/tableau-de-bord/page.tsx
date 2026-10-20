@@ -13,7 +13,6 @@ export default async function TableauDeBordPage() {
   const analyticsStartIso = fallbackStart.toISOString()
 
   const [
-    summaryRes,
     membersRes,
     accountsRes,
     vaultRes,
@@ -25,7 +24,6 @@ export default async function TableauDeBordPage() {
     analyticsExchangesRes,
     analyticsLoansRes,
   ] = await Promise.allSettled([
-    supabase.rpc('get_cooperative_summary'),
     supabase.from('members').select('id, status').eq('status', 'active'),
     supabase.from('accounts').select('id, balance, currency, status').eq('status', 'active'),
     supabase.from('cash_vault').select('current_balance, opening_balance, last_updated').limit(1).single(),
@@ -60,7 +58,9 @@ export default async function TableauDeBordPage() {
       .gte('created_at', analyticsStartIso),
   ])
 
-  const summary = summaryRes.status === 'fulfilled' ? (summaryRes.value.data?.[0] ?? null) : null
+  // get_cooperative_summary(coop_id) was called without its argument and
+  // always failed; DashboardHome computes its KPIs from the queries above.
+  const summary = null
   const members = membersRes.status === 'fulfilled' ? (membersRes.value.data ?? []) : []
   const accounts = accountsRes.status === 'fulfilled' ? (accountsRes.value.data ?? []) : []
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

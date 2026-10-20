@@ -8,7 +8,6 @@ const STATUSES = [
   { value: 'pending',   label: 'En attente', color: '#FCD34D', bg: 'rgba(234,179,8,0.12)'   },
   { value: 'active',    label: 'Actif',      color: '#4ADE80', bg: 'rgba(34,197,94,0.12)'   },
   { value: 'rejected',  label: 'Rejeté',     color: '#F87171', bg: 'rgba(239,68,68,0.12)'   },
-  { value: 'closed',    label: 'Clôturé',    color: 'rgba(255,255,255,0.35)', bg: 'rgba(255,255,255,0.05)' },
   { value: 'completed', label: 'Complété',   color: '#4ADE80', bg: 'rgba(34,197,94,0.12)'   },
   { value: 'defaulted', label: 'En défaut',  color: '#F87171', bg: 'rgba(239,68,68,0.12)'   },
 ]
