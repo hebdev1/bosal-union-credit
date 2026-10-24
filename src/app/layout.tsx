@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     default: 'Bosal Credit Union',
     template: '%s — Bosal Credit Union',
   },
-  description: "Bosal Credit Union — la force de la coopérative. Plateforme core banking pour coopératives financières haïtiennes.",
+  description: "Bosal Credit Union — espace de travail des agents : comptes membres, guichet, registre des prêts et bureau de change.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'),
 }
 

@@ -111,3 +111,14 @@ supabase/                   # Migrations + seed + config local
 
 Vercel : le push sur `main` déclenche un deploy automatique.
 Les variables d'environnement requises sont documentées dans `.env.example`.
+
+Formulaire de contact du site public : les demandes sont enregistrées dans la
+table `contact_requests` (lecture depuis le dashboard Supabase). Pour recevoir
+aussi un e-mail à chaque demande, définir les trois variables suivantes en
+production :
+
+```
+RESEND_API_KEY=re_...
+RESEND_FROM="CoopFinance <no-reply@votre-domaine-verifie>"
+CONTACT_NOTIFY_EMAIL=equipe@votre-domaine
+```

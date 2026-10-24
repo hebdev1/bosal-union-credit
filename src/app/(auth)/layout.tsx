@@ -13,10 +13,14 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
       {/* ── Panneau gauche : branding ───────────────────────────────────── */}
-      <div
+      {/* Thème sombre conservé : c'est l'entrée du tableau de bord (thème
+          sombre global, globals.css) et les pages enfants (login, inscription,
+          mot de passe oublié, accès refusé) écrivent en blanc. Pas d'aria-hidden
+          sur le panneau : il contient un lien focusable et du texte réel. */}
+      <aside
         className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden"
         style={{ background: 'linear-gradient(135deg, #07080C 0%, #0D1018 60%, #14181F 100%)' }}
-        aria-hidden="true"
+        aria-label="Présentation de l’espace de gestion"
       >
         {/* Grid bg subtil */}
         <div
@@ -26,49 +30,48 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               'linear-gradient(rgba(255,255,255,0.012) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.012) 1px, transparent 1px)',
             backgroundSize: '64px 64px',
           }}
+          aria-hidden="true"
         />
 
         {/* Accent glow */}
         <div
           className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full pointer-events-none"
           style={{ background: 'radial-gradient(circle, rgba(196,30,58,0.22) 0%, transparent 70%)' }}
+          aria-hidden="true"
         />
 
         {/* Logo */}
-        <Link href="/" className="relative z-10 flex items-center gap-3 w-fit">
+        <Link
+          href="/"
+          className="relative z-10 flex items-center gap-3 w-fit"
+          aria-label="Bosal Credit Union, retour à l’accueil du site"
+        >
           <BosalBadge size={40} />
           <span className="font-semibold text-base" style={{ color: 'rgba(255,255,255,0.95)' }}>
             Bosal <span className="font-bold">Credit Union</span>
           </span>
         </Link>
 
-        {/* Témoignage central */}
-        <div className="relative z-10 space-y-6">
-          <blockquote className="space-y-4">
-            <p
-              className="text-2xl leading-snug font-display italic"
-              style={{ color: 'rgba(255,255,255,0.92)' }}
-            >
-              &ldquo;La force de l&rsquo;union, la rigueur du crédit — Bosal Credit Union,
-              pensée pour la coopérative haïtienne moderne.&rdquo;
-            </p>
-            <footer className="space-y-0.5">
-              <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.85)' }}>
-                Jean-Baptiste Moreau
-              </p>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.45)' }}>
-                Directeur Général, Coopérative Bosal
-              </p>
-            </footer>
-          </blockquote>
+        {/* Présentation centrale — description factuelle, sans témoignage */}
+        <div className="relative z-10 space-y-4">
+          <p
+            className="text-2xl leading-snug font-display"
+            style={{ color: 'rgba(255,255,255,0.92)' }}
+          >
+            Comptes membres, opérations de guichet, registre des prêts et bureau de change
+            de la coopérative, dans un seul espace de travail.
+          </p>
+          <p className="text-sm" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            Chaque coopérative n&rsquo;accède qu&rsquo;à ses propres données.
+          </p>
         </div>
 
-        {/* Stats bas */}
+        {/* Repères bas — faits vérifiables dans le produit */}
         <div className="relative z-10 grid grid-cols-3 gap-6">
           {[
-            { value: '12 000+', label: 'Membres actifs' },
-            { value: '4 devises', label: 'HTG · USD · CAD · DOP' },
-            { value: '99.9 %', label: 'Disponibilité' },
+            { value: 'HTG · USD', label: 'Comptes membres' },
+            { value: '4 devises', label: 'Change HTG · USD · CAD · DOP' },
+            { value: '3 rôles', label: 'Admin · Gérant · Caissier' },
           ].map((stat) => (
             <div key={stat.label} className="space-y-1">
               <p
@@ -77,13 +80,13 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               >
                 {stat.value}
               </p>
-              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.40)' }}>
+              <p className="text-xs" style={{ color: 'rgba(255,255,255,0.62)' }}>
                 {stat.label}
               </p>
             </div>
           ))}
         </div>
-      </div>
+      </aside>
 
       {/* ── Panneau droit : formulaire ──────────────────────────────────── */}
       <div
@@ -91,14 +94,18 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         style={{ background: '#07080C' }}
       >
         {/* Logo mobile uniquement */}
-        <div className="lg:hidden flex items-center gap-3 px-6 pt-6 pb-0">
-          <Link href="/" className="flex items-center gap-2.5">
+        <header className="lg:hidden flex items-center gap-3 px-6 pt-6 pb-0">
+          <Link
+            href="/"
+            className="flex items-center gap-2.5"
+            aria-label="Bosal Credit Union, retour à l’accueil du site"
+          >
             <BosalBadge size={32} />
             <span className="font-semibold text-sm" style={{ color: 'rgba(255,255,255,0.95)' }}>
               Bosal <span className="font-bold">Credit Union</span>
             </span>
           </Link>
-        </div>
+        </header>
 
         {/* Contenu centré */}
         <div className="flex-1 flex items-center justify-center px-6 py-12">
@@ -108,9 +115,11 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         </div>
 
         {/* Footer minimal */}
-        <p className="text-center text-xs pb-6 px-6" style={{ color: 'rgba(255,255,255,0.25)' }}>
-          © {new Date().getFullYear()} Bosal Credit Union · Tous droits réservés
-        </p>
+        <footer className="pb-6 px-6">
+          <p className="text-center text-xs" style={{ color: 'rgba(255,255,255,0.55)' }}>
+            © {new Date().getFullYear()} Bosal Credit Union · Tous droits réservés
+          </p>
+        </footer>
       </div>
     </div>
   )

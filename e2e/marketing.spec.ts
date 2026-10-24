@@ -7,9 +7,9 @@ import { test, expect } from '@playwright/test'
  */
 
 test.describe('Parcours marketing', () => {
-  test('landing affiche la marque Bosal Credit Union', async ({ page }) => {
+  test('landing affiche la marque CoopFinance', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveTitle(/Bosal/i)
+    await expect(page).toHaveTitle(/CoopFinance/i)
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
   })
 

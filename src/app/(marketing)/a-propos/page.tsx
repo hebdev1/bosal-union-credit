@@ -1,43 +1,81 @@
-import { Heart, Target, Globe2 } from 'lucide-react'
-import { PageShell, Section, FeatureGrid } from '@/components/marketing/PageShell'
-import { getPage } from '@/lib/marketing-pages'
+import type { Metadata } from 'next'
+import { InteriorHero, PublicCallout } from '@/components/marketing/coopfinance/Sections'
 
-const SLUG = '/a-propos'
-const p = getPage(SLUG)!
-export const metadata = { title: p.title, description: p.description }
+export const metadata: Metadata = {
+  title: 'À propos',
+  description:
+    'Notre mission : donner aux coopératives et caisses populaires haïtiennes des outils fiables pour grandir et servir leurs membres.',
+}
 
-export default function Page() {
+const VALUES = [
+  {
+    n: '01',
+    title: 'La confiance avant tout',
+    text: 'Chaque choix de produit privilégie la sécurité, la traçabilité et la clarté.',
+  },
+  {
+    n: '02',
+    title: 'La proximité comme force',
+    text: 'La technologie doit renforcer la relation humaine, jamais la remplacer.',
+  },
+  {
+    n: '03',
+    title: 'La clarté financière',
+    text: 'Des informations compréhensibles permettent des décisions plus justes.',
+  },
+]
+
+// Product facts only (verifiable in the application), no audience figures.
+const FACTS = [
+  { value: '3', label: 'rôles : administrateur, gérant, caissier' },
+  { value: '4', label: 'devises au bureau de change' },
+  { value: '2', label: 'devises de compte : gourde et dollar' },
+  { value: '1', label: 'plateforme pour membres, crédits, caisse et rapports' },
+]
+
+export default function AboutPage() {
   return (
-    <PageShell slug={SLUG}>
-      <Section title="Renforcer la coopérative haïtienne par la technologie">
-        <p>
-          Bosal Credit Union est née d’un constat simple : les coopératives haïtiennes portent
-          une partie immense de l’économie du pays, mais sont souvent équipées d’outils hérités,
-          lents et coûteux. Notre équipe, basée à Port-au-Prince, conçoit un logiciel qui parle
-          leur langue, respecte leurs pratiques et amplifie leur impact.
-        </p>
-        <p>
-          Le nom ? <em>Bosal Credit Union</em> — <em>Bosal</em> évoque la force tranquille et la
-          solidité qui tiennent la coopérative debout, tandis que <em>Credit Union</em> affirme
-          notre mission : unir les membres autour d’un crédit juste, transparent et coopératif.
-        </p>
-      </Section>
-
-      <FeatureGrid
-        items={[
-          { icon: <Heart size={18} />, title: 'Humain d’abord', description: 'Nous accompagnons chaque coopérative individuellement, sans hotline impersonnelle.' },
-          { icon: <Target size={18} />, title: 'Précision financière', description: 'Les chiffres justes, à la gourde près, en temps réel. Aucun à-peu-près.' },
-          { icon: <Globe2 size={18} />, title: 'Ancré en Haïti', description: 'Équipe haïtienne, serveurs conformes BRH, interfaces en français et créole.' },
-        ]}
+    <>
+      <InteriorHero
+        kicker="NOTRE MISSION"
+        title="La finance de proximité mérite une technologie d’excellence."
+        text="Nous construisons les outils qui permettent aux institutions financières locales de grandir, de mieux décider et de servir durablement leurs communautés."
       />
-
-      <Section title="L’équipe">
-        <p>
-          Ingénieurs logiciels, anciens directeurs de coopératives, experts en conformité
-          financière et designers — une équipe mixte qui croit que la technologie doit servir
-          les humains, pas l’inverse.
-        </p>
-      </Section>
-    </PageShell>
+      <section className="public-section about-values">
+        <div className="public-shell">
+          <div className="about-intro">
+            <div>
+              <span className="section-kicker">POURQUOI COOPFINANCE</span>
+              <h2>Une plateforme née d’une conviction simple.</h2>
+            </div>
+            <p>
+              Les coopératives et caisses populaires jouent un rôle essentiel
+              en Haïti. Pourtant, leurs équipes composent souvent avec des
+              cahiers, des tableurs et des outils fragmentés. CoopFinance
+              réunit rigueur financière, simplicité opérationnelle et
+              expérience moderne.
+            </p>
+          </div>
+          <div className="value-grid">
+            {VALUES.map(value => (
+              <article key={value.n}>
+                <span>{value.n}</span>
+                <h3>{value.title}</h3>
+                <p>{value.text}</p>
+              </article>
+            ))}
+          </div>
+          <div className="mission-panel">
+            {FACTS.map(fact => (
+              <div key={fact.label}>
+                <strong>{fact.value}</strong>
+                <span>{fact.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      <PublicCallout />
+    </>
   )
 }

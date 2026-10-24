@@ -1,49 +1,96 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Briefcase, Code2, Users } from 'lucide-react'
-import { PageShell, Section, FeatureGrid } from '@/components/marketing/PageShell'
+import { PageShell, Section, FeatureGrid, Steps } from '@/components/marketing/PageShell'
 import { getPage } from '@/lib/marketing-pages'
 
 const SLUG = '/partenaires'
 const p = getPage(SLUG)!
-export const metadata = { title: p.title, description: p.description }
+export const metadata: Metadata = { title: p.title, description: p.description }
+
+// No integration and no formal partner programme exist today: this page only
+// invites organisations that work with cooperatives to get in touch.
+const AUDIENCES = [
+  {
+    icon: <Users size={18} />,
+    title: 'Réseaux et fédérations',
+    description:
+      'Vous accompagnez plusieurs coopératives ? Présentez-nous leurs besoins : nous verrons ensemble si CoopFinance peut y répondre.',
+  },
+  {
+    icon: <Briefcase size={18} />,
+    title: 'Cabinets comptables',
+    description:
+      'Les transactions, les prêts et les opérations de change s’exportent aujourd’hui en CSV, et une partie des listes en PDF. CoopFinance ne tient ni plan comptable ni grand livre : dites-nous quels formats vous seraient utiles.',
+  },
+  {
+    icon: <Code2 size={18} />,
+    title: 'Intégrateurs techniques',
+    description:
+      'CoopFinance ne propose pas d’API publique ni de webhooks. Si vous avez un projet d’intégration, parlons-en.',
+  },
+]
 
 export default function Page() {
   return (
     <PageShell slug={SLUG}>
-      <Section title="Rejoignez l’écosystème Bosal Credit Union">
+      <Section title="Travaillons avec ceux qui accompagnent les coopératives">
         <p>
-          Cabinets comptables, intégrateurs techniques, fédérations coopératives — nous
-          construisons un réseau de partenaires qui partagent notre vision : moderniser le
-          mouvement coopératif haïtien.
+          CoopFinance s’adresse aux coopératives et caisses populaires haïtiennes. Nous
+          souhaitons échanger avec les organisations qui les accompagnent au quotidien :
+          réseaux et fédérations de coopératives, cabinets comptables et intégrateurs
+          techniques.
         </p>
       </Section>
 
-      <FeatureGrid
-        items={[
-          { icon: <Briefcase size={18} />, title: 'Cabinets comptables', description: 'Accompagnez vos clients coopératifs avec une plateforme certifiée BRH et exports comptables.' },
-          { icon: <Code2 size={18} />, title: 'Intégrateurs techniques', description: 'Connectez Bosal Credit Union à d’autres systèmes via notre API REST et webhooks.' },
-          { icon: <Users size={18} />, title: 'Fédérations & réseaux', description: 'Bénéficiez de tarifs préférentiels pour les COOPEC membres de votre fédération.' },
-        ]}
-      />
+      <section className="cf-block" aria-labelledby="partenaires-profils">
+        <h2 id="partenaires-profils">À qui s’adresse cette page</h2>
+        <FeatureGrid items={AUDIENCES} />
+      </section>
 
-      <Section title="Programme partenaire">
-        <p>
-          Commission sur les abonnements apportés, formation gratuite de votre équipe, co-marketing
-          et accès prioritaire aux nouvelles fonctionnalités. <Link href="/contact" style={{ color: '#C41E3A' }}
-          className="underline underline-offset-4">Discutons-en</Link>.
-        </p>
-      </Section>
-
-      <Section title="Déjà intégré avec">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
-          {['BRH Reporting', 'QuickBooks', 'MonCash API', 'Twilio SMS'].map(name => (
-            <div key={name} className="rounded-xl p-5 border flex items-center justify-center text-[13px] font-medium text-white/65"
-              style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.07)' }}>
-              {name}
-            </div>
-          ))}
+      <section className="cf-block" aria-labelledby="partenaires-transparence">
+        <h2 id="partenaires-transparence">Pour être clairs</h2>
+        <div className="cf-card-muted cf-prose">
+          <p>À ce jour, CoopFinance n’a :</p>
+          <ul>
+            <li>
+              aucune intégration avec un service tiers (paiement mobile, envoi de SMS,
+              logiciel comptable, déclarations réglementaires) ;
+            </li>
+            <li>pas d’API publique ;</li>
+            <li>pas de programme partenaire formalisé : ni commission, ni remise, ni certification.</li>
+          </ul>
+          <p>Nous préférons le dire ici plutôt que de vous le laisser découvrir plus tard.</p>
         </div>
-      </Section>
+      </section>
+
+      <section className="cf-block" aria-labelledby="partenaires-contact">
+        <h2 id="partenaires-contact">Prendre contact</h2>
+        <Steps
+          items={[
+            {
+              title: 'Présentez votre organisation',
+              description:
+                'Utilisez le formulaire de la page contact : qui vous êtes, les coopératives que vous accompagnez, ce que vous cherchez.',
+            },
+            {
+              title: 'Échangeons sur votre projet',
+              description:
+                'Nous revenons vers vous pour comprendre vos besoins et vous dire ce qui est possible avec l’application telle qu’elle est.',
+            },
+            {
+              title: 'Voyez l’application',
+              description:
+                'Si c’est pertinent, nous vous présentons CoopFinance lors d’une démonstration.',
+            },
+          ]}
+        />
+        <div className="cf-prose mt-5">
+          <p>
+            <Link href="/contact">Écrire à l’équipe CoopFinance</Link>
+          </p>
+        </div>
+      </section>
     </PageShell>
   )
 }

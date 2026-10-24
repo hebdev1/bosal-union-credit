@@ -1,77 +1,71 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { PageShell, Section } from '@/components/marketing/PageShell'
+import { ArrowLeftRight, FileSpreadsheet, FileText, Landmark } from 'lucide-react'
+import { FeatureGrid, PageShell, Section } from '@/components/marketing/PageShell'
 import { getPage } from '@/lib/marketing-pages'
 
 const SLUG = '/api-reference'
 const p = getPage(SLUG)!
-export const metadata = { title: p.title, description: p.description }
+export const metadata: Metadata = { title: p.title, description: p.description }
 
-const ENDPOINTS = [
-  { method: 'GET',  path: '/v1/members',           desc: 'Liste paginée des membres de la coopérative' },
-  { method: 'POST', path: '/v1/members',           desc: 'Créer un nouveau membre avec KYC' },
-  { method: 'GET',  path: '/v1/accounts/:id',      desc: 'Détails et solde d’un compte' },
-  { method: 'POST', path: '/v1/transactions',      desc: 'Enregistrer un dépôt, retrait ou virement' },
-  { method: 'GET',  path: '/v1/loans',             desc: 'Liste des prêts avec filtres (statut, membre, agence)' },
-  { method: 'POST', path: '/v1/loans/:id/disburse', desc: 'Décaisser un prêt approuvé' },
-  { method: 'GET',  path: '/v1/exchange/rates',    desc: 'Taux de change du jour (HTG, USD, CAD, DOP)' },
-  { method: 'POST', path: '/v1/webhooks',          desc: 'Souscrire à des événements (loan.created, etc.)' },
+// The exports that exist in the application today (no public API).
+const EXPORTS = [
+  {
+    icon: <FileSpreadsheet size={18} />,
+    title: 'Transactions',
+    description:
+      'Export CSV et PDF des opérations affichées dans le journal, qui porte sur les 500 opérations les plus récentes.',
+  },
+  {
+    icon: <Landmark size={18} />,
+    title: 'Prêts',
+    description: 'Export CSV de la liste des prêts ; export PDF des prêts et des remboursements.',
+  },
+  {
+    icon: <ArrowLeftRight size={18} />,
+    title: 'Bureau de change',
+    description:
+      'Export CSV et PDF de l’historique, qui porte sur les 100 opérations de change les plus récentes.',
+  },
+  {
+    icon: <FileText size={18} />,
+    title: 'Relevés de compte',
+    description: 'Relevé PDF au format A4, depuis la fiche de chaque compte.',
+  },
 ]
-
-const METHOD_COLOR: Record<string, string> = {
-  GET: '#22C55E',
-  POST: '#3B82F6',
-  PUT: '#F59E0B',
-  DELETE: '#EF4444',
-}
 
 export default function Page() {
   return (
     <PageShell slug={SLUG}>
-      <Section title="API REST — simple, prévisible, documentée">
+      <Section title="Pas d’API publique pour le moment">
         <p>
-          Intégrez Bosal Credit Union à vos outils internes : comptabilité, CRM, reporting externe.
-          Authentification par clé API, réponses JSON, webhooks en temps réel.
+          CoopFinance s’utilise uniquement par son application web, réservée aux agents de la
+          coopérative. Il n’existe aujourd’hui ni API publique, ni clé d’API, ni webhooks : aucune
+          interface n’est proposée pour connecter un logiciel externe.
         </p>
       </Section>
 
-      <Section title="Exemple — créer un dépôt">
-        <pre className="rounded-xl p-5 text-[12.5px] overflow-x-auto"
-          style={{ background: '#05060A', border: '1px solid rgba(255,255,255,0.07)', color: 'rgba(255,255,255,0.85)', fontFamily: 'JetBrains Mono, monospace' }}>
-{`curl -X POST https://api.bosal-credit-union.ht/v1/transactions \\
-  -H "Authorization: Bearer \${API_KEY}" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "type": "deposit",
-    "account_id": "acc_7f3a...",
-    "amount": 5000,
-    "currency": "HTG",
-    "memo": "Dépôt mensuel membre"
-  }'`}
-        </pre>
-      </Section>
-
-      <Section title="Endpoints principaux">
-        <div className="mt-2 rounded-xl overflow-hidden border"
-          style={{ borderColor: 'rgba(255,255,255,0.07)' }}>
-          {ENDPOINTS.map((e, i) => (
-            <div key={e.path} className="flex items-center gap-3 px-4 py-3"
-              style={{
-                background: i % 2 ? 'rgba(255,255,255,0.015)' : 'transparent',
-                borderTop: i === 0 ? 'none' : '1px solid rgba(255,255,255,0.05)',
-              }}>
-              <span className="w-14 text-[11px] font-semibold tracking-wider"
-                style={{ color: METHOD_COLOR[e.method] }}>{e.method}</span>
-              <code className="text-[13px] text-white/85 font-mono flex-shrink-0">{e.path}</code>
-              <span className="text-[12px] text-white/45 ml-auto text-right hidden sm:block">{e.desc}</span>
-            </div>
-          ))}
+      <section className="cf-block">
+        <h2>Récupérer vos données</h2>
+        <div className="cf-prose">
+          <p>
+            Pour exploiter vos données dans un autre outil, par exemple un tableur, utilisez les
+            exports disponibles dans l’application :
+          </p>
         </div>
-      </Section>
+        <FeatureGrid items={EXPORTS} />
+        <div className="cf-prose mt-5">
+          <p>
+            Les fichiers CSV s’ouvrent directement dans Excel ou dans un autre tableur. L’export de
+            la liste des membres ou des comptes et l’import de fichiers ne sont pas disponibles.
+          </p>
+        </div>
+      </section>
 
-      <Section>
+      <Section title="Un besoin d’intégration ?">
         <p>
-          Besoin d’une clé API ? <Link href="/contact" style={{ color: '#C41E3A' }} className="underline underline-offset-4">Contactez-nous</Link> ou
-          consultez le <Link href="/statut" style={{ color: '#C41E3A' }} className="underline underline-offset-4">statut</Link> des services.
+          Si votre coopérative doit relier CoopFinance à un autre outil,{' '}
+          <Link href="/contact">décrivez-nous votre besoin via le formulaire de contact</Link>.
         </p>
       </Section>
     </PageShell>

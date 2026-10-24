@@ -1,80 +1,98 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { Check } from 'lucide-react'
-import { PageShell, Section } from '@/components/marketing/PageShell'
-import { getPage } from '@/lib/marketing-pages'
+import { ArrowRight, Check, ShieldCheck } from 'lucide-react'
+import { InteriorHero } from '@/components/marketing/coopfinance/Sections'
 
-const SLUG = '/tarifs'
-const p = getPage(SLUG)!
-export const metadata = { title: p.title, description: p.description }
+export const metadata: Metadata = {
+  title: 'Tarification',
+  description:
+    'Trois formules dimensionnées selon vos membres et vos besoins. Proposition sur devis après un échange avec votre institution.',
+}
 
+// Every plan includes every module of the application (there is no
+// per-plan gating in the product); plans differ by the service around it.
 const PLANS = [
   {
-    name: 'Starter', price: '4 900', period: 'HTG / mois', tagline: 'Jusqu’à 500 membres',
-    highlight: false,
-    features: ['1 agence', 'Comptes HTG & USD', 'Prêts & échéanciers', 'Rapports mensuels', 'Support e-mail'],
+    name: 'Essentiel',
+    description: 'Pour les petites coopératives qui structurent leurs opérations.',
+    price: 'Sur devis',
+    features: [
+      'Tous les modules de l’application',
+      'Mise en place de votre coopérative par notre équipe',
+      'Accès de vos agents par rôle : administrateur, gérant, caissier',
+    ],
   },
   {
-    name: 'Croissance', price: '12 500', period: 'HTG / mois', tagline: 'Jusqu’à 3 000 membres',
-    highlight: true,
-    features: ['Jusqu’à 3 agences', '4 devises (HTG/USD/CAD/DOP)', 'Bureau de change', 'API & webhooks', 'Alertes fraude', 'Support prioritaire'],
+    name: 'Croissance',
+    description: 'Pour les coopératives qui veulent reprendre leurs registres et former leurs équipes.',
+    price: 'Sur devis',
+    recommended: true,
+    features: [
+      'Tout ce qui est inclus dans Essentiel',
+      'Aide à la saisie de votre historique',
+      'Formation de vos équipes',
+    ],
   },
   {
-    name: 'Entreprise', price: 'Sur devis', period: '', tagline: 'Multi-agences illimitées',
-    highlight: false,
-    features: ['Agences illimitées', 'SLA 99.9%', 'Intégrations sur mesure', 'Formation en présentiel', 'Chargé de compte dédié', 'Conformité BRH avancée'],
+    name: 'Accompagnement',
+    description: 'Pour les institutions qui veulent un déploiement sur mesure.',
+    price: 'Personnalisé',
+    features: [
+      'Tout ce qui est inclus dans Croissance',
+      'Paramétrage de vos reçus et de votre logo avec vous',
+      'Accompagnement au déploiement sur mesure',
+    ],
   },
 ]
 
-export default function Page() {
+export default function PricingPage() {
   return (
-    <PageShell slug={SLUG}>
-      <Section title="Une formule par taille de coopérative">
-        <p>Essai de 30 jours sur toutes les formules. Sans carte bancaire, sans engagement.</p>
-      </Section>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
-        {PLANS.map(plan => (
-          <div key={plan.name} className="rounded-2xl p-6 border flex flex-col"
-            style={{
-              background: plan.highlight ? 'linear-gradient(180deg, rgba(196,30,58,0.08) 0%, rgba(196,30,58,0.02) 100%)' : 'rgba(255,255,255,0.02)',
-              borderColor: plan.highlight ? 'rgba(196,30,58,0.35)' : 'rgba(255,255,255,0.07)',
-            }}>
-            {plan.highlight && (
-              <span className="self-start mb-3 text-[10px] font-semibold uppercase tracking-[0.1em] px-2 py-0.5 rounded-full"
-                style={{ background: '#C41E3A', color: '#fff' }}>Populaire</span>
-            )}
-            <p className="text-[13px] text-white/50">{plan.tagline}</p>
-            <p className="mt-1 text-[22px] font-semibold text-white">{plan.name}</p>
-            <div className="mt-4 flex items-baseline gap-1.5">
-              <span className="text-[32px] font-semibold text-white">{plan.price}</span>
-              {plan.period && <span className="text-[13px] text-white/45">{plan.period}</span>}
-            </div>
-            <ul className="mt-6 space-y-2.5 flex-1">
-              {plan.features.map(f => (
-                <li key={f} className="flex items-start gap-2 text-[13px] text-white/70">
-                  <Check size={14} style={{ color: '#22C55E' }} className="mt-0.5 flex-shrink-0" />
-                  {f}
-                </li>
-              ))}
-            </ul>
-            <Link href={plan.name === 'Entreprise' ? '/contact' : '/inscription'}
-              className="mt-6 h-10 flex items-center justify-center rounded-full text-[13px] font-semibold transition-all"
-              style={{
-                background: plan.highlight ? '#C41E3A' : 'transparent',
-                color: plan.highlight ? '#fff' : 'rgba(255,255,255,0.85)',
-                border: plan.highlight ? 'none' : '1px solid rgba(255,255,255,0.15)',
-              }}>
-              {plan.name === 'Entreprise' ? 'Demander un devis' : 'Commencer'}
-            </Link>
+    <>
+      <InteriorHero
+        kicker="TARIFICATION SUR DEVIS"
+        title="Une formule adaptée à votre institution."
+        text="Chaque déploiement est dimensionné selon vos membres, vos agences et vos besoins. Parlez-nous de votre organisation pour recevoir une proposition claire."
+      />
+      <section className="public-section pricing-section">
+        <div className="public-shell pricing-grid">
+          {PLANS.map(plan => (
+            <article
+              className={plan.recommended ? 'pricing-card popular' : 'pricing-card'}
+              key={plan.name}
+            >
+              {plan.recommended && <span className="popular-label">RECOMMANDÉ</span>}
+              <h2>{plan.name}</h2>
+              <p>{plan.description}</p>
+              <strong>{plan.price}</strong>
+              <small>Configuration selon vos besoins</small>
+              <Link href="/contact">
+                {plan.recommended ? 'Demander une démo' : 'Nous contacter'}{' '}
+                <ArrowRight size={15} aria-hidden="true" />
+              </Link>
+              <ul>
+                {plan.features.map(feature => (
+                  <li key={feature}>
+                    <Check size={14} aria-hidden="true" />
+                    {feature}
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+        <div className="public-shell pricing-note">
+          <ShieldCheck size={20} aria-hidden="true" />
+          <div>
+            <strong>Toutes les formules incluent</strong>
+            <span>
+              Tous les modules de l’application (membres et comptes, guichet
+              avec reçus PDF, registre des prêts, bureau de change, alertes de
+              fraude, exports CSV et PDF), hébergement sécurisé, sauvegardes
+              quotidiennes et mises à jour.
+            </span>
           </div>
-        ))}
-      </div>
-
-      <Section title="Questions fréquentes">
-        <p>
-          Consultez notre <Link href="/aide" style={{ color: '#C41E3A' }} className="underline underline-offset-4">centre d’aide</Link> ou lisez les <Link href="/cgu" style={{ color: '#C41E3A' }} className="underline underline-offset-4">conditions d’utilisation</Link> pour en savoir plus.
-        </p>
-      </Section>
-    </PageShell>
+        </div>
+      </section>
+    </>
   )
 }

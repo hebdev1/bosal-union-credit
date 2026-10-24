@@ -1,42 +1,79 @@
-import { Lock, Key, Database, FileSearch, UserCheck, AlertTriangle, ShieldCheck, Server } from 'lucide-react'
-import { PageShell, Section, FeatureGrid } from '@/components/marketing/PageShell'
-import { getPage } from '@/lib/marketing-pages'
+import type { Metadata } from 'next'
+import { Building2, FileCheck2, LockKeyhole, ReceiptText, ShieldCheck, UserX } from 'lucide-react'
+import { InteriorHero, PublicCallout } from '@/components/marketing/coopfinance/Sections'
 
-const SLUG = '/securite'
-const p = getPage(SLUG)!
-export const metadata = { title: p.title, description: p.description }
+export const metadata: Metadata = {
+  title: 'Sécurité',
+  description:
+    'Isolation des données par coopérative, rôles, journal d’audit, chiffrement et sauvegardes quotidiennes.',
+}
 
-export default function Page() {
+// Each item describes a control that is in place in the application.
+const CONTROLS = [
+  {
+    icon: LockKeyhole,
+    title: 'Contrôles d’accès',
+    text: 'Administrateur, gérant, caissier : chaque rôle n’a accès qu’aux actions qui lui reviennent, vérifiées jusque dans la base de données.',
+  },
+  {
+    icon: Building2,
+    title: 'Séparation des institutions',
+    text: 'Les données de chaque coopérative restent strictement isolées : un agent ne voit jamais celles d’une autre institution.',
+  },
+  {
+    icon: FileCheck2,
+    title: 'Traçabilité',
+    text: 'Les actions sensibles sont enregistrées dans un journal d’audit, avec leur auteur et leur horodatage.',
+  },
+  {
+    icon: ShieldCheck,
+    title: 'Protection des données',
+    text: 'Connexions chiffrées, données chiffrées au repos et sauvegardes quotidiennes de la base.',
+  },
+  {
+    icon: ReceiptText,
+    title: 'Opérations fiables',
+    text: 'Protection contre la double saisie, soldes des comptes recalculés par la base à chaque opération et référence imprimée sur chaque reçu.',
+  },
+  {
+    icon: UserX,
+    title: 'Accès révocables',
+    text: 'Un agent suspendu perd immédiatement l’accès aux données de la coopérative.',
+  },
+]
+
+export default function SecurityPage() {
   return (
-    <PageShell slug={SLUG}>
-      <Section title="La sécurité, en fondation — pas en option">
-        <p>
-          Une coopérative gère l’argent de ses membres. Chez Bosal Credit Union, la sécurité est
-          intégrée à chaque couche : du chiffrement au niveau du disque jusqu’au contrôle d’accès
-          par rôle, en passant par l’audit de chaque transaction.
-        </p>
-      </Section>
-
-      <FeatureGrid
-        items={[
-          { icon: <Lock size={18} />, title: 'Chiffrement AES-256', description: 'Toutes les données sont chiffrées au repos et en transit (TLS 1.3).' },
-          { icon: <Key size={18} />, title: 'Authentification 2FA', description: 'Double facteur obligatoire pour les gestionnaires et administrateurs.' },
-          { icon: <UserCheck size={18} />, title: 'Rôles & permissions', description: 'Contrôle granulaire : agent, comptable, gestionnaire, directeur.' },
-          { icon: <FileSearch size={18} />, title: 'Audit trail complet', description: 'Chaque création, modification ou suppression est horodatée et tracée.' },
-          { icon: <Database size={18} />, title: 'Sauvegardes quotidiennes', description: 'Backup automatique chiffré, restauration ponctuelle possible sur 30 jours.' },
-          { icon: <AlertTriangle size={18} />, title: 'Détection de fraude', description: 'Alertes automatiques sur opérations inhabituelles, doublons, dépassements.' },
-          { icon: <ShieldCheck size={18} />, title: 'Conformité BRH', description: 'Indicateurs prudentiels et rapports adaptés à la réglementation haïtienne.' },
-          { icon: <Server size={18} />, title: 'Hébergement redondé', description: 'Infrastructure haute disponibilité avec bascule automatique en cas d’incident.' },
-        ]}
+    <>
+      <InteriorHero
+        kicker="SÉCURITÉ & CONFIANCE"
+        title="Vos données financières exigent le plus haut niveau d’attention."
+        text="CoopFinance intègre la sécurité, la séparation des données et la traçabilité au cœur de chaque opération."
       />
-
-      <Section title="Transparence totale">
-        <p>
-          Le <a href="/statut" style={{ color: '#C41E3A' }} className="underline underline-offset-4">statut système</a> public
-          et la page <a href="/confidentialite" style={{ color: '#C41E3A' }} className="underline underline-offset-4">confidentialité</a> détaillent
-          comment vos données sont traitées, stockées et protégées.
-        </p>
-      </Section>
-    </PageShell>
+      <section className="public-section security-section">
+        <div className="public-shell security-grid">
+          {CONTROLS.map(({ icon: Icon, title, text }) => (
+            <article key={title}>
+              <Icon size={24} aria-hidden="true" />
+              <h2>{title}</h2>
+              <p>{text}</p>
+            </article>
+          ))}
+        </div>
+        <div className="public-shell compliance-panel">
+          <div>
+            <span>APPROCHE RESPONSABLE</span>
+            <h2>La conformité est un processus, pas une promesse automatique.</h2>
+          </div>
+          <p>
+            CoopFinance fournit les outils : rôles et exports CSV et PDF de vos
+            opérations ; les actions sensibles sont en outre enregistrées dans un
+            journal d’audit. Chaque institution reste responsable de l’adaptation
+            à sa juridiction et à ses obligations réglementaires.
+          </p>
+        </div>
+      </section>
+      <PublicCallout />
+    </>
   )
 }
